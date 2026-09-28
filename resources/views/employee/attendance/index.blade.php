@@ -28,11 +28,16 @@
 
                 <div x-show="step === 'selfie'" x-cloak>
                     <p class="text-sm font-medium text-slate-700 mb-2">2. Take a selfie (camera only, no gallery upload)</p>
-                    <video x-ref="video" autoplay playsinline muted class="w-full max-w-sm rounded-lg bg-slate-900"></video>
+                    <video x-ref="selfieVideo" autoplay playsinline muted class="w-full max-w-sm rounded-lg bg-slate-900"></video>
                     <canvas x-ref="canvas" class="hidden"></canvas>
-                    <div class="mt-3">
-                        <button type="button" @click="captureSelfie()" class="px-4 py-2 bg-emerald-600 text-white text-sm font-medium rounded-lg hover:bg-emerald-700">
+                    <div class="mt-3 flex gap-2">
+                        <button type="button" @click="captureSelfie()" :disabled="!cameraReady"
+                                :class="cameraReady ? 'bg-emerald-600 hover:bg-emerald-700' : 'bg-slate-300 cursor-not-allowed'"
+                                class="px-4 py-2 text-white text-sm font-medium rounded-lg">
                             Capture Selfie
+                        </button>
+                        <button type="button" x-show="!cameraReady" x-cloak @click="retrySelfieCamera()" class="px-4 py-2 bg-slate-800 text-white text-sm font-medium rounded-lg hover:bg-slate-700">
+                            Try Camera Again
                         </button>
                     </div>
                 </div>
@@ -50,8 +55,11 @@
 
                 <div x-show="step === 'checkpoint' && checkpointMethod === 'qr'" x-cloak>
                     <p class="text-sm font-medium text-slate-700 mb-2">3. Scan the attendance QR at your checkpoint</p>
-                    <video x-ref="video" autoplay playsinline muted class="w-full max-w-sm rounded-lg bg-slate-900"></video>
+                    <video x-ref="qrVideo" autoplay playsinline muted class="w-full max-w-sm rounded-lg bg-slate-900"></video>
                     <p class="text-xs text-slate-400 mt-2">Point your camera at the QR code displayed at the checkpoint screen.</p>
+                    <button type="button" x-show="!cameraReady" x-cloak @click="retryQrCamera()" class="mt-3 px-4 py-2 bg-slate-800 text-white text-sm font-medium rounded-lg hover:bg-slate-700">
+                        Try Camera Again
+                    </button>
                 </div>
 
                 <div x-show="step === 'ready'" x-cloak>
@@ -155,6 +163,7 @@
                 stream: null,
                 scanning: false,
                 nfcCancelled: false,
+                cameraReady: false,
 
                 requestLocation() {
                     this.error = '';
@@ -173,7 +182,7 @@
                             }
                             this.distanceInfo = `You are ${Math.round(distance)} meters from the office. Location verified.`;
                             this.step = 'selfie';
-                            this.$nextTick(() => this.startCamera());
+                            this.$nextTick(() => this.startCamera('user', 'selfieVideo'));
                         },
                         (err) => {
                             this.error = 'Unable to get GPS location: ' + err.message;
@@ -182,17 +191,32 @@
                     );
                 },
 
-                async startCamera() {
+                async startCamera(facingMode, videoRef) {
+                    this.error = '';
+                    this.cameraReady = false;
+                    this.stopCamera();
                     try {
-                        this.stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'user' } });
-                        this.$refs.video.srcObject = this.stream;
+                        this.stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: { ideal: facingMode } } });
+                        this.$refs[videoRef].srcObject = this.stream;
+                        this.cameraReady = true;
                     } catch (e) {
-                        this.error = 'Camera access denied or unavailable. Selfie verification is required to clock in.';
+                        this.error = 'Camera access was denied or is unavailable. Please allow camera permission for this site in your browser settings, then tap "Try Camera Again".';
                     }
                 },
 
+                retrySelfieCamera() {
+                    this.startCamera('user', 'selfieVideo');
+                },
+
+                retryQrCamera() {
+                    this.startCamera('environment', 'qrVideo').then(() => {
+                        if (this.cameraReady) this.startQrScan();
+                    });
+                },
+
                 captureSelfie() {
-                    const video = this.$refs.video;
+                    if (!this.cameraReady) return;
+                    const video = this.$refs.selfieVideo;
                     const canvas = this.$refs.canvas;
                     canvas.width = video.videoWidth || 480;
                     canvas.height = video.videoHeight || 360;
@@ -241,12 +265,14 @@
                 switchToQr() {
                     this.nfcCancelled = true;
                     this.checkpointMethod = 'qr';
-                    this.startCamera().then(() => this.startQrScan());
+                    this.startCamera('environment', 'qrVideo').then(() => {
+                        if (this.cameraReady) this.startQrScan();
+                    });
                 },
 
                 startQrScan() {
                     this.scanning = true;
-                    const video = this.$refs.video;
+                    const video = this.$refs.qrVideo;
                     const canvas = document.createElement('canvas');
                     const ctx = canvas.getContext('2d');
 
