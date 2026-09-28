@@ -1,0 +1,62 @@
+<?php
+
+namespace App\Http\Controllers\Employee;
+
+use App\Http\Controllers\Controller;
+use App\Http\Requests\Employee\StoreOvertimeRequest;
+use App\Models\AuditLog;
+use App\Models\Overtime;
+use Illuminate\Http\RedirectResponse;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Storage;
+use Illuminate\View\View;
+
+class OvertimeController extends Controller
+{
+    public function index(): View
+    {
+        $employee = Auth::user()->employee;
+        abort_if(! $employee, 403);
+
+        $overtimes = $employee->overtimes()->orderByDesc('date')->paginate(10);
+
+        return view('employee.overtime.index', compact('overtimes'));
+    }
+
+    public function create(): View
+    {
+        return view('employee.overtime.create');
+    }
+
+    public function store(StoreOvertimeRequest $request): RedirectResponse
+    {
+        $employee = Auth::user()->employee;
+        abort_if(! $employee, 403);
+
+        $data = $request->validated();
+
+        $start = \Carbon\Carbon::parse($data['date'].' '.$data['start_time']);
+        $end = \Carbon\Carbon::parse($data['date'].' '.$data['end_time']);
+        $totalHours = round(abs($end->diffInMinutes($start)) / 60, 2);
+
+        $attachmentPath = null;
+        if ($request->hasFile('attachment')) {
+            $attachmentPath = $request->file('attachment')->store('attachments/overtime', 'public');
+        }
+
+        $overtime = $employee->overtimes()->create([
+            'date' => $data['date'],
+            'start_time' => $data['start_time'],
+            'end_time' => $data['end_time'],
+            'total_hours' => $totalHours,
+            'reason' => $data['reason'],
+            'attachment' => $attachmentPath,
+            'status' => Overtime::STATUS_PENDING,
+            'ot_rate' => 1.5,
+        ]);
+
+        AuditLog::record('create', 'overtime', "{$employee->full_name} requested OT for {$overtime->date->format('d M Y')}");
+
+        return redirect()->route('employee.overtime.index')->with('success', 'Overtime request submitted.');
+    }
+}

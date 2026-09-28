@@ -1,0 +1,85 @@
+<x-app-layout title="Employees">
+    <x-slot name="header">
+        <div class="flex items-center justify-between">
+            <div>
+                <h2 class="text-xl font-semibold text-slate-800">Employee Management</h2>
+                <p class="text-sm text-slate-500 mt-1">{{ $employees->total() }} employee(s) total.</p>
+            </div>
+            <a href="{{ route('hr.employees.create') }}" class="inline-flex items-center px-4 py-2 bg-emerald-600 text-white text-sm font-medium rounded-lg hover:bg-emerald-700">
+                + Add Employee
+            </a>
+        </div>
+    </x-slot>
+
+    <form method="GET" class="bg-white rounded-xl border border-slate-200 p-4 mb-4 flex flex-wrap gap-3 items-end">
+        <div>
+            <label class="block text-xs text-slate-500 mb-1">Search</label>
+            <input type="text" name="search" value="{{ request('search') }}" placeholder="Name or employee code"
+                   class="rounded-md border-gray-300 text-sm focus:border-emerald-500 focus:ring-emerald-500">
+        </div>
+        <div>
+            <label class="block text-xs text-slate-500 mb-1">Department</label>
+            <select name="department_id" class="rounded-md border-gray-300 text-sm focus:border-emerald-500 focus:ring-emerald-500">
+                <option value="">All</option>
+                @foreach ($departments as $department)
+                    <option value="{{ $department->id }}" @selected(request('department_id') == $department->id)>{{ $department->name }}</option>
+                @endforeach
+            </select>
+        </div>
+        <div>
+            <label class="block text-xs text-slate-500 mb-1">Status</label>
+            <select name="status" class="rounded-md border-gray-300 text-sm focus:border-emerald-500 focus:ring-emerald-500">
+                <option value="">All</option>
+                @foreach (['active', 'probation', 'resigned', 'terminated', 'suspended'] as $status)
+                    <option value="{{ $status }}" @selected(request('status') == $status)>{{ ucfirst($status) }}</option>
+                @endforeach
+            </select>
+        </div>
+        <button type="submit" class="px-4 py-2 bg-slate-800 text-white text-sm rounded-md hover:bg-slate-700">Filter</button>
+        @if (request()->hasAny(['search', 'department_id', 'status']))
+            <a href="{{ route('hr.employees.index') }}" class="text-sm text-slate-500 underline">Reset</a>
+        @endif
+    </form>
+
+    <div class="bg-white rounded-xl border border-slate-200 overflow-hidden">
+        <table class="min-w-full divide-y divide-slate-200 text-sm">
+            <thead class="bg-slate-50">
+                <tr class="text-left text-xs uppercase tracking-wide text-slate-500">
+                    <th class="px-4 py-3">Employee</th>
+                    <th class="px-4 py-3">Department</th>
+                    <th class="px-4 py-3">Position</th>
+                    <th class="px-4 py-3">Office</th>
+                    <th class="px-4 py-3">Status</th>
+                    <th class="px-4 py-3"></th>
+                </tr>
+            </thead>
+            <tbody class="divide-y divide-slate-100">
+                @forelse ($employees as $employee)
+                    <tr>
+                        <td class="px-4 py-3">
+                            <div class="font-medium text-slate-800">{{ $employee->full_name }}</div>
+                            <div class="text-xs text-slate-400">{{ $employee->employee_code }} &middot; {{ $employee->user->email }}</div>
+                        </td>
+                        <td class="px-4 py-3">{{ $employee->department->name }}</td>
+                        <td class="px-4 py-3">{{ $employee->position }}</td>
+                        <td class="px-4 py-3">{{ $employee->office->name }}</td>
+                        <td class="px-4 py-3">
+                            <x-status-badge :status="$employee->employment_status" />
+                        </td>
+                        <td class="px-4 py-3 text-right">
+                            <a href="{{ route('hr.employees.edit', $employee) }}" class="text-emerald-600 hover:text-emerald-800 font-medium">Edit</a>
+                        </td>
+                    </tr>
+                @empty
+                    <tr>
+                        <td colspan="6" class="px-4 py-8 text-center text-slate-400">No employees found.</td>
+                    </tr>
+                @endforelse
+            </tbody>
+        </table>
+    </div>
+
+    <div class="mt-4">
+        {{ $employees->links() }}
+    </div>
+</x-app-layout>
