@@ -35,11 +35,12 @@ class AttendanceServiceTest extends TestCase
         $token = AttendanceQrToken::factory()->create(['office_id' => $office->id]);
 
         $attendance = app(AttendanceService::class)->clockIn(
-            $employee, 3.1579, 101.7116, self::TINY_JPEG, $token->token, '127.0.0.1', 'PHPUnit'
+            $employee, 3.1579, 101.7116, self::TINY_JPEG, '127.0.0.1', 'PHPUnit', $token->token
         );
 
         $this->assertNotNull($attendance->id);
         $this->assertEquals(0, $attendance->clock_in_distance_meters);
+        $this->assertEquals('qr', $attendance->verification_method);
         $this->assertTrue(\Illuminate\Support\Facades\Storage::disk('public')->exists($attendance->selfie_path));
     }
 
@@ -55,7 +56,7 @@ class AttendanceServiceTest extends TestCase
 
         $this->expectException(ValidationException::class);
 
-        app(AttendanceService::class)->clockIn($employee, $farLat, $farLng, self::TINY_JPEG, $token->token, '127.0.0.1', 'PHPUnit');
+        app(AttendanceService::class)->clockIn($employee, $farLat, $farLng, self::TINY_JPEG, '127.0.0.1', 'PHPUnit', $token->token);
     }
 
     public function test_clock_in_rejected_with_expired_qr_token(): void
@@ -67,7 +68,33 @@ class AttendanceServiceTest extends TestCase
         $this->expectException(ValidationException::class);
         $this->expectExceptionMessage('QR code expired');
 
-        app(AttendanceService::class)->clockIn($employee, 3.1579, 101.7116, self::TINY_JPEG, $expiredToken->token, '127.0.0.1', 'PHPUnit');
+        app(AttendanceService::class)->clockIn($employee, 3.1579, 101.7116, self::TINY_JPEG, '127.0.0.1', 'PHPUnit', $expiredToken->token);
+    }
+
+    public function test_clock_in_succeeds_via_nfc_tag(): void
+    {
+        $office = Office::factory()->create(['latitude' => 3.1579, 'longitude' => 101.7116, 'nfc_tag_id' => 'HQ-ENTRANCE-01']);
+        $employee = $this->makeEmployeeWithShift($office);
+
+        $attendance = app(AttendanceService::class)->clockIn(
+            $employee, 3.1579, 101.7116, self::TINY_JPEG, '127.0.0.1', 'PHPUnit', null, 'HQ-ENTRANCE-01'
+        );
+
+        $this->assertEquals('nfc', $attendance->verification_method);
+        $this->assertNull($attendance->qr_token_id);
+    }
+
+    public function test_clock_in_rejected_with_wrong_nfc_tag(): void
+    {
+        $office = Office::factory()->create(['latitude' => 3.1579, 'longitude' => 101.7116, 'nfc_tag_id' => 'HQ-ENTRANCE-01']);
+        $employee = $this->makeEmployeeWithShift($office);
+
+        $this->expectException(ValidationException::class);
+        $this->expectExceptionMessage('NFC tag not recognized');
+
+        app(AttendanceService::class)->clockIn(
+            $employee, 3.1579, 101.7116, self::TINY_JPEG, '127.0.0.1', 'PHPUnit', null, 'WRONG-TAG'
+        );
     }
 
     public function test_clock_out_detects_overtime_when_working_beyond_shift_hours(): void
@@ -77,7 +104,7 @@ class AttendanceServiceTest extends TestCase
         $token = AttendanceQrToken::factory()->create(['office_id' => $office->id]);
 
         $service = app(AttendanceService::class);
-        $attendance = $service->clockIn($employee, 3.1579, 101.7116, self::TINY_JPEG, $token->token, '127.0.0.1', 'PHPUnit');
+        $attendance = $service->clockIn($employee, 3.1579, 101.7116, self::TINY_JPEG, '127.0.0.1', 'PHPUnit', $token->token);
         $attendance->update(['clock_in_time' => now()->subHours(10)]);
 
         $result = $service->clockOut($employee, 3.1579, 101.7116);
