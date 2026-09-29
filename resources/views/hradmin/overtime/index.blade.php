@@ -1,6 +1,6 @@
-<x-app-layout title="Overtime">
+<x-app-layout title="Overtime Records">
     <x-slot name="header">
-        <h2 class="page-title">Overtime — Company Wide</h2>
+        <h2 class="page-title">Overtime Records</h2>
     </x-slot>
 
     <form method="GET" class="filter-bar">
@@ -47,7 +47,7 @@
                         <td class="px-4 py-3">{{ $ot->total_hours }}h</td>
                         <td class="px-4 py-3">{{ $ot->amount ? 'RM '.number_format($ot->amount, 2) : '-' }}</td>
                         <td class="px-4 py-3"><x-status-badge :status="$ot->status" /></td>
-                        <td class="px-4 py-3 text-right space-x-2">
+                        <td class="px-4 py-3 text-right whitespace-nowrap space-x-1.5">
                             @if ($ot->status === 'pending')
                                 <form method="POST" action="{{ route('hr.overtime.approve', $ot) }}" class="inline">
                                     @csrf

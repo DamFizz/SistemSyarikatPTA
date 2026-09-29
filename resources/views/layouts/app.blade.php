@@ -37,7 +37,7 @@
                         ->first();
                 @endphp
 
-                <main class="flex-1 px-4 pb-10 pt-6 sm:px-6 sm:pt-8 lg:px-10">
+                <main class="flex-1 px-4 pb-10 pt-4 sm:px-6 sm:pt-6 lg:px-10">
                     <div class="mx-auto w-full max-w-7xl">
                         @if ($urgentAnnouncement)
                             <div class="mb-5 flex items-center gap-3 rounded-2xl bg-gradient-to-r from-rose-600 to-rose-500 px-4 py-3 text-sm text-white shadow-lg shadow-rose-600/20">

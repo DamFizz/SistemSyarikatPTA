@@ -1,5 +1,5 @@
-<header class="sticky top-0 z-20 px-4 pt-3 sm:px-6 lg:px-10">
-    <div class="mx-auto flex h-14 max-w-7xl items-center gap-3 rounded-2xl border border-white/60 bg-white/70 px-3 shadow-soft backdrop-blur-xl sm:px-4">
+<header class="sticky top-0 z-20 bg-gradient-to-b from-canvas from-70% to-canvas/0 px-4 pb-2 pt-3 sm:px-6 lg:px-10">
+    <div class="mx-auto flex h-14 max-w-7xl items-center gap-3 rounded-2xl border border-slate-200/70 bg-white/90 px-3 shadow-soft backdrop-blur-xl sm:px-4">
         <button @click="sidebarOpen = ! sidebarOpen" class="rounded-xl p-2 text-slate-500 hover:bg-slate-100 hover:text-slate-800 lg:hidden" aria-label="Open menu">
             <x-icon name="menu" />
         </button>

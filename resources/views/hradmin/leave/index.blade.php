@@ -1,6 +1,6 @@
-<x-app-layout title="Leave">
+<x-app-layout title="Leave Records">
     <x-slot name="header">
-        <h2 class="page-title">Leave — Company Wide</h2>
+        <h2 class="page-title">Leave Records</h2>
     </x-slot>
 
     <form method="GET" class="filter-bar">
@@ -47,7 +47,7 @@
                         <td class="px-4 py-3">{{ $leave->start_date->format('d M') }} - {{ $leave->end_date->format('d M Y') }}</td>
                         <td class="px-4 py-3">{{ $leave->total_days }}</td>
                         <td class="px-4 py-3"><x-status-badge :status="$leave->status" /></td>
-                        <td class="px-4 py-3 text-right space-x-2">
+                        <td class="px-4 py-3 text-right whitespace-nowrap space-x-1.5">
                             @if ($leave->status === 'pending')
                                 <form method="POST" action="{{ route('hr.leave.approve', $leave) }}" class="inline">
                                     @csrf

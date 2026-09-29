@@ -1,6 +1,6 @@
 <x-app-layout title="{{ $period->period_name }}">
     <x-slot name="header">
-        <div class="flex items-center justify-between">
+        <div class="flex flex-wrap items-center justify-between gap-3">
             <div>
                 <h2 class="page-title">{{ $period->period_name }}</h2>
                 <p class="text-sm text-slate-500 mt-1">{{ $period->start_date->format('d M Y') }} - {{ $period->end_date->format('d M Y') }} &middot; <x-status-badge :status="$period->status" /></p>

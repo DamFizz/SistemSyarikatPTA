@@ -1,6 +1,6 @@
 <x-app-layout title="Departments">
     <x-slot name="header">
-        <div class="flex items-center justify-between">
+        <div class="flex flex-wrap items-center justify-between gap-3">
             <div>
                 <h2 class="page-title">Departments</h2>
                 <p class="text-sm text-slate-500 mt-1">{{ $departments->total() }} department(s).</p>

@@ -16,7 +16,7 @@
         </div>
 
         <div>
-            <div class="flex items-center justify-between">
+            <div class="flex flex-wrap items-center justify-between gap-3">
                 <x-input-label for="password" :value="__('Password')" />
                 @if (Route::has('password.request'))
                     <a class="text-xs font-semibold text-emerald-700 hover:text-emerald-900" href="{{ route('password.request') }}">

@@ -1,6 +1,6 @@
 <x-app-layout title="Announcements">
     <x-slot name="header">
-        <div class="flex items-center justify-between">
+        <div class="flex flex-wrap items-center justify-between gap-3">
             <h2 class="page-title">Announcements</h2>
             @if (Auth::user()->hasRole('super_admin', 'hr_admin', 'manager'))
                 <a href="{{ route('announcements.create') }}" class="btn-primary">

@@ -152,7 +152,7 @@
             </div>
 
             <div class="card p-6">
-                <div class="flex items-center justify-between">
+                <div class="flex flex-wrap items-center justify-between gap-3">
                     <h3 class="card-title">WiFi QR poster</h3>
                     @if ($wifiQrSvg)
                         <button type="button" onclick="window.print()" class="btn-ghost btn-sm"><x-icon name="printer" class="h-4 w-4" /> Print</button>

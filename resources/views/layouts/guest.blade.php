@@ -40,7 +40,7 @@
 
                     {{-- Illustrative attendance card --}}
                     <div class="mt-10 max-w-sm rounded-3xl border border-white/10 bg-white/[0.04] p-5 backdrop-blur-md shadow-2xl">
-                        <div class="flex items-center justify-between">
+                        <div class="flex flex-wrap items-center justify-between gap-3">
                             <span class="text-xs font-medium text-slate-400">Today &middot; {{ now()->format('D, d M') }}</span>
                             <span class="chip bg-emerald-400/10 text-emerald-300 ring-1 ring-emerald-400/20">
                                 <span class="h-1.5 w-1.5 rounded-full bg-emerald-400"></span> On duty

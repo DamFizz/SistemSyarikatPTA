@@ -53,7 +53,7 @@
                         <td class="px-4 py-3">{{ $log->user?->name ?? 'System' }}</td>
                         <td class="px-4 py-3"><x-status-badge :status="$log->action" /></td>
                         <td class="px-4 py-3">{{ ucfirst($log->module) }}</td>
-                        <td class="px-4 py-3">{{ $log->description }}</td>
+                        <td class="px-4 py-3 max-w-md truncate" title="{{ $log->description }}">{{ $log->description }}</td>
                         <td class="px-4 py-3 text-xs text-slate-400">{{ $log->ip_address }}</td>
                     </tr>
                 @empty

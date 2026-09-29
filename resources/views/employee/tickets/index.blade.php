@@ -1,6 +1,6 @@
 <x-app-layout title="Helpdesk">
     <x-slot name="header">
-        <div class="flex items-center justify-between">
+        <div class="flex flex-wrap items-center justify-between gap-3">
             <h2 class="page-title">My Helpdesk Tickets</h2>
             <a href="{{ route('employee.tickets.create') }}" class="btn-primary">
                 + Submit Ticket

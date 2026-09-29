@@ -1,6 +1,6 @@
 <x-app-layout title="Leave">
     <x-slot name="header">
-        <div class="flex items-center justify-between">
+        <div class="flex flex-wrap items-center justify-between gap-3">
             <h2 class="page-title">My Leave</h2>
             <a href="{{ route('employee.leave.create') }}" class="btn-primary">
                 + Apply Leave

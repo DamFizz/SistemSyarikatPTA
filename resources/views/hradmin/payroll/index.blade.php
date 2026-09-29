@@ -1,6 +1,6 @@
 <x-app-layout title="Payroll">
     <x-slot name="header">
-        <div class="flex items-center justify-between">
+        <div class="flex flex-wrap items-center justify-between gap-3">
             <h2 class="page-title">Payroll Periods</h2>
             <a href="{{ route('hr.payroll.create') }}" class="btn-primary">
                 + New Payroll Period

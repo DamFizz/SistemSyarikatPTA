@@ -13,8 +13,8 @@
     if ($role !== 'super_admin') {
         $groups['My Workspace'] = [
             ['Attendance', 'employee.attendance.index', ['employee.attendance.*'], 'fingerprint'],
-            ['Overtime', 'employee.overtime.index', ['employee.overtime.*'], 'clock'],
-            ['Leave', 'employee.leave.index', ['employee.leave.*'], 'calendar'],
+            [$role === 'hr_admin' ? 'Request Overtime' : 'Overtime', 'employee.overtime.index', ['employee.overtime.*'], 'clock'],
+            [$role === 'hr_admin' ? 'Request Leave' : 'Leave', 'employee.leave.index', ['employee.leave.*'], 'calendar'],
             ['Payslips', 'employee.payslips.index', ['employee.payslips.*'], 'banknotes'],
             ['Helpdesk', 'employee.tickets.index', ['employee.tickets.*'], 'lifebuoy'],
         ];
@@ -41,8 +41,8 @@
         ];
         $groups['Operations'] = [
             ['Attendance Records', 'hr.attendance.index', ['hr.attendance.*'], 'fingerprint'],
-            ['Overtime', 'hr.overtime.index', ['hr.overtime.*'], 'clock'],
-            ['Leave', 'hr.leave.index', ['hr.leave.*'], 'calendar'],
+            ['Overtime Records', 'hr.overtime.index', ['hr.overtime.*'], 'clock'],
+            ['Leave Records', 'hr.leave.index', ['hr.leave.*'], 'calendar'],
             ['Payroll', 'hr.payroll.index', ['hr.payroll.*'], 'banknotes'],
             ['Helpdesk Tickets', 'hr.tickets.index', ['hr.tickets.*'], 'lifebuoy'],
             ['Reports', 'hr.reports.index', ['hr.reports.*'], 'chart'],

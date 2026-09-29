@@ -107,7 +107,7 @@
                             </div>
                         </td>
                         <td class="px-4 py-3"><x-status-badge :status="$record->status" /></td>
-                        <td class="px-4 py-3 max-w-[16rem]">
+                        <td class="px-4 py-3 min-w-[14rem] max-w-[18rem] !whitespace-normal">
                             @if ($record->is_flagged)
                                 <div class="flex items-start gap-1.5 text-xs text-rose-600">
                                     <x-icon name="flag" class="mt-0.5 h-3.5 w-3.5 shrink-0" />

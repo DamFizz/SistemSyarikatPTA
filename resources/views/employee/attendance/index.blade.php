@@ -25,7 +25,7 @@
 
     <div class="grid gap-5 lg:grid-cols-5">
         {{-- ============ Attendance console ============ --}}
-        <div class="lg:col-span-3" x-data="attendanceConsole(@js($config))">
+        <div class="scroll-mt-24 lg:col-span-3" x-data="attendanceConsole(@js($config))">
             <div class="surface-dark min-h-[30rem] p-5 sm:p-8">
                 <div class="relative">
                     {{-- Top row: live clock + network pill --}}
@@ -130,10 +130,10 @@
                     </div>
 
                     {{-- ---------- Phase: capture (GPS + selfie) ---------- --}}
-                    <div x-show="phase === 'capture'" x-cloak class="mt-6">
+                    <div x-show="phase === 'capture'" x-cloak class="mt-5 sm:mt-6">
                         <div class="flex items-center justify-between gap-3 text-sm">
                             <div class="font-semibold text-white" x-text="action === 'in' ? 'Clock-in verification' : 'Clock-out verification'"></div>
-                            <div class="chip bg-white/5 font-mono text-slate-300 ring-1 ring-white/10">
+                            <div class="chip shrink-0 bg-white/5 font-mono text-slate-300 ring-1 ring-white/10">
                                 <x-icon name="lock" class="h-3.5 w-3.5" /> <span x-text="countdownLabel"></span>
                             </div>
                         </div>
@@ -141,25 +141,40 @@
                         <div class="mt-4 grid gap-4 sm:grid-cols-5">
                             {{-- Camera --}}
                             <div class="sm:col-span-3">
-                                <div class="relative aspect-[3/4] overflow-hidden rounded-3xl bg-ink-950 ring-1 ring-white/10 sm:aspect-square">
+                                <div class="relative mx-auto aspect-square max-h-[52vh] w-full overflow-hidden rounded-3xl bg-ink-950 ring-1 ring-white/10 sm:max-h-none">
                                     <video x-ref="video" autoplay playsinline muted class="h-full w-full scale-x-[-1] object-cover" x-show="!selfie"></video>
                                     <img :src="selfie" x-show="selfie" x-cloak class="h-full w-full scale-x-[-1] object-cover" alt="Selfie preview">
 
                                     {{-- Face guide --}}
                                     <div x-show="!selfie && cameraReady" class="pointer-events-none absolute inset-0 flex items-center justify-center">
-                                        <div class="h-[62%] w-[52%] rounded-[50%] border-2 border-dashed border-white/50 shadow-[0_0_0_9999px_rgba(6,10,19,0.45)]"></div>
+                                        <div class="h-[70%] w-[55%] rounded-[50%] border-2 border-dashed border-white/50 shadow-[0_0_0_9999px_rgba(6,10,19,0.45)]"></div>
                                     </div>
-                                    <div x-show="!cameraReady && !selfie" class="absolute inset-0 flex flex-col items-center justify-center gap-3 p-6 text-center text-sm text-slate-400">
-                                        <x-icon name="camera" class="h-9 w-9 text-slate-500" />
+                                    <div x-show="!cameraReady && !selfie" class="absolute inset-0 flex flex-col items-center justify-center gap-3 p-5 text-center text-sm text-slate-400">
+                                        <x-icon name="camera" class="h-8 w-8 text-slate-500" />
                                         <span x-text="cameraError || 'Starting front camera…'"></span>
                                         <button type="button" x-show="cameraError" @click="startCamera()" class="rounded-xl bg-white/10 px-4 py-2 text-xs font-semibold text-white hover:bg-white/15">Try camera again</button>
                                     </div>
                                     <canvas x-ref="canvas" class="hidden"></canvas>
                                 </div>
+
+                                {{-- Compact status (phones) --}}
+                                <div class="mt-3 grid grid-cols-3 gap-2 sm:hidden">
+                                    <template x-for="item in checklist" :key="'m-' + item.label">
+                                        <div class="flex min-w-0 items-center justify-center gap-1.5 rounded-xl px-2 py-2 text-[11px] font-medium ring-1"
+                                             :class="{ 'bg-emerald-400/10 text-emerald-300 ring-emerald-400/20': item.state === 'ok', 'bg-rose-400/10 text-rose-300 ring-rose-400/20': item.state === 'fail', 'bg-white/5 text-slate-400 ring-white/10': item.state === 'wait' }">
+                                            <span class="h-1.5 w-1.5 shrink-0 rounded-full" :class="{ 'bg-emerald-400': item.state === 'ok', 'bg-rose-400': item.state === 'fail', 'bg-slate-500 animate-pulse': item.state === 'wait' }"></span>
+                                            <span class="truncate" x-text="item.short"></span>
+                                        </div>
+                                    </template>
+                                </div>
+                                <div x-show="locationState === 'fail'" x-cloak class="mt-2 flex items-center justify-between gap-3 rounded-xl bg-rose-500/10 px-3 py-2 text-xs text-rose-200 sm:hidden">
+                                    <span x-text="locationDetail"></span>
+                                    <button type="button" @click="locate()" class="shrink-0 font-semibold text-white underline">Retry</button>
+                                </div>
                             </div>
 
-                            {{-- Checks --}}
-                            <div class="space-y-3 sm:col-span-2">
+                            {{-- Detailed checks (tablet / desktop) --}}
+                            <div class="hidden space-y-3 sm:col-span-2 sm:block">
                                 <template x-for="item in checklist" :key="item.label">
                                     <div class="flex items-start gap-3 rounded-2xl border border-white/5 bg-white/[0.03] p-3.5">
                                         <span class="mt-0.5 flex h-6 w-6 shrink-0 items-center justify-center rounded-full"
@@ -179,21 +194,22 @@
                             </div>
                         </div>
 
-                        <div class="mt-5 flex flex-wrap items-center justify-between gap-3">
-                            <button type="button" @click="cancel()" class="rounded-xl px-4 py-2.5 text-sm font-medium text-slate-400 hover:bg-white/5 hover:text-white">Cancel</button>
+                        {{-- Actions: full-width stack on phones, one row on larger screens --}}
+                        <div class="mt-5 flex flex-col-reverse gap-2 sm:flex-row sm:items-center sm:justify-between sm:gap-3">
+                            <button type="button" @click="cancel()" class="w-full rounded-xl px-4 py-2.5 text-sm font-medium text-slate-400 hover:bg-white/5 hover:text-white sm:w-auto">Cancel</button>
 
-                            <div class="flex gap-2">
+                            <div class="flex flex-col gap-2 sm:flex-row">
                                 <button type="button" x-show="!selfie" @click="capture()" :disabled="!cameraReady"
-                                        class="inline-flex items-center gap-2 rounded-xl bg-white px-5 py-2.5 text-sm font-semibold text-ink-900 transition hover:bg-slate-100 disabled:cursor-not-allowed disabled:opacity-40">
+                                        class="inline-flex w-full items-center justify-center gap-2 rounded-xl bg-white px-5 py-3 text-sm font-semibold text-ink-900 transition hover:bg-slate-100 disabled:cursor-not-allowed disabled:opacity-40 sm:w-auto sm:py-2.5">
                                     <x-icon name="camera" class="h-4 w-4" /> Take selfie
                                 </button>
-                                <button type="button" x-show="selfie" x-cloak @click="retake()" :disabled="busy" class="rounded-xl border border-white/10 px-4 py-2.5 text-sm font-medium text-slate-200 hover:bg-white/5">Retake</button>
                                 <button type="button" x-show="selfie" x-cloak @click="submit()" :disabled="busy || locationState !== 'ok'"
-                                        class="inline-flex items-center gap-2 rounded-xl px-5 py-2.5 text-sm font-semibold text-white transition disabled:cursor-not-allowed disabled:opacity-40"
+                                        class="inline-flex w-full items-center justify-center gap-2 rounded-xl px-5 py-3 text-sm font-semibold text-white transition disabled:cursor-not-allowed disabled:opacity-40 sm:order-2 sm:w-auto sm:py-2.5"
                                         :class="action === 'in' ? 'bg-emerald-500 hover:bg-emerald-400' : 'bg-rose-500 hover:bg-rose-400'">
                                     <svg x-show="busy" class="h-4 w-4 animate-spin" viewBox="0 0 24 24" fill="none"><path d="M22 12a10 10 0 00-10-10" stroke="currentColor" stroke-width="3" stroke-linecap="round"/></svg>
                                     <span x-text="busy ? 'Submitting…' : (action === 'in' ? 'Confirm clock in' : 'Confirm clock out')"></span>
                                 </button>
+                                <button type="button" x-show="selfie" x-cloak @click="retake()" :disabled="busy" class="w-full rounded-xl border border-white/10 px-4 py-2.5 text-sm font-medium text-slate-200 hover:bg-white/5 sm:order-1 sm:w-auto">Retake</button>
                             </div>
                         </div>
                     </div>
@@ -340,6 +356,7 @@
                 clock: '',
                 dateLabel: '',
                 pollTimer: null,
+                netSeq: 0,
                 countdownTimer: null,
                 expiresAt: null,
                 countdownLabel: '3:00',
@@ -360,9 +377,9 @@
 
                 get checklist() {
                     return [
-                        { label: 'Office network', state: 'ok', detail: config.networkCheck ? (config.ssid || 'Office WiFi') + ' verified' : 'Testing mode' },
-                        { label: 'Location', state: this.locationState, detail: this.locationDetail },
-                        { label: 'Live selfie', state: this.selfie ? 'ok' : 'wait', detail: this.selfie ? 'Captured' : 'Look at the camera and tap “Take selfie”' },
+                        { label: 'Office network', short: 'WiFi', state: 'ok', detail: config.networkCheck ? (config.ssid || 'Office WiFi') + ' verified' : 'Testing mode' },
+                        { label: 'Location', short: 'Location', state: this.locationState, detail: this.locationDetail },
+                        { label: 'Live selfie', short: 'Selfie', state: this.selfie ? 'ok' : 'wait', detail: this.selfie ? 'Captured' : 'Look at the camera and tap “Take selfie”' },
                     ];
                 },
 
@@ -375,8 +392,16 @@
                         return;
                     }
 
+                    // Never leave the camera running once we move away from the capture step.
+                    this.$watch('phase', (phase) => { if (phase !== 'capture') this.stopCamera(); });
+
                     this.checkNetwork();
-                    document.addEventListener('visibilitychange', () => { if (!document.hidden) this.checkNetwork(); });
+                    document.addEventListener('visibilitychange', () => {
+                        if (document.hidden) return;
+                        // Some phones stop the camera while a permission dialog covers the page — restart it.
+                        if (this.phase === 'capture' && !this.selfie && !this.cameraLive()) this.startCamera();
+                        this.checkNetwork();
+                    });
                     window.addEventListener('online', () => this.checkNetwork());
                     navigator.connection?.addEventListener?.('change', () => setTimeout(() => this.checkNetwork(), 800));
                 },
@@ -394,13 +419,19 @@
                 },
 
                 async checkNetwork(manual = false) {
-                    if (!IDLE_PHASES.includes(this.phase) || this.checking) return;
+                    if (!IDLE_PHASES.includes(this.phase) || this.checking || this.busy) return;
                     this.checking = true;
+                    const seq = ++this.netSeq;
+                    // A poll that was still in flight when the user tapped Clock In/Out must not
+                    // yank the page back to the idle screen (this used to close the camera).
+                    const stale = () => seq !== this.netSeq || !IDLE_PHASES.includes(this.phase) || this.busy;
                     try {
                         const res = await fetch(config.statusUrl, { headers: { Accept: 'application/json' }, cache: 'no-store', credentials: 'same-origin' });
+                        if (stale()) return;
                         if (res.status === 401 || res.status === 419) { window.location.reload(); return; }
                         if (!res.ok) throw new Error('status ' + res.status);
                         const data = await res.json();
+                        if (stale()) return;
                         this.ip = data.ip;
                         this.state = data.state;
                         this.onNetwork = data.on_office_network;
@@ -416,6 +447,7 @@
                             }
                         }
                     } catch (e) {
+                        if (stale()) return;
                         // The phone is probably switching networks (joining the office WiFi) — retry shortly.
                         this.onNetwork = false;
                         if (this.phase === 'ready') this.phase = 'network';
@@ -441,19 +473,25 @@
                 },
 
                 async start() {
+                    if (this.busy) return;
                     this.error = '';
                     this.busy = true;
+                    this.netSeq++;
+                    clearTimeout(this.pollTimer);
                     try {
                         const data = await this.post(config.beginUrl, { action: this.action });
-                        clearTimeout(this.pollTimer);
                         this.challenge = data.challenge;
                         this.expiresAt = Date.now() + data.expires_in * 1000;
                         this.selfie = null;
                         this.position = null;
                         this.phase = 'capture';
+                        this.$nextTick(() => this.$root.scrollIntoView({ behavior: 'smooth', block: 'start' }));
                         this.startCountdown();
-                        this.locate();
-                        this.$nextTick(() => this.startCamera());
+                        // Ask for camera first, then location, so two permission prompts never collide.
+                        this.$nextTick(async () => {
+                            await this.startCamera();
+                            this.locate();
+                        });
                     } catch (e) {
                         this.error = e.message;
                         this.checkNetwork();
@@ -514,6 +552,15 @@
                             video: { facingMode: { ideal: 'user' }, width: { ideal: 720 }, height: { ideal: 720 } },
                             audio: false,
                         });
+                        if (this.phase !== 'capture') { this.stopCamera(); return; }
+                        this.stream.getVideoTracks().forEach((track) => {
+                            track.onended = () => {
+                                if (this.phase === 'capture' && !this.selfie) {
+                                    this.cameraReady = false;
+                                    this.cameraError = 'The camera was interrupted. Tap “Try camera again”.';
+                                }
+                            };
+                        });
                         const video = this.$refs.video;
                         video.srcObject = this.stream;
                         await video.play().catch(() => {});
@@ -523,6 +570,10 @@
                             ? 'Camera permission was blocked. Allow camera access for this site in your browser settings, then try again.'
                             : 'Could not start the front camera (' + e.name + ').';
                     }
+                },
+
+                cameraLive() {
+                    return !!this.stream && this.stream.getVideoTracks().some((t) => t.readyState === 'live');
                 },
 
                 stopCamera() {

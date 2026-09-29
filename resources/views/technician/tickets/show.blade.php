@@ -1,6 +1,6 @@
 <x-app-layout title="{{ $ticket->ticket_code }}">
     <x-slot name="header">
-        <div class="flex items-center justify-between">
+        <div class="flex flex-wrap items-center justify-between gap-3">
             <div>
                 <div class="flex items-center gap-3">
                     <h2 class="page-title">{{ $ticket->ticket_code }} — {{ $ticket->title }}</h2>

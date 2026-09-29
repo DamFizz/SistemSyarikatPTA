@@ -26,7 +26,7 @@
                         <td class="px-4 py-3">{{ $ot->total_hours }}h</td>
                         <td class="px-4 py-3 max-w-xs truncate">{{ $ot->reason }}</td>
                         <td class="px-4 py-3"><x-status-badge :status="$ot->status" /></td>
-                        <td class="px-4 py-3 text-right space-x-2">
+                        <td class="px-4 py-3 text-right whitespace-nowrap space-x-1.5">
                             @if ($ot->status === 'pending')
                                 <form method="POST" action="{{ route('manager.overtime.approve', $ot) }}" class="inline">
                                     @csrf

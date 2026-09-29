@@ -1,6 +1,6 @@
 <x-app-layout title="Overtime">
     <x-slot name="header">
-        <div class="flex items-center justify-between">
+        <div class="flex flex-wrap items-center justify-between gap-3">
             <h2 class="page-title">My Overtime</h2>
             <a href="{{ route('employee.overtime.create') }}" class="btn-primary">
                 + Request Overtime
