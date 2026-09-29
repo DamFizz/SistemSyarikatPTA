@@ -5,14 +5,17 @@ namespace App\Http\Controllers\HRAdmin;
 use App\Http\Controllers\Controller;
 use App\Models\Attendance;
 use App\Models\Department;
+use App\Services\SelfieRetentionService;
 use Illuminate\Http\Request;
 use Illuminate\View\View;
 
 class AttendanceController extends Controller
 {
-    public function index(Request $request): View
+    public function index(Request $request, SelfieRetentionService $retention): View
     {
-        $records = Attendance::with(['employee.department'])
+        $retention->purgeIfDue();
+
+        $records = Attendance::with(['employee.department', 'photos:id,attendance_id,type'])
             ->when($request->filled('date'), fn ($q) => $q->whereDate('attendance_date', $request->date('date')))
             ->when(! $request->filled('date') && ! $request->boolean('flagged'), fn ($q) => $q->whereDate('attendance_date', today()))
             ->when($request->filled('department_id'), fn ($q) => $q->whereHas('employee', fn ($e) => $e->where('department_id', $request->integer('department_id'))))

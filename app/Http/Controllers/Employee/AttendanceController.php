@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\AuditLog;
 use App\Models\Employee;
 use App\Services\AttendanceService;
+use App\Services\SelfieRetentionService;
 use App\Services\WorkHoursService;
 use App\Support\AttendanceCapture;
 use Illuminate\Http\JsonResponse;
@@ -31,9 +32,10 @@ class AttendanceController extends Controller
         private readonly WorkHoursService $workHours,
     ) {}
 
-    public function index(Request $request): View
+    public function index(Request $request, SelfieRetentionService $retention): View
     {
         $employee = $this->employee();
+        $retention->purgeIfDue();
 
         if (! $request->cookie(self::DEVICE_COOKIE)) {
             Cookie::queue(Cookie::forever(self::DEVICE_COOKIE, Str::random(48), null, null, null, true));
@@ -44,7 +46,7 @@ class AttendanceController extends Controller
             'office' => $employee->office,
             'today' => $this->attendanceService->todayRecord($employee),
             'state' => $this->attendanceService->state($employee),
-            'history' => $employee->attendance()->orderByDesc('attendance_date')->limit(14)->get(),
+            'history' => $employee->attendance()->with('photos:id,attendance_id,type')->orderByDesc('attendance_date')->limit(14)->get(),
             'workSummary' => $this->workHours->summary($employee),
         ]);
     }

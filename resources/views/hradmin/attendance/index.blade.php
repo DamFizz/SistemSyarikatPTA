@@ -9,6 +9,7 @@
                 {{ \Illuminate\Support\Carbon::parse(request('date', today()->format('Y-m-d')))->format('l, d F Y') }}
             @endif
         </p>
+        <p class="mt-1 text-xs text-slate-400">Selfies are kept until the end of each month, then deleted automatically.</p>
     </x-slot>
 
     <form method="GET" class="filter-bar">
@@ -94,14 +95,14 @@
                         </td>
                         <td class="px-4 py-3">
                             <div class="flex -space-x-2">
-                                @foreach (['in' => $record->selfie_path, 'out' => $record->clock_out_selfie_path] as $type => $path)
-                                    @if ($path)
-                                        <a href="{{ route('attendance.selfie', [$record, $type]) }}" target="_blank" title="Clock-{{ $type }} selfie" class="block h-9 w-9 overflow-hidden rounded-xl ring-2 ring-white transition hover:z-10 hover:scale-110">
-                                            <img src="{{ route('attendance.selfie', [$record, $type]) }}" alt="Clock-{{ $type }} selfie" loading="lazy" class="h-full w-full object-cover">
+                                @foreach (['in', 'out'] as $type)
+                                    @if ($record->hasSelfie($type))
+                                        <a href="{{ route('attendance.selfie', [$record, $type]) }}" target="_blank" title="Clock-{{ $type }} selfie" class="block h-9 w-9 overflow-hidden rounded-xl bg-slate-100 ring-2 ring-white transition hover:z-10 hover:scale-110">
+                                            <img src="{{ route('attendance.selfie', [$record, $type]) }}" alt="Clock-{{ $type }} selfie" loading="lazy" class="h-full w-full object-cover" onerror="this.parentElement.remove()">
                                         </a>
                                     @endif
                                 @endforeach
-                                @if (! $record->selfie_path && ! $record->clock_out_selfie_path)
+                                @if (! $record->hasSelfie('in') && ! $record->hasSelfie('out'))
                                     <span class="text-slate-300">–</span>
                                 @endif
                             </div>

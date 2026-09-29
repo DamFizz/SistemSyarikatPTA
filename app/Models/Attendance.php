@@ -7,6 +7,7 @@ use Illuminate\Database\Eloquent\Attributes\Table;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Support\Facades\Storage;
 
 #[Table('attendance')]
 #[Fillable([
@@ -66,5 +67,36 @@ class Attendance extends Model
     public function overtimes(): HasMany
     {
         return $this->hasMany(Overtime::class);
+    }
+
+    public function photos(): HasMany
+    {
+        return $this->hasMany(AttendancePhoto::class);
+    }
+
+    public function selfiePath(string $type): ?string
+    {
+        return $type === 'out' ? $this->clock_out_selfie_path : $this->selfie_path;
+    }
+
+    /**
+     * Whether the clock-in / clock-out selfie can still be shown
+     * (it may have been purged, or lost from disk for older records).
+     */
+    public function hasSelfie(string $type): bool
+    {
+        $path = $this->selfiePath($type);
+
+        if (! $path) {
+            return false;
+        }
+
+        if ($path === AttendancePhoto::STORAGE_MARKER) {
+            return $this->relationLoaded('photos')
+                ? $this->photos->contains('type', $type)
+                : $this->photos()->where('type', $type)->exists();
+        }
+
+        return Storage::disk('local')->exists($path) || Storage::disk('public')->exists($path);
     }
 }

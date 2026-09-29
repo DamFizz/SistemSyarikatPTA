@@ -306,7 +306,7 @@
     <div class="card mt-5 overflow-x-auto">
         <div class="card-header">
             <h3 class="card-title">Recent attendance</h3>
-            <span class="text-xs text-slate-400">Last 14 records</span>
+            <span class="text-xs text-slate-400">Selfies are kept until the end of each month</span>
         </div>
         <table class="table-modern">
             <thead>
@@ -331,10 +331,10 @@
                         <td class="px-4 py-3 whitespace-nowrap">{{ $record->working_minutes ? intdiv($record->working_minutes, 60).'h '.($record->working_minutes % 60).'m' : '–' }}</td>
                         <td class="px-4 py-3">
                             <div class="flex -space-x-2">
-                                @foreach (['in' => $record->selfie_path, 'out' => $record->clock_out_selfie_path] as $type => $path)
-                                    @if ($path)
-                                        <a href="{{ route('attendance.selfie', [$record, $type]) }}" target="_blank" class="block h-8 w-8 overflow-hidden rounded-lg ring-2 ring-white" title="Clock-{{ $type }} selfie">
-                                            <img src="{{ route('attendance.selfie', [$record, $type]) }}" alt="" loading="lazy" class="h-full w-full object-cover">
+                                @foreach (['in', 'out'] as $type)
+                                    @if ($record->hasSelfie($type))
+                                        <a href="{{ route('attendance.selfie', [$record, $type]) }}" target="_blank" title="Clock-{{ $type }} selfie" class="block h-8 w-8 overflow-hidden rounded-xl bg-slate-100 ring-2 ring-white transition hover:z-10 hover:scale-110">
+                                            <img src="{{ route('attendance.selfie', [$record, $type]) }}" alt="Clock-{{ $type }} selfie" loading="lazy" class="h-full w-full object-cover" onerror="this.parentElement.remove()">
                                         </a>
                                     @endif
                                 @endforeach

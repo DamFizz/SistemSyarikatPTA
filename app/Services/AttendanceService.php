@@ -3,13 +3,14 @@
 namespace App\Services;
 
 use App\Models\Attendance;
+use App\Models\AttendancePhoto;
 use App\Models\Employee;
 use App\Models\Office;
 use App\Models\Overtime;
 use App\Models\RestDayJustification;
 use App\Support\AttendanceCapture;
 use Carbon\Carbon;
-use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
 
@@ -91,7 +92,7 @@ class AttendanceService
         }
 
         $distance = $this->assertWithinGeofence($office, $capture, 'Clock-in');
-        [$selfiePath, $selfieHash] = $this->storeSelfie($capture->selfieDataUrl, $employee->id, 'in');
+        $selfie = $this->validateSelfie($capture->selfieDataUrl);
 
         $flags = $this->detectFlags($employee, $office, $capture);
 
@@ -101,7 +102,7 @@ class AttendanceService
 
         $shift = $employee->currentShift();
 
-        $attendance = Attendance::create([
+        $attendance = DB::transaction(fn () => tap(Attendance::create([
             'employee_id' => $employee->id,
             'shift_id' => $shift?->id,
             'attendance_date' => Carbon::today(),
@@ -110,8 +111,8 @@ class AttendanceService
             'clock_in_lng' => $capture->longitude,
             'clock_in_distance_meters' => $distance,
             'clock_in_accuracy_meters' => $capture->accuracy !== null ? (int) round($capture->accuracy) : null,
-            'selfie_path' => $selfiePath,
-            'selfie_hash' => $selfieHash,
+            'selfie_path' => AttendancePhoto::STORAGE_MARKER,
+            'selfie_hash' => $selfie['hash'],
             'verification_method' => $office->network_check_enabled ? 'wifi' : 'testing',
             'device_info' => Str::limit((string) $capture->userAgent, 250, ''),
             'device_hash' => $capture->deviceHash,
@@ -119,7 +120,7 @@ class AttendanceService
             'status' => $this->determineStatus(now(), $shift),
             'is_flagged' => $flags !== [],
             'flag_reasons' => $flags ?: null,
-        ]);
+        ]), fn (Attendance $attendance) => $this->saveSelfie($attendance, 'in', $selfie)));
 
         if ($restDayDue) {
             RestDayJustification::create([
@@ -150,7 +151,7 @@ class AttendanceService
         $office = $employee->office;
         $this->assertOnOfficeNetwork($office, $capture->ip);
         $distance = $this->assertWithinGeofence($office, $capture, 'Clock-out');
-        [$selfiePath, $selfieHash] = $this->storeSelfie($capture->selfieDataUrl, $employee->id, 'out');
+        $selfie = $this->validateSelfie($capture->selfieDataUrl);
 
         $flags = $this->detectFlags($employee, $office, $capture, $attendance);
 
@@ -176,13 +177,14 @@ class AttendanceService
             'clock_out_lng' => $capture->longitude,
             'clock_out_distance_meters' => $distance,
             'clock_out_accuracy_meters' => $capture->accuracy !== null ? (int) round($capture->accuracy) : null,
-            'clock_out_selfie_path' => $selfiePath,
-            'clock_out_selfie_hash' => $selfieHash,
+            'clock_out_selfie_path' => AttendancePhoto::STORAGE_MARKER,
+            'clock_out_selfie_hash' => $selfie['hash'],
             'clock_out_ip_address' => $capture->ip,
             'working_minutes' => $workingMinutes,
             'is_flagged' => $allFlags !== [],
             'flag_reasons' => $allFlags ?: null,
         ]);
+        $this->saveSelfie($attendance, 'out', $selfie);
 
         $potentialOtMinutes = 0;
 
@@ -315,11 +317,11 @@ class AttendanceService
     }
 
     /**
-     * Validate that the selfie is a genuine, fresh camera image and store it privately.
+     * Validate that the selfie is a genuine, fresh camera image.
      *
-     * @return array{0: string, 1: string} [path, sha256]
+     * @return array{binary: string, mime: string, hash: string}
      */
-    private function storeSelfie(string $dataUrl, int $employeeId, string $type): array
+    private function validateSelfie(string $dataUrl): array
     {
         $invalid = fn (string $message) => ValidationException::withMessages(['selfie' => $message]);
 
@@ -351,16 +353,21 @@ class AttendanceService
             throw $invalid('This photo has already been used. Please take a new live selfie.');
         }
 
-        $extension = match ($info['mime']) {
-            'image/png' => 'png',
-            'image/webp' => 'webp',
-            default => 'jpg',
-        };
+        return ['binary' => $binary, 'mime' => $info['mime'], 'hash' => $hash];
+    }
 
-        // Private disk: selfies are only served through an authorised route, never a public URL.
-        $path = "selfies/{$employeeId}/".now()->format('Ymd_His')."_{$type}_".Str::random(16).".{$extension}";
-        Storage::disk('local')->put($path, $binary);
-
-        return [$path, $hash];
+    /**
+     * Selfies are kept in the database (not the filesystem) so they survive redeploys,
+     * and are only ever served through the authorised selfie route.
+     *
+     * @param  array{binary: string, mime: string, hash: string}  $selfie
+     */
+    private function saveSelfie(Attendance $attendance, string $type, array $selfie): void
+    {
+        $attendance->photos()->updateOrCreate(['type' => $type], [
+            'mime' => $selfie['mime'],
+            'size' => strlen($selfie['binary']),
+            'data' => base64_encode($selfie['binary']),
+        ]);
     }
 }

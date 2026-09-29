@@ -75,7 +75,8 @@ class AttendanceServiceTest extends TestCase
         $this->assertEquals(0, $attendance->clock_in_distance_meters);
         $this->assertEquals('wifi', $attendance->verification_method);
         $this->assertFalse($attendance->is_flagged);
-        $this->assertTrue(Storage::disk('local')->exists($attendance->selfie_path));
+        $this->assertTrue($attendance->hasSelfie('in'));
+        $this->assertSame(0, count(Storage::disk('local')->allFiles()), 'Selfies must not be written to disk.');
         $this->assertNotNull($employee->fresh()->registered_device_hash);
     }
 
@@ -207,7 +208,7 @@ class AttendanceServiceTest extends TestCase
         $this->assertEquals(60, $result['potential_ot_minutes']); // 9h worked vs 8h normal
         $this->assertInstanceOf(Overtime::class, $result['overtime']);
         $this->assertNotNull($attendance->fresh()->clock_out_selfie_path);
-        $this->assertTrue(Storage::disk('local')->exists($attendance->fresh()->clock_out_selfie_path));
+        $this->assertTrue($attendance->fresh()->hasSelfie('out'));
     }
 
     public function test_clock_out_rejected_when_not_on_office_wifi(): void
