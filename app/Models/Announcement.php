@@ -45,4 +45,13 @@ class Announcement extends Model
             ->where('created_by', '!=', $user->id)
             ->when($user->announcements_seen_at, fn (Builder $q, $seenAt) => $q->where('created_at', '>', $seenAt));
     }
+
+    /**
+     * HR / Super Admin may delete any announcement; managers only their own.
+     */
+    public function canBeDeletedBy(User $user): bool
+    {
+        return $user->hasRole(User::ROLE_SUPER_ADMIN, User::ROLE_HR_ADMIN)
+            || ($user->hasRole(User::ROLE_MANAGER) && $this->created_by === $user->id);
+    }
 }

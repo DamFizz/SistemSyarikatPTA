@@ -34,7 +34,7 @@ export default {
             keyframes: {
                 'fade-up': {
                     '0%': { opacity: '0', transform: 'translateY(6px)' },
-                    '100%': { opacity: '1', transform: 'translateY(0)' },
+                    '100%': { opacity: '1', transform: 'none' },
                 },
                 ripple: {
                     '0%': { transform: 'scale(0.6)', opacity: '0.6' },
@@ -46,7 +46,7 @@ export default {
                 },
             },
             animation: {
-                'fade-up': 'fade-up .35s ease-out both',
+                'fade-up': 'fade-up .35s ease-out backwards',
                 ripple: 'ripple 2.2s cubic-bezier(0, 0, .2, 1) infinite',
                 'scan-line': 'scan-line 2.4s ease-in-out infinite',
             },

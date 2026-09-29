@@ -30,6 +30,8 @@ Route::middleware('auth')->group(function () {
     Route::post('/announcements/dismiss', [AnnouncementController::class, 'dismiss'])->name('announcements.dismiss');
     Route::get('/announcements/create', [AnnouncementController::class, 'create'])->name('announcements.create');
     Route::post('/announcements', [AnnouncementController::class, 'store'])->name('announcements.store');
+    Route::delete('/announcements/bulk', [AnnouncementController::class, 'bulkDestroy'])->name('announcements.bulk-destroy');
+    Route::delete('/announcements/{announcement}', [AnnouncementController::class, 'destroy'])->name('announcements.destroy');
 });
 
 require __DIR__.'/auth.php';

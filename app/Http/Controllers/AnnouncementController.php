@@ -7,7 +7,9 @@ use App\Models\Announcement;
 use App\Models\AuditLog;
 use App\Models\Department;
 use Illuminate\Http\RedirectResponse;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\View\View;
 
 class AnnouncementController extends Controller
@@ -62,5 +64,49 @@ class AnnouncementController extends Controller
         Auth::user()->forceFill(['announcements_seen_at' => now()])->save();
 
         return back();
+    }
+
+    public function destroy(Announcement $announcement): RedirectResponse
+    {
+        abort_unless($announcement->canBeDeletedBy(Auth::user()), 403, 'You can only delete announcements you created.');
+
+        $this->deleteAnnouncement($announcement);
+
+        return back()->with('success', 'Announcement deleted.');
+    }
+
+    public function bulkDestroy(Request $request): RedirectResponse
+    {
+        $data = $request->validate([
+            'ids' => ['required', 'array', 'min:1', 'max:100'],
+            'ids.*' => ['integer'],
+        ]);
+
+        $announcements = Announcement::whereKey($data['ids'])->get();
+        $deletable = $announcements->filter(fn (Announcement $announcement) => $announcement->canBeDeletedBy(Auth::user()));
+
+        abort_if($deletable->isEmpty(), 403, 'You cannot delete the selected announcements.');
+
+        $deletable->each(fn (Announcement $announcement) => $this->deleteAnnouncement($announcement));
+
+        $message = $deletable->count().' announcement(s) deleted.';
+        $skipped = $announcements->count() - $deletable->count();
+
+        if ($skipped > 0) {
+            $message .= " {$skipped} skipped because you can only delete your own.";
+        }
+
+        return back()->with('success', $message);
+    }
+
+    private function deleteAnnouncement(Announcement $announcement): void
+    {
+        if ($announcement->attachment) {
+            Storage::disk('public')->delete($announcement->attachment);
+        }
+
+        $announcement->delete();
+
+        AuditLog::record('delete', 'announcement', "Deleted announcement \"{$announcement->title}\"");
     }
 }
