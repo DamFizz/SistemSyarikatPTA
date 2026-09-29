@@ -141,7 +141,8 @@
     }
 
     /* @csrf / @method inputs must not push the first visible field down. */
-    .form-card > input[type='hidden'] + :not(input[type='hidden']) {
+    .form-card > input[type='hidden'] + :not(input[type='hidden']),
+    [class*='space-y-'] > input[type='hidden'] + :not(input[type='hidden']) {
         margin-top: 0 !important;
     }
 
@@ -214,5 +215,13 @@
     .bg-grid {
         background-image: radial-gradient(circle at 1px 1px, rgba(15, 23, 42, 0.06) 1px, transparent 0);
         background-size: 22px 22px;
+    }
+}
+
+@layer utilities {
+    /* Full viewport height that follows mobile browser toolbars (vh fallback for older browsers). */
+    .h-viewport {
+        height: 100vh;
+        height: 100dvh;
     }
 }

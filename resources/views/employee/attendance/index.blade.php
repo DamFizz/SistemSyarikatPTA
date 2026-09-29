@@ -13,6 +13,8 @@
         'ssid' => $office->wifi_ssid,
         'networkCheck' => (bool) $office->network_check_enabled,
         'networkConfigured' => $office->isNetworkConfigured(),
+        'restDayRequired' => $state === 'not_clocked_in' && $workSummary['rest_day_required'],
+        'consecutiveDays' => $workSummary['consecutive_days'],
     ];
 @endphp
 
@@ -127,6 +129,9 @@
                         </button>
 
                         <p class="mt-7 text-sm text-slate-400" x-text="action === 'in' ? 'Next: location check and a live selfie.' : 'Clock-out also needs your location and a live selfie.'"></p>
+                        <div x-show="action === 'in' && config.restDayRequired" x-cloak class="mt-4 max-w-sm rounded-2xl border border-amber-400/25 bg-amber-400/10 px-4 py-3 text-xs leading-relaxed text-amber-200">
+                            You've worked <span x-text="config.consecutiveDays"></span> days in a row — today should be your rest day. If you still clock in, you must give HR a reason.
+                        </div>
                     </div>
 
                     {{-- ---------- Phase: capture (GPS + selfie) ---------- --}}
@@ -194,6 +199,16 @@
                             </div>
                         </div>
 
+                        {{-- Rest-day justification (Employment Act: one rest day per week) --}}
+                        <div x-show="action === 'in' && config.restDayRequired" x-cloak class="mt-4 rounded-2xl border border-amber-400/25 bg-amber-400/10 p-4">
+                            <label for="rest_day_reason" class="text-sm font-semibold text-amber-200">Today is your rest day — why do you need to work?</label>
+                            <p class="mt-0.5 text-xs text-amber-200/70">You've worked <span x-text="config.consecutiveDays"></span> days in a row. This reason is sent to HR for review.</p>
+                            <textarea id="rest_day_reason" x-model="restDayReason" rows="3" maxlength="1000"
+                                      class="mt-3 block w-full rounded-xl border-white/10 bg-white/5 text-sm text-white placeholder:text-slate-500 focus:border-amber-300 focus:ring-amber-300/20"
+                                      placeholder="e.g. Month-end closing deadline requested by my manager"></textarea>
+                            <p class="mt-1 text-[11px] text-amber-200/60" x-show="restDayReason.trim().length < 10">At least 10 characters.</p>
+                        </div>
+
                         {{-- Actions: full-width stack on phones, one row on larger screens --}}
                         <div class="mt-5 flex flex-col-reverse gap-2 sm:flex-row sm:items-center sm:justify-between sm:gap-3">
                             <button type="button" @click="cancel()" class="w-full rounded-xl px-4 py-2.5 text-sm font-medium text-slate-400 hover:bg-white/5 hover:text-white sm:w-auto">Cancel</button>
@@ -203,7 +218,7 @@
                                         class="inline-flex w-full items-center justify-center gap-2 rounded-xl bg-white px-5 py-3 text-sm font-semibold text-ink-900 transition hover:bg-slate-100 disabled:cursor-not-allowed disabled:opacity-40 sm:w-auto sm:py-2.5">
                                     <x-icon name="camera" class="h-4 w-4" /> Take selfie
                                 </button>
-                                <button type="button" x-show="selfie" x-cloak @click="submit()" :disabled="busy || locationState !== 'ok'"
+                                <button type="button" x-show="selfie" x-cloak @click="submit()" :disabled="busy || locationState !== 'ok' || restDayMissing"
                                         class="inline-flex w-full items-center justify-center gap-2 rounded-xl px-5 py-3 text-sm font-semibold text-white transition disabled:cursor-not-allowed disabled:opacity-40 sm:order-2 sm:w-auto sm:py-2.5"
                                         :class="action === 'in' ? 'bg-emerald-500 hover:bg-emerald-400' : 'bg-rose-500 hover:bg-rose-400'">
                                     <svg x-show="busy" class="h-4 w-4 animate-spin" viewBox="0 0 24 24" fill="none"><path d="M22 12a10 10 0 00-10-10" stroke="currentColor" stroke-width="3" stroke-linecap="round"/></svg>
@@ -231,6 +246,8 @@
 
         {{-- ============ Side column ============ --}}
         <div class="space-y-5 lg:col-span-2">
+            <x-work-hours-summary :summary="$workSummary" />
+
             <div class="card p-5">
                 <h3 class="card-title">Today</h3>
                 <div class="mt-4 grid grid-cols-2 gap-3">
@@ -369,7 +386,12 @@
                 locationState: 'wait',
                 locationDetail: 'Getting your GPS position…',
                 successMessage: '',
+                restDayReason: '',
                 doneAction: 'in',
+
+                get restDayMissing() {
+                    return this.action === 'in' && config.restDayRequired && this.restDayReason.trim().length < 10;
+                },
 
                 get action() {
                     return this.state === 'clocked_in' ? 'out' : 'in';
@@ -619,6 +641,7 @@
                             longitude: this.position.longitude,
                             accuracy: this.position.accuracy,
                             selfie: this.selfie,
+                            rest_day_reason: this.action === 'in' && config.restDayRequired ? this.restDayReason : null,
                         });
                         clearInterval(this.countdownTimer);
                         this.doneAction = this.action;

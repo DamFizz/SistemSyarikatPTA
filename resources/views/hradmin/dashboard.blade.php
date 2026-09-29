@@ -10,6 +10,14 @@
         </div>
     </x-slot>
 
+    @if ($pendingJustifications)
+        <a href="{{ route('hr.work-hours.index') }}" class="alert-warning mb-5 !text-amber-800 hover:bg-amber-100/70">
+            <x-icon name="calendar" class="h-5 w-5 shrink-0" />
+            <span class="flex-1"><strong>{{ $pendingJustifications }}</strong> employee(s) worked through their weekly rest day and submitted a justification for review.</span>
+            <x-icon name="arrow-right" class="h-4 w-4 shrink-0" />
+        </a>
+    @endif
+
     <div class="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-4">
         <x-stat-card label="Active employees" :value="$totalEmployees" icon="users" :href="route('hr.employees.index')" />
         <x-stat-card label="Pending leave" :value="$pendingLeave" icon="calendar" tone="amber" :href="route('hr.leave.index')" />

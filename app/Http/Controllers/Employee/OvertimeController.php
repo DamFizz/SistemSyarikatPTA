@@ -6,9 +6,10 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\Employee\StoreOvertimeRequest;
 use App\Models\AuditLog;
 use App\Models\Overtime;
+use App\Services\WorkHoursService;
+use Carbon\Carbon;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\Storage;
 use Illuminate\View\View;
 
 class OvertimeController extends Controller
@@ -23,21 +24,28 @@ class OvertimeController extends Controller
         return view('employee.overtime.index', compact('overtimes'));
     }
 
-    public function create(): View
+    public function create(WorkHoursService $workHours): View
     {
-        return view('employee.overtime.create');
+        $employee = Auth::user()->employee;
+        abort_if(! $employee, 403);
+
+        return view('employee.overtime.create', ['workSummary' => $workHours->summary($employee)]);
     }
 
-    public function store(StoreOvertimeRequest $request): RedirectResponse
+    public function store(StoreOvertimeRequest $request, WorkHoursService $workHours): RedirectResponse
     {
         $employee = Auth::user()->employee;
         abort_if(! $employee, 403);
 
         $data = $request->validated();
 
-        $start = \Carbon\Carbon::parse($data['date'].' '.$data['start_time']);
-        $end = \Carbon\Carbon::parse($data['date'].' '.$data['end_time']);
+        $start = Carbon::parse($data['date'].' '.$data['start_time']);
+        $end = Carbon::parse($data['date'].' '.$data['end_time']);
         $totalHours = round(abs($end->diffInMinutes($start)) / 60, 2);
+
+        // Employment Act limits: monthly overtime cap and the weekly hours limit.
+        $workHours->assertOtRequestWithinCap($employee, Carbon::parse($data['date']), $totalHours);
+        $workHours->assertOtWithinWeeklyLimit($employee, Carbon::parse($data['date']), $totalHours);
 
         $attachmentPath = null;
         if ($request->hasFile('attachment')) {

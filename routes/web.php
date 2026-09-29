@@ -27,6 +27,7 @@ Route::middleware('auth')->group(function () {
     Route::get('/payslips/{payroll}/download', [PayslipController::class, 'download'])->name('payslips.download');
 
     Route::get('/announcements', [AnnouncementController::class, 'index'])->name('announcements.index');
+    Route::post('/announcements/dismiss', [AnnouncementController::class, 'dismiss'])->name('announcements.dismiss');
     Route::get('/announcements/create', [AnnouncementController::class, 'create'])->name('announcements.create');
     Route::post('/announcements', [AnnouncementController::class, 'store'])->name('announcements.store');
 });

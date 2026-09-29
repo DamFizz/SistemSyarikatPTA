@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Manager;
 
 use App\Http\Controllers\Controller;
 use App\Models\AuditLog;
+use App\Models\Employee;
 use App\Models\LeaveRequest;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -14,10 +15,10 @@ class LeaveController extends Controller
 {
     public function index(Request $request): View
     {
-        $departmentId = Auth::user()->employee?->department_id;
+        $manager = $this->manager();
 
-        $leaveRequests = LeaveRequest::with(['employee', 'leaveType'])
-            ->whereHas('employee', fn ($q) => $q->where('department_id', $departmentId))
+        $leaveRequests = LeaveRequest::with(['employee.department', 'leaveType'])
+            ->whereHas('employee', fn ($q) => $q->approvableBy($manager))
             ->when($request->filled('status'), fn ($q) => $q->where('status', $request->string('status')), fn ($q) => $q->where('status', LeaveRequest::STATUS_PENDING))
             ->orderByDesc('start_date')
             ->paginate(15)
@@ -28,7 +29,8 @@ class LeaveController extends Controller
 
     public function approve(LeaveRequest $leaveRequest): RedirectResponse
     {
-        $this->authorizeDepartment($leaveRequest);
+        $this->authorizeApprover($leaveRequest);
+
         $leaveRequest->approveAndDeductBalance(Auth::id());
 
         AuditLog::record('approve', 'leave', "Approved leave for {$leaveRequest->employee->full_name}");
@@ -38,7 +40,8 @@ class LeaveController extends Controller
 
     public function reject(LeaveRequest $leaveRequest): RedirectResponse
     {
-        $this->authorizeDepartment($leaveRequest);
+        $this->authorizeApprover($leaveRequest);
+
         $leaveRequest->rejectRequest(Auth::id());
 
         AuditLog::record('reject', 'leave', "Rejected leave for {$leaveRequest->employee->full_name}");
@@ -46,8 +49,17 @@ class LeaveController extends Controller
         return back()->with('success', 'Leave rejected.');
     }
 
-    private function authorizeDepartment(LeaveRequest $leaveRequest): void
+    private function manager(): Employee
     {
-        abort_unless($leaveRequest->employee->department_id === Auth::user()->employee?->department_id, 403);
+        $manager = Auth::user()->employee;
+        abort_if(! $manager, 403, 'Your account has no employee profile.');
+
+        return $manager;
+    }
+
+    private function authorizeApprover(LeaveRequest $leaveRequest): void
+    {
+        abort_unless($leaveRequest->status === LeaveRequest::STATUS_PENDING, 422, 'This request has already been processed.');
+        abort_unless($leaveRequest->employee->isApprovableBy($this->manager()), 403, 'You are not the approving manager for this employee.');
     }
 }

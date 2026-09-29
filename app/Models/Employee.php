@@ -4,6 +4,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Attributes\Hidden;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -13,7 +14,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
     'user_id', 'employee_code', 'full_name', 'ic_number', 'phone', 'gender', 'dob',
     'address', 'profile_photo', 'department_id', 'office_id', 'manager_id', 'position',
     'employment_type', 'employment_status', 'join_date',
-    'registered_device_hash', 'device_registered_at',
+    'registered_device_hash', 'device_registered_at', 'ot_cap_mode',
 ])]
 #[Hidden(['registered_device_hash'])]
 class Employee extends Model
@@ -116,5 +117,44 @@ class Employee extends Model
     public function tickets(): HasMany
     {
         return $this->hasMany(Ticket::class);
+    }
+
+    public function restDayJustifications(): HasMany
+    {
+        return $this->hasMany(RestDayJustification::class);
+    }
+
+    /**
+     * Employees whose leave / overtime the given manager approves:
+     * their direct reports, plus anyone in a department the manager runs who has no direct manager.
+     * If a department has no manager set, any manager inside that department covers it.
+     */
+    public function scopeApprovableBy(Builder $query, Employee $manager): Builder
+    {
+        return $query->whereKeyNot($manager->id)->where(function (Builder $q) use ($manager) {
+            $q->where('manager_id', $manager->id)
+                ->orWhere(function (Builder $q) use ($manager) {
+                    $q->whereNull('manager_id')->whereHas('department', function (Builder $d) use ($manager) {
+                        $d->where('manager_id', $manager->id)
+                            ->orWhere(fn (Builder $d) => $d->whereNull('manager_id')->whereKey($manager->department_id));
+                    });
+                });
+        });
+    }
+
+    public function isApprovableBy(?Employee $manager): bool
+    {
+        return $manager !== null && static::approvableBy($manager)->whereKey($this->id)->exists();
+    }
+
+    /**
+     * The first manager-role account able to approve this employee's requests, if any.
+     */
+    public function approvingManager(): ?Employee
+    {
+        return static::whereHas('user', fn (Builder $u) => $u->where('role', User::ROLE_MANAGER))
+            ->whereKeyNot($this->id)
+            ->get()
+            ->first(fn (Employee $manager) => $this->isApprovableBy($manager));
     }
 }

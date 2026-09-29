@@ -1,8 +1,12 @@
 <x-app-layout title="Leave Approvals">
     <x-slot name="header">
-        <h2 class="page-title">Leave Approvals</h2>
-        <p class="text-sm text-slate-500 mt-1">Department leave requests.</p>
+        <p class="eyebrow">My Team</p>
+        <h2 class="page-title mt-1">Leave Approvals</h2>
+        <p class="muted mt-1">Leave requests from employees you manage.</p>
     </x-slot>
+
+    <x-validation-alert />
+    <x-status-tabs />
 
     <div class="card overflow-x-auto">
         <table class="table-modern">

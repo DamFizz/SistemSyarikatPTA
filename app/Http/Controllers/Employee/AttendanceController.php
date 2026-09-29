@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\AuditLog;
 use App\Models\Employee;
 use App\Services\AttendanceService;
+use App\Services\WorkHoursService;
 use App\Support\AttendanceCapture;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
@@ -25,7 +26,10 @@ class AttendanceController extends Controller
     /** How long the employee has between "Clock In/Out" and submitting the selfie. */
     public const CHALLENGE_TTL_SECONDS = 180;
 
-    public function __construct(private readonly AttendanceService $attendanceService) {}
+    public function __construct(
+        private readonly AttendanceService $attendanceService,
+        private readonly WorkHoursService $workHours,
+    ) {}
 
     public function index(Request $request): View
     {
@@ -41,6 +45,7 @@ class AttendanceController extends Controller
             'today' => $this->attendanceService->todayRecord($employee),
             'state' => $this->attendanceService->state($employee),
             'history' => $employee->attendance()->orderByDesc('attendance_date')->limit(14)->get(),
+            'workSummary' => $this->workHours->summary($employee),
         ]);
     }
 
@@ -77,6 +82,10 @@ class AttendanceController extends Controller
         }
 
         $this->attendanceService->assertOnOfficeNetwork($employee->office, $request->ip());
+
+        if ($data['action'] === 'in') {
+            $this->workHours->assertCanStartShift($employee);
+        }
 
         $nonce = Str::random(64);
 
@@ -123,6 +132,14 @@ class AttendanceController extends Controller
             $message .= " Potential overtime detected: {$otHours}h {$otMinutes}m (pending approval).";
         }
 
+        if ($result['ot_capped']) {
+            $message .= ' Your monthly overtime limit has been reached, so extra hours were not booked as overtime.';
+        }
+
+        if ($result['week_hours'] > $this->workHours->weeklyHoursLimit()) {
+            $message .= " Warning: you have worked {$result['week_hours']}h this week, above the legal weekly limit.";
+        }
+
         return $this->respond($request, $message);
     }
 
@@ -134,6 +151,7 @@ class AttendanceController extends Controller
             'longitude' => ['required', 'numeric', 'between:-180,180'],
             'accuracy' => ['nullable', 'numeric', 'min:0'],
             'selfie' => ['required', 'string', 'max:'.(int) (AttendanceService::MAX_SELFIE_BYTES * 1.4)],
+            'rest_day_reason' => ['nullable', 'string', 'max:1000'],
         ]);
 
         $this->consumeChallenge($request, $data['challenge'], $action);
@@ -148,6 +166,7 @@ class AttendanceController extends Controller
             ip: $request->ip(),
             userAgent: $request->userAgent(),
             deviceHash: is_string($deviceToken) && $deviceToken !== '' ? hash('sha256', $deviceToken) : null,
+            restDayReason: $data['rest_day_reason'] ?? null,
         );
     }
 

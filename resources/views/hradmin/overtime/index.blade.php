@@ -1,6 +1,8 @@
 <x-app-layout title="Overtime Records">
     <x-slot name="header">
-        <h2 class="page-title">Overtime Records</h2>
+        <p class="eyebrow">Operations</p>
+        <h2 class="page-title mt-1">Overtime Records</h2>
+        <p class="muted mt-1">Company-wide record. Requests are approved by each employee's manager.</p>
     </x-slot>
 
     <form method="GET" class="filter-bar">
@@ -35,7 +37,7 @@
                     <th class="px-4 py-3">Hours</th>
                     <th class="px-4 py-3">Amount</th>
                     <th class="px-4 py-3">Status</th>
-                    <th class="px-4 py-3"></th>
+                    <th class="px-4 py-3 text-right">Approval</th>
                 </tr>
             </thead>
             <tbody>
@@ -48,16 +50,7 @@
                         <td class="px-4 py-3">{{ $ot->amount ? 'RM '.number_format($ot->amount, 2) : '-' }}</td>
                         <td class="px-4 py-3"><x-status-badge :status="$ot->status" /></td>
                         <td class="px-4 py-3 text-right whitespace-nowrap space-x-1.5">
-                            @if ($ot->status === 'pending')
-                                <form method="POST" action="{{ route('hr.overtime.approve', $ot) }}" class="inline">
-                                    @csrf
-                                    <button class="btn-success-soft btn-sm">Approve</button>
-                                </form>
-                                <form method="POST" action="{{ route('hr.overtime.reject', $ot) }}" class="inline">
-                                    @csrf
-                                    <button class="btn-danger-soft btn-sm">Reject</button>
-                                </form>
-                            @endif
+                            <x-approval-cell :request="$ot" approve-route="hr.overtime.approve" reject-route="hr.overtime.reject" />
                         </td>
                     </tr>
                 @empty

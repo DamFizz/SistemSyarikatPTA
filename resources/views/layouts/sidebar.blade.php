@@ -43,6 +43,7 @@
             ['Attendance Records', 'hr.attendance.index', ['hr.attendance.*'], 'fingerprint'],
             ['Overtime Records', 'hr.overtime.index', ['hr.overtime.*'], 'clock'],
             ['Leave Records', 'hr.leave.index', ['hr.leave.*'], 'calendar'],
+            ['Working Hours', 'hr.work-hours.index', ['hr.work-hours.*'], 'shield'],
             ['Payroll', 'hr.payroll.index', ['hr.payroll.*'], 'banknotes'],
             ['Helpdesk Tickets', 'hr.tickets.index', ['hr.tickets.*'], 'lifebuoy'],
             ['Reports', 'hr.reports.index', ['hr.reports.*'], 'chart'],
@@ -59,7 +60,7 @@
 
 <aside
     :class="sidebarOpen ? 'translate-x-0' : '-translate-x-full'"
-    class="fixed inset-y-0 left-0 z-40 flex w-[17rem] flex-col bg-ink-900 text-slate-300 transition-transform duration-300 ease-out lg:inset-y-3 lg:left-3 lg:translate-x-0 lg:rounded-3xl lg:shadow-2xl lg:shadow-ink-950/20"
+    class="fixed left-0 top-0 z-40 flex h-viewport w-[17rem] max-w-[85vw] flex-col overscroll-contain bg-ink-900 text-slate-300 transition-transform duration-300 ease-out lg:inset-y-3 lg:left-3 lg:h-auto lg:max-w-none lg:translate-x-0 lg:rounded-3xl lg:shadow-2xl lg:shadow-ink-950/20"
 >
     {{-- Decorative glow --}}
     <div class="pointer-events-none absolute inset-0 overflow-hidden lg:rounded-3xl">
@@ -78,7 +79,7 @@
         </button>
     </div>
 
-    <nav class="relative flex-1 space-y-0.5 overflow-y-auto px-3 pb-4 [scrollbar-width:thin] [scrollbar-color:rgba(255,255,255,0.08)_transparent]">
+    <nav class="relative flex-1 space-y-0.5 overflow-y-auto overscroll-contain px-3 pb-4 [scrollbar-width:thin] [scrollbar-color:rgba(255,255,255,0.08)_transparent]">
         @foreach ($groups as $label => $items)
             @if ($label)
                 <div class="nav-section">{{ $label }}</div>

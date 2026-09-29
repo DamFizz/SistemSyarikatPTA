@@ -4,7 +4,9 @@ namespace App\Http\Controllers\Manager;
 
 use App\Http\Controllers\Controller;
 use App\Models\AuditLog;
+use App\Models\Employee;
 use App\Models\Overtime;
+use App\Services\WorkHoursService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -12,23 +14,29 @@ use Illuminate\View\View;
 
 class OvertimeController extends Controller
 {
+    public function __construct(private readonly WorkHoursService $workHours) {}
+
     public function index(Request $request): View
     {
-        $departmentId = Auth::user()->employee?->department_id;
+        $manager = $this->manager();
 
-        $overtimes = Overtime::with('employee')
-            ->whereHas('employee', fn ($q) => $q->where('department_id', $departmentId))
+        $overtimes = Overtime::with('employee.department')
+            ->whereHas('employee', fn ($q) => $q->approvableBy($manager))
             ->when($request->filled('status'), fn ($q) => $q->where('status', $request->string('status')), fn ($q) => $q->where('status', Overtime::STATUS_PENDING))
             ->orderByDesc('date')
             ->paginate(15)
             ->withQueryString();
 
-        return view('manager.overtime.index', compact('overtimes'));
+        return view('manager.overtime.index', [
+            'overtimes' => $overtimes,
+            'workHours' => $this->workHours,
+        ]);
     }
 
     public function approve(Overtime $overtime): RedirectResponse
     {
-        $this->authorizeDepartment($overtime);
+        $this->authorizeApprover($overtime);
+        $this->workHours->assertOtApprovalWithinCap($overtime);
 
         $overtime->update([
             'status' => Overtime::STATUS_APPROVED,
@@ -44,7 +52,7 @@ class OvertimeController extends Controller
 
     public function reject(Overtime $overtime): RedirectResponse
     {
-        $this->authorizeDepartment($overtime);
+        $this->authorizeApprover($overtime);
 
         $overtime->update([
             'status' => Overtime::STATUS_REJECTED,
@@ -57,8 +65,17 @@ class OvertimeController extends Controller
         return back()->with('success', 'Overtime rejected.');
     }
 
-    private function authorizeDepartment(Overtime $overtime): void
+    private function manager(): Employee
     {
-        abort_unless($overtime->employee->department_id === Auth::user()->employee?->department_id, 403);
+        $manager = Auth::user()->employee;
+        abort_if(! $manager, 403, 'Your account has no employee profile.');
+
+        return $manager;
+    }
+
+    private function authorizeApprover(Overtime $overtime): void
+    {
+        abort_unless($overtime->status === Overtime::STATUS_PENDING, 422, 'This request has already been processed.');
+        abort_unless($overtime->employee->isApprovableBy($this->manager()), 403, 'You are not the approving manager for this employee.');
     }
 }

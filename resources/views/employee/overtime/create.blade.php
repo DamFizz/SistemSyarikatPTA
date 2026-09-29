@@ -3,7 +3,8 @@
         <h2 class="page-title">Request Overtime</h2>
     </x-slot>
 
-    <form method="POST" action="{{ route('employee.overtime.store') }}" enctype="multipart/form-data" class="form-card max-w-2xl">
+    <div class="grid gap-5 lg:grid-cols-3">
+    <form method="POST" action="{{ route('employee.overtime.store') }}" enctype="multipart/form-data" class="form-card lg:col-span-2">
         @csrf
         <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
             <div>
@@ -37,4 +38,7 @@
             <button type="submit" class="btn-primary">Submit Request</button>
         </div>
     </form>
+
+    <x-work-hours-summary :summary="$workSummary" class="lg:self-start" />
+    </div>
 </x-app-layout>

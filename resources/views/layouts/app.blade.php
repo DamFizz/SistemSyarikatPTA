@@ -16,22 +16,20 @@
         @vite(['resources/css/app.css', 'resources/js/app.js'])
     </head>
     <body class="font-sans antialiased">
-        <div x-data="{ sidebarOpen: false }" @keydown.escape.window="sidebarOpen = false" class="relative min-h-screen">
+        <div x-data="{ sidebarOpen: false }" x-effect="document.documentElement.classList.toggle('overflow-hidden', sidebarOpen)" @keydown.escape.window="sidebarOpen = false" class="relative min-h-screen">
             {{-- Soft ambient glow behind the content area --}}
             <div class="pointer-events-none fixed inset-x-0 top-0 h-72 bg-gradient-to-b from-emerald-100/50 via-canvas/0 to-transparent"></div>
 
             @include('layouts.sidebar')
 
-            <div x-show="sidebarOpen" x-cloak x-transition.opacity @click="sidebarOpen = false" class="fixed inset-0 z-30 bg-ink-950/60 backdrop-blur-sm lg:hidden"></div>
+            <div x-show="sidebarOpen" x-cloak x-transition.opacity @click="sidebarOpen = false" class="fixed left-0 top-0 z-30 h-viewport w-full bg-ink-950/60 backdrop-blur-sm lg:hidden"></div>
 
             <div class="relative flex min-h-screen flex-col lg:pl-[18rem]">
                 @include('layouts.topbar')
 
                 @php
-                    $urgentAnnouncement = \App\Models\Announcement::where('priority', 'urgent')
-                        ->where(function ($q) {
-                            $q->whereNull('department_id')->orWhere('department_id', auth()->user()->employee?->department_id);
-                        })
+                    $urgentAnnouncement = \App\Models\Announcement::unseenBy(auth()->user())
+                        ->where('priority', 'urgent')
                         ->where('created_at', '>=', now()->subDays(3))
                         ->latest()
                         ->first();
@@ -47,6 +45,10 @@
                                 </span>
                                 <span class="min-w-0 flex-1 truncate"><strong class="font-semibold">Urgent:</strong> {{ $urgentAnnouncement->title }}</span>
                                 <a href="{{ route('announcements.index') }}" class="shrink-0 rounded-lg bg-white/15 px-3 py-1 text-xs font-semibold text-white hover:bg-white/25">View</a>
+                                <form method="POST" action="{{ route('announcements.dismiss') }}" class="shrink-0">
+                                    @csrf
+                                    <button type="submit" class="rounded-lg p-1 text-white/70 hover:bg-white/15 hover:text-white" aria-label="Dismiss"><x-icon name="x" class="h-4 w-4" /></button>
+                                </form>
                             </div>
                         @endif
 

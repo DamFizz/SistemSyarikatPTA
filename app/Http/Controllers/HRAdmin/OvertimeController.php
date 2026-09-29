@@ -5,7 +5,9 @@ namespace App\Http\Controllers\HRAdmin;
 use App\Http\Controllers\Controller;
 use App\Models\AuditLog;
 use App\Models\Department;
+use App\Models\Employee;
 use App\Models\Overtime;
+use App\Services\WorkHoursService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -15,7 +17,7 @@ class OvertimeController extends Controller
 {
     public function index(Request $request): View
     {
-        $overtimes = Overtime::with('employee.department')
+        $overtimes = Overtime::with(['employee.department', 'approver'])
             ->when($request->filled('department_id'), fn ($q) => $q->whereHas('employee', fn ($e) => $e->where('department_id', $request->integer('department_id'))))
             ->when($request->filled('status'), fn ($q) => $q->where('status', $request->string('status')))
             ->orderByDesc('date')
@@ -28,8 +30,11 @@ class OvertimeController extends Controller
         ]);
     }
 
-    public function approve(Overtime $overtime): RedirectResponse
+    public function approve(Overtime $overtime, WorkHoursService $workHours): RedirectResponse
     {
+        $this->authorizeFallbackApproval($overtime->employee, $overtime->status);
+        $workHours->assertOtApprovalWithinCap($overtime);
+
         $overtime->update([
             'status' => Overtime::STATUS_APPROVED,
             'approved_by' => Auth::id(),
@@ -44,6 +49,8 @@ class OvertimeController extends Controller
 
     public function reject(Overtime $overtime): RedirectResponse
     {
+        $this->authorizeFallbackApproval($overtime->employee, $overtime->status);
+
         $overtime->update([
             'status' => Overtime::STATUS_REJECTED,
             'approved_by' => Auth::id(),
@@ -53,5 +60,15 @@ class OvertimeController extends Controller
         AuditLog::record('reject', 'overtime', "Rejected OT for {$overtime->employee->full_name} ({$overtime->date->format('d M Y')})");
 
         return back()->with('success', 'Overtime rejected.');
+    }
+
+    /**
+     * HR Admin never approves. Super Admin may, but only when no manager can approve the employee.
+     */
+    private function authorizeFallbackApproval(Employee $employee, string $status): void
+    {
+        abort_unless(Auth::user()->isSuperAdmin(), 403, 'Overtime is approved by the employee\'s manager.');
+        abort_unless($status === Overtime::STATUS_PENDING, 422, 'This request has already been processed.');
+        abort_if($employee->approvingManager() !== null, 403, 'This employee has a manager who must approve the request.');
     }
 }

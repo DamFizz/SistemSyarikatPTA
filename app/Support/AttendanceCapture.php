@@ -15,5 +15,6 @@ final readonly class AttendanceCapture
         public ?string $ip,
         public ?string $userAgent = null,
         public ?string $deviceHash = null,
+        public ?string $restDayReason = null,
     ) {}
 }

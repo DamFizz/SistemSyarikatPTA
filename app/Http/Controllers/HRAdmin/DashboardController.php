@@ -7,6 +7,7 @@ use App\Models\Attendance;
 use App\Models\Employee;
 use App\Models\LeaveRequest;
 use App\Models\Overtime;
+use App\Models\RestDayJustification;
 use App\Models\Ticket;
 use Illuminate\View\View;
 
@@ -22,6 +23,7 @@ class DashboardController extends Controller
             'pendingLeave' => LeaveRequest::where('status', 'pending')->count(),
             'pendingOvertime' => Overtime::where('status', 'pending')->count(),
             'openTickets' => Ticket::whereNotIn('status', ['resolved', 'closed'])->count(),
+            'pendingJustifications' => RestDayJustification::where('status', RestDayJustification::STATUS_PENDING)->count(),
             'todayPresent' => (clone $today)->count(),
             'todayLate' => (clone $today)->where('status', Attendance::STATUS_LATE)->count(),
             'todayFlagged' => (clone $today)->where('is_flagged', true)->count(),

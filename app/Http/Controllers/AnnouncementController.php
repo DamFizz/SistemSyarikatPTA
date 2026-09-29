@@ -24,6 +24,9 @@ class AnnouncementController extends Controller
             ->orderByDesc('created_at')
             ->paginate(10);
 
+        // Opening the list counts as reading everything, which clears the banner and the bell dot.
+        Auth::user()->forceFill(['announcements_seen_at' => now()])->save();
+
         return view('announcements.index', compact('announcements'));
     }
 
@@ -52,5 +55,12 @@ class AnnouncementController extends Controller
         AuditLog::record('create', 'announcement', "Created announcement \"{$announcement->title}\"");
 
         return redirect()->route('announcements.index')->with('success', 'Announcement published.');
+    }
+
+    public function dismiss(): RedirectResponse
+    {
+        Auth::user()->forceFill(['announcements_seen_at' => now()])->save();
+
+        return back();
     }
 }

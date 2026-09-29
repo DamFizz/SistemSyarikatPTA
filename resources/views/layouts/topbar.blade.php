@@ -23,6 +23,9 @@
 
             <a href="{{ route('announcements.index') }}" class="relative rounded-xl p-2 text-slate-500 hover:bg-slate-100 hover:text-slate-800" title="Announcements">
                 <x-icon name="bell" />
+                @if (\App\Models\Announcement::unseenBy(auth()->user())->where('created_at', '>=', now()->subDays(30))->exists())
+                    <span class="absolute right-1.5 top-1.5 h-2.5 w-2.5 rounded-full bg-rose-500 ring-2 ring-white"></span>
+                @endif
             </a>
 
             <x-dropdown align="right" width="56">

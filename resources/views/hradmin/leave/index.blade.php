@@ -1,6 +1,8 @@
 <x-app-layout title="Leave Records">
     <x-slot name="header">
-        <h2 class="page-title">Leave Records</h2>
+        <p class="eyebrow">Operations</p>
+        <h2 class="page-title mt-1">Leave Records</h2>
+        <p class="muted mt-1">Company-wide record. Requests are approved by each employee's manager.</p>
     </x-slot>
 
     <form method="GET" class="filter-bar">
@@ -35,7 +37,7 @@
                     <th class="px-4 py-3">Dates</th>
                     <th class="px-4 py-3">Days</th>
                     <th class="px-4 py-3">Status</th>
-                    <th class="px-4 py-3"></th>
+                    <th class="px-4 py-3 text-right">Approval</th>
                 </tr>
             </thead>
             <tbody>
@@ -48,16 +50,7 @@
                         <td class="px-4 py-3">{{ $leave->total_days }}</td>
                         <td class="px-4 py-3"><x-status-badge :status="$leave->status" /></td>
                         <td class="px-4 py-3 text-right whitespace-nowrap space-x-1.5">
-                            @if ($leave->status === 'pending')
-                                <form method="POST" action="{{ route('hr.leave.approve', $leave) }}" class="inline">
-                                    @csrf
-                                    <button class="btn-success-soft btn-sm">Approve</button>
-                                </form>
-                                <form method="POST" action="{{ route('hr.leave.reject', $leave) }}" class="inline">
-                                    @csrf
-                                    <button class="btn-danger-soft btn-sm">Reject</button>
-                                </form>
-                            @endif
+                            <x-approval-cell :request="$leave" approve-route="hr.leave.approve" reject-route="hr.leave.reject" />
                         </td>
                     </tr>
                 @empty

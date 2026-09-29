@@ -6,6 +6,7 @@ use App\Models\Attendance;
 use App\Models\Employee;
 use App\Models\Office;
 use App\Models\Overtime;
+use App\Models\RestDayJustification;
 use App\Support\AttendanceCapture;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\Storage;
@@ -14,6 +15,8 @@ use Illuminate\Validation\ValidationException;
 
 class AttendanceService
 {
+    public function __construct(private readonly WorkHoursService $workHours) {}
+
     /** GPS readings less precise than this are rejected outright. */
     public const MAX_GPS_ACCURACY_METERS = 500;
 
@@ -76,14 +79,29 @@ class AttendanceService
 
         $office = $employee->office;
         $this->assertOnOfficeNetwork($office, $capture->ip);
+        $this->workHours->assertCanStartShift($employee);
+
+        $restDayDue = $this->workHours->restDayRequiredToday($employee);
+        $reason = trim((string) $capture->restDayReason);
+
+        if ($restDayDue && mb_strlen($reason) < 10) {
+            throw ValidationException::withMessages([
+                'rest_day_reason' => 'You have worked '.WorkHoursService::MAX_CONSECUTIVE_DAYS.' days in a row, so today is your rest day. Explain to HR why you need to work today (at least 10 characters).',
+            ]);
+        }
+
         $distance = $this->assertWithinGeofence($office, $capture, 'Clock-in');
         [$selfiePath, $selfieHash] = $this->storeSelfie($capture->selfieDataUrl, $employee->id, 'in');
 
         $flags = $this->detectFlags($employee, $office, $capture);
 
+        if ($restDayDue) {
+            $flags[] = 'Working without the weekly rest day (justification sent to HR)';
+        }
+
         $shift = $employee->currentShift();
 
-        return Attendance::create([
+        $attendance = Attendance::create([
             'employee_id' => $employee->id,
             'shift_id' => $shift?->id,
             'attendance_date' => Carbon::today(),
@@ -102,6 +120,19 @@ class AttendanceService
             'is_flagged' => $flags !== [],
             'flag_reasons' => $flags ?: null,
         ]);
+
+        if ($restDayDue) {
+            RestDayJustification::create([
+                'employee_id' => $employee->id,
+                'attendance_id' => $attendance->id,
+                'work_date' => Carbon::today(),
+                'consecutive_days' => $this->workHours->consecutiveDaysBefore($employee, today()) + 1,
+                'reason' => $reason,
+                'status' => RestDayJustification::STATUS_PENDING,
+            ]);
+        }
+
+        return $attendance;
     }
 
     public function clockOut(Employee $employee, AttendanceCapture $capture): array
@@ -129,6 +160,12 @@ class AttendanceService
         $shift = $attendance->shift;
         if ($shift) {
             $workingMinutes = max(0, $workingMinutes - $shift->break_duration_minutes);
+        }
+
+        $weekHours = ($this->workHours->workedMinutesInWeek($employee, $attendance->attendance_date, $attendance->id) + $workingMinutes) / 60;
+
+        if ($weekHours > $this->workHours->weeklyHoursLimit()) {
+            $flags[] = sprintf('Weekly limit exceeded (%.1fh of %gh)', $weekHours, $this->workHours->weeklyHoursLimit());
         }
 
         $allFlags = array_values(array_unique(array_merge($attendance->flag_reasons ?? [], $flags)));
@@ -162,15 +199,28 @@ class AttendanceService
         }
 
         $overtime = null;
+        $otCapped = false;
 
-        if ($potentialOtMinutes >= 15) {
+        // Never auto-book more overtime than the employee's monthly cap allows.
+        $remaining = $this->workHours->remainingOtHours($employee, $attendance->attendance_date);
+        $bookableOtMinutes = $remaining === null ? $potentialOtMinutes : min($potentialOtMinutes, (int) floor($remaining * 60));
+
+        if ($bookableOtMinutes < $potentialOtMinutes) {
+            $otCapped = true;
+            $attendance->update([
+                'is_flagged' => true,
+                'flag_reasons' => array_values(array_unique(array_merge($attendance->flag_reasons ?? [], ['Monthly overtime cap reached — extra hours not booked as OT']))),
+            ]);
+        }
+
+        if ($bookableOtMinutes >= 15) {
             $overtime = Overtime::create([
                 'employee_id' => $employee->id,
                 'attendance_id' => $attendance->id,
                 'date' => $attendance->attendance_date,
                 'start_time' => $shift?->end_time ?? $attendance->clock_in_time->format('H:i:s'),
                 'end_time' => $clockOutTime->format('H:i:s'),
-                'total_hours' => round($potentialOtMinutes / 60, 2),
+                'total_hours' => round($bookableOtMinutes / 60, 2),
                 'reason' => 'Auto-detected from attendance clock-out.',
                 'status' => Overtime::STATUS_PENDING,
                 'ot_rate' => 1.5,
@@ -182,6 +232,8 @@ class AttendanceService
             'working_minutes' => $workingMinutes,
             'potential_ot_minutes' => $potentialOtMinutes,
             'overtime' => $overtime,
+            'ot_capped' => $otCapped,
+            'week_hours' => round($weekHours, 1),
         ];
     }
 

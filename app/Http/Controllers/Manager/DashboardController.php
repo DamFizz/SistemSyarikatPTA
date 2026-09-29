@@ -27,10 +27,10 @@ class DashboardController extends Controller
             'teamSize' => $team->count(),
             'team' => $team,
             'teamClockedIn' => $team->filter(fn ($member) => $member->attendance->first()?->clock_in_time)->count(),
-            'pendingLeave' => LeaveRequest::whereHas('employee', fn ($q) => $q->where('department_id', $departmentId))
-                ->where('status', 'pending')->count(),
-            'pendingOvertime' => Overtime::whereHas('employee', fn ($q) => $q->where('department_id', $departmentId))
-                ->where('status', 'pending')->count(),
+            'pendingLeave' => $employee ? LeaveRequest::whereHas('employee', fn ($q) => $q->approvableBy($employee))
+                ->where('status', 'pending')->count() : 0,
+            'pendingOvertime' => $employee ? Overtime::whereHas('employee', fn ($q) => $q->approvableBy($employee))
+                ->where('status', 'pending')->count() : 0,
         ]);
     }
 }
