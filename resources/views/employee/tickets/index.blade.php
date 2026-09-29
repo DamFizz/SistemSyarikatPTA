@@ -1,16 +1,16 @@
 <x-app-layout title="Helpdesk">
     <x-slot name="header">
         <div class="flex items-center justify-between">
-            <h2 class="text-xl font-semibold text-slate-800">My Helpdesk Tickets</h2>
-            <a href="{{ route('employee.tickets.create') }}" class="inline-flex items-center px-4 py-2 bg-emerald-600 text-white text-sm font-medium rounded-lg hover:bg-emerald-700">
+            <h2 class="page-title">My Helpdesk Tickets</h2>
+            <a href="{{ route('employee.tickets.create') }}" class="btn-primary">
                 + Submit Ticket
             </a>
         </div>
     </x-slot>
 
-    <div class="bg-white rounded-xl border border-slate-200 overflow-hidden">
-        <table class="min-w-full divide-y divide-slate-200 text-sm">
-            <thead class="bg-slate-50">
+    <div class="card overflow-x-auto">
+        <table class="table-modern">
+            <thead>
                 <tr class="text-left text-xs uppercase tracking-wide text-slate-500">
                     <th class="px-4 py-3">Ticket</th>
                     <th class="px-4 py-3">Category</th>
@@ -20,7 +20,7 @@
                     <th class="px-4 py-3"></th>
                 </tr>
             </thead>
-            <tbody class="divide-y divide-slate-100">
+            <tbody>
                 @forelse ($tickets as $ticket)
                     <tr>
                         <td class="px-4 py-3">
@@ -32,7 +32,7 @@
                         <td class="px-4 py-3"><x-status-badge :status="$ticket->status" /></td>
                         <td class="px-4 py-3">{{ $ticket->created_at->format('d M Y') }}</td>
                         <td class="px-4 py-3 text-right">
-                            <a href="{{ route('employee.tickets.show', $ticket) }}" class="text-emerald-600 hover:text-emerald-800 font-medium">View</a>
+                            <a href="{{ route('employee.tickets.show', $ticket) }}" class="btn-secondary btn-sm">View</a>
                         </td>
                     </tr>
                 @empty

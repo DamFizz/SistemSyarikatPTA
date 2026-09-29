@@ -1,8 +1,8 @@
 <x-app-layout title="Leave">
     <x-slot name="header">
         <div class="flex items-center justify-between">
-            <h2 class="text-xl font-semibold text-slate-800">My Leave</h2>
-            <a href="{{ route('employee.leave.create') }}" class="inline-flex items-center px-4 py-2 bg-emerald-600 text-white text-sm font-medium rounded-lg hover:bg-emerald-700">
+            <h2 class="page-title">My Leave</h2>
+            <a href="{{ route('employee.leave.create') }}" class="btn-primary">
                 + Apply Leave
             </a>
         </div>
@@ -14,9 +14,9 @@
         @endforeach
     </div>
 
-    <div class="bg-white rounded-xl border border-slate-200 overflow-hidden">
-        <table class="min-w-full divide-y divide-slate-200 text-sm">
-            <thead class="bg-slate-50">
+    <div class="card overflow-x-auto">
+        <table class="table-modern">
+            <thead>
                 <tr class="text-left text-xs uppercase tracking-wide text-slate-500">
                     <th class="px-4 py-3">Type</th>
                     <th class="px-4 py-3">Start</th>
@@ -26,7 +26,7 @@
                     <th class="px-4 py-3">Status</th>
                 </tr>
             </thead>
-            <tbody class="divide-y divide-slate-100">
+            <tbody>
                 @forelse ($leaveRequests as $leave)
                     <tr>
                         <td class="px-4 py-3">{{ $leave->leaveType->name }}</td>

@@ -11,8 +11,11 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 #[Table('attendance')]
 #[Fillable([
     'employee_id', 'shift_id', 'attendance_date', 'clock_in_time', 'clock_out_time',
-    'clock_in_lat', 'clock_in_lng', 'clock_in_distance_meters', 'clock_out_lat', 'clock_out_lng',
-    'selfie_path', 'qr_token_id', 'verification_method', 'device_info', 'ip_address', 'working_minutes', 'status', 'is_flagged',
+    'clock_in_lat', 'clock_in_lng', 'clock_in_distance_meters', 'clock_in_accuracy_meters',
+    'clock_out_lat', 'clock_out_lng', 'clock_out_distance_meters', 'clock_out_accuracy_meters',
+    'selfie_path', 'selfie_hash', 'clock_out_selfie_path', 'clock_out_selfie_hash',
+    'qr_token_id', 'verification_method', 'device_info', 'device_hash', 'ip_address', 'clock_out_ip_address',
+    'working_minutes', 'status', 'is_flagged', 'flag_reasons',
 ])]
 class Attendance extends Model
 {
@@ -41,6 +44,7 @@ class Attendance extends Model
             'clock_out_lat' => 'decimal:7',
             'clock_out_lng' => 'decimal:7',
             'is_flagged' => 'boolean',
+            'flag_reasons' => 'array',
         ];
     }
 

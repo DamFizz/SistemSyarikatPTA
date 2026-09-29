@@ -2,30 +2,83 @@
 <html lang="{{ str_replace('_', '-', app()->getLocale()) }}">
     <head>
         <meta charset="utf-8">
-        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
         <meta name="csrf-token" content="{{ csrf_token() }}">
+        <meta name="theme-color" content="#0a1020">
 
-        <title>{{ config('app.name', 'Laravel') }}</title>
+        <title>{{ config('app.name', 'SEMS') }} · Sign in</title>
 
-        <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Crect width='24' height='24' rx='6' fill='%2310b981'/%3E%3Ctext x='12' y='17' font-family='Arial,sans-serif' font-size='14' font-weight='bold' fill='white' text-anchor='middle'%3ES%3C/text%3E%3C/svg%3E">
+        @include('layouts.partials.favicon')
 
-        <!-- Fonts -->
         <link rel="preconnect" href="https://fonts.bunny.net">
-        <link href="https://fonts.bunny.net/css?family=figtree:400,500,600&display=swap" rel="stylesheet" />
+        <link href="https://fonts.bunny.net/css?family=plus-jakarta-sans:400,500,600,700,800|jetbrains-mono:500&display=swap" rel="stylesheet" />
 
-        <!-- Scripts -->
         @vite(['resources/css/app.css', 'resources/js/app.js'])
     </head>
-    <body class="font-sans text-slate-800 antialiased">
-        <div class="min-h-screen flex flex-col sm:justify-center items-center pt-6 sm:pt-0 bg-slate-900">
-            <div class="flex items-center gap-3">
-                <div class="h-11 w-11 rounded-xl bg-emerald-500 flex items-center justify-center text-white font-bold text-lg">S</div>
-                <span class="text-white font-semibold text-2xl tracking-tight">SEMS</span>
-            </div>
+    <body class="font-sans antialiased">
+        <div class="flex min-h-screen">
+            {{-- Brand panel --}}
+            <aside class="relative hidden w-[46%] max-w-2xl overflow-hidden bg-ink-900 lg:flex lg:flex-col">
+                <div class="absolute inset-0 opacity-[0.35]" style="background-image: radial-gradient(circle at 1px 1px, rgba(255,255,255,0.08) 1px, transparent 0); background-size: 26px 26px;"></div>
+                <div class="absolute -top-32 -left-24 h-96 w-96 rounded-full bg-emerald-500/25 blur-3xl"></div>
+                <div class="absolute -bottom-40 right-0 h-96 w-96 rounded-full bg-teal-400/15 blur-3xl"></div>
 
-            <div class="w-full sm:max-w-md mt-6 px-6 py-4 bg-white shadow-md overflow-hidden sm:rounded-lg">
-                {{ $slot }}
-            </div>
+                <div class="relative flex items-center gap-3 px-12 pt-12">
+                    <x-application-logo size="h-10 w-10" />
+                    <span class="text-lg font-bold tracking-tight text-white">SEMS</span>
+                </div>
+
+                <div class="relative flex flex-1 flex-col justify-center px-12 xl:px-16">
+                    <p class="eyebrow !text-emerald-400">Smart Employee Management</p>
+                    <h1 class="mt-4 text-4xl font-extrabold leading-[1.1] !text-white xl:text-5xl">
+                        Your whole workforce,<br>
+                        <span class="bg-gradient-to-r from-emerald-300 to-teal-200 bg-clip-text text-transparent">one calm workspace.</span>
+                    </h1>
+                    <p class="mt-5 max-w-md text-[15px] leading-relaxed text-slate-400">
+                        Attendance, leave, overtime, payroll and helpdesk — verified, audited and beautifully simple.
+                    </p>
+
+                    {{-- Illustrative attendance card --}}
+                    <div class="mt-10 max-w-sm rounded-3xl border border-white/10 bg-white/[0.04] p-5 backdrop-blur-md shadow-2xl">
+                        <div class="flex items-center justify-between">
+                            <span class="text-xs font-medium text-slate-400">Today &middot; {{ now()->format('D, d M') }}</span>
+                            <span class="chip bg-emerald-400/10 text-emerald-300 ring-1 ring-emerald-400/20">
+                                <span class="h-1.5 w-1.5 rounded-full bg-emerald-400"></span> On duty
+                            </span>
+                        </div>
+                        <div class="mt-4 flex items-end gap-2">
+                            <span class="font-mono text-4xl font-medium tracking-tight text-white">08:52</span>
+                            <span class="pb-1 text-sm text-slate-400">clocked in</span>
+                        </div>
+                        <div class="mt-5 grid grid-cols-3 gap-2 text-[11px]">
+                            @foreach ([['wifi', 'Office WiFi'], ['map-pin', 'In geofence'], ['camera', 'Selfie']] as [$icon, $label])
+                                <div class="flex flex-col items-center gap-1.5 rounded-2xl bg-white/[0.04] px-2 py-3 text-slate-300">
+                                    <x-icon :name="$icon" class="h-5 w-5 text-emerald-400" />
+                                    {{ $label }}
+                                </div>
+                            @endforeach
+                        </div>
+                    </div>
+                </div>
+
+                <div class="relative px-12 pb-10 text-xs text-slate-500">&copy; {{ now()->year }} SEMS &middot; Final Year Project</div>
+            </aside>
+
+            {{-- Form panel --}}
+            <main class="relative flex flex-1 flex-col items-center justify-center bg-canvas px-5 py-12 sm:px-8">
+                <div class="pointer-events-none absolute inset-x-0 top-0 h-64 bg-gradient-to-b from-emerald-100/60 to-transparent lg:hidden"></div>
+
+                <div class="relative w-full max-w-[26rem]">
+                    <div class="mb-8 flex items-center gap-3 lg:hidden">
+                        <x-application-logo size="h-10 w-10" />
+                        <span class="text-lg font-bold tracking-tight text-slate-900">SEMS</span>
+                    </div>
+
+                    <div class="card p-7 sm:p-9 shadow-lift">
+                        {{ $slot }}
+                    </div>
+                </div>
+            </main>
         </div>
     </body>
 </html>

@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\AnnouncementController;
+use App\Http\Controllers\AttendanceSelfieController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\PayslipController;
 use App\Http\Controllers\ProfileController;
@@ -18,6 +19,10 @@ Route::middleware('auth')->group(function () {
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
     Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
+
+    Route::get('/attendance/{attendance}/selfie/{type}', [AttendanceSelfieController::class, 'show'])
+        ->whereIn('type', ['in', 'out'])
+        ->name('attendance.selfie');
 
     Route::get('/payslips/{payroll}/download', [PayslipController::class, 'download'])->name('payslips.download');
 

@@ -2,27 +2,29 @@
 <html lang="{{ str_replace('_', '-', app()->getLocale()) }}">
     <head>
         <meta charset="utf-8">
-        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
         <meta name="csrf-token" content="{{ csrf_token() }}">
+        <meta name="theme-color" content="#0a1020">
 
-        <title>{{ isset($title) ? $title.' - '.config('app.name') : config('app.name', 'SEMS') }}</title>
+        <title>{{ isset($title) ? $title.' · '.config('app.name') : config('app.name', 'SEMS') }}</title>
 
-        <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Crect width='24' height='24' rx='6' fill='%2310b981'/%3E%3Ctext x='12' y='17' font-family='Arial,sans-serif' font-size='14' font-weight='bold' fill='white' text-anchor='middle'%3ES%3C/text%3E%3C/svg%3E">
+        @include('layouts.partials.favicon')
 
         <link rel="preconnect" href="https://fonts.bunny.net">
-        <link href="https://fonts.bunny.net/css?family=figtree:400,500,600,700&display=swap" rel="stylesheet" />
+        <link href="https://fonts.bunny.net/css?family=plus-jakarta-sans:400,500,600,700,800|jetbrains-mono:500&display=swap" rel="stylesheet" />
 
         @vite(['resources/css/app.css', 'resources/js/app.js'])
     </head>
-    <body class="font-sans antialiased bg-slate-100 text-slate-800">
-        <div x-data="{ sidebarOpen: false }" class="min-h-screen flex">
+    <body class="font-sans antialiased">
+        <div x-data="{ sidebarOpen: false }" @keydown.escape.window="sidebarOpen = false" class="relative min-h-screen">
+            {{-- Soft ambient glow behind the content area --}}
+            <div class="pointer-events-none fixed inset-x-0 top-0 h-72 bg-gradient-to-b from-emerald-100/50 via-canvas/0 to-transparent"></div>
 
             @include('layouts.sidebar')
 
-            <!-- Mobile sidebar overlay -->
-            <div x-show="sidebarOpen" x-cloak @click="sidebarOpen = false" class="fixed inset-0 z-30 bg-slate-900/50 lg:hidden"></div>
+            <div x-show="sidebarOpen" x-cloak x-transition.opacity @click="sidebarOpen = false" class="fixed inset-0 z-30 bg-ink-950/60 backdrop-blur-sm lg:hidden"></div>
 
-            <div class="flex-1 flex flex-col min-w-0 lg:pl-64">
+            <div class="relative flex min-h-screen flex-col lg:pl-[18rem]">
                 @include('layouts.topbar')
 
                 @php
@@ -34,32 +36,43 @@
                         ->latest()
                         ->first();
                 @endphp
-                @if ($urgentAnnouncement)
-                    <div class="bg-red-600 text-white px-4 py-2 text-sm text-center">
-                        <strong>URGENT:</strong> {{ $urgentAnnouncement->title }} —
-                        <a href="{{ route('announcements.index') }}" class="underline">View details</a>
-                    </div>
-                @endif
 
-                @isset($header)
-                    <header class="bg-white border-b border-slate-200">
-                        <div class="max-w-7xl mx-auto py-5 px-4 sm:px-6 lg:px-8">
-                            {{ $header }}
-                        </div>
-                    </header>
-                @endisset
-
-                <main class="flex-1 p-4 sm:p-6 lg:p-8">
-                    <div class="max-w-7xl mx-auto w-full">
-                        @if (session('success'))
-                            <div class="mb-4 rounded-lg bg-emerald-50 border border-emerald-200 text-emerald-800 px-4 py-3 text-sm">
-                                {{ session('success') }}
+                <main class="flex-1 px-4 pb-10 pt-6 sm:px-6 sm:pt-8 lg:px-10">
+                    <div class="mx-auto w-full max-w-7xl">
+                        @if ($urgentAnnouncement)
+                            <div class="mb-5 flex items-center gap-3 rounded-2xl bg-gradient-to-r from-rose-600 to-rose-500 px-4 py-3 text-sm text-white shadow-lg shadow-rose-600/20">
+                                <span class="relative flex h-2.5 w-2.5 shrink-0">
+                                    <span class="absolute inline-flex h-full w-full animate-ping rounded-full bg-white/70"></span>
+                                    <span class="relative inline-flex h-2.5 w-2.5 rounded-full bg-white"></span>
+                                </span>
+                                <span class="min-w-0 flex-1 truncate"><strong class="font-semibold">Urgent:</strong> {{ $urgentAnnouncement->title }}</span>
+                                <a href="{{ route('announcements.index') }}" class="shrink-0 rounded-lg bg-white/15 px-3 py-1 text-xs font-semibold text-white hover:bg-white/25">View</a>
                             </div>
                         @endif
 
-                        {{ $slot }}
+                        @isset($header)
+                            <header class="mb-6 animate-fade-up sm:mb-8">
+                                {{ $header }}
+                            </header>
+                        @endisset
+
+                        @if (session('success'))
+                            <div x-data="{ show: true }" x-show="show" x-transition class="alert-success mb-5 animate-fade-up">
+                                <svg class="mt-0.5 h-5 w-5 shrink-0 text-emerald-500" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.857-9.809a.75.75 0 00-1.214-.882l-3.483 4.79-1.88-1.88a.75.75 0 10-1.06 1.061l2.5 2.5a.75.75 0 001.137-.089l4-5.5z" clip-rule="evenodd" /></svg>
+                                <span class="flex-1">{{ session('success') }}</span>
+                                <button type="button" @click="show = false" class="text-emerald-600/60 hover:text-emerald-800" aria-label="Dismiss">&times;</button>
+                            </div>
+                        @endif
+
+                        <div class="animate-fade-up">
+                            {{ $slot }}
+                        </div>
                     </div>
                 </main>
+
+                <footer class="px-4 pb-6 text-center text-xs text-slate-400 sm:px-6 lg:px-10">
+                    &copy; {{ now()->year }} {{ config('app.name', 'SEMS') }} &middot; Smart Employee Management System
+                </footer>
             </div>
         </div>
     </body>

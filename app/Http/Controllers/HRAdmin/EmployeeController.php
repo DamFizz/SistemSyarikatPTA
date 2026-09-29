@@ -115,4 +115,17 @@ class EmployeeController extends Controller
 
         return redirect()->route('hr.employees.index')->with('success', 'Employee updated.');
     }
+
+    /**
+     * Forget the employee's registered phone, e.g. after they change devices.
+     * The next device used to clock in becomes the new registered device.
+     */
+    public function resetDevice(Employee $employee): RedirectResponse
+    {
+        $employee->forceFill(['registered_device_hash' => null, 'device_registered_at' => null])->save();
+
+        AuditLog::record('update', 'employee', "Reset registered attendance device for \"{$employee->full_name}\" ({$employee->employee_code})");
+
+        return back()->with('success', 'Registered device reset. The next phone used to clock in will be registered.');
+    }
 }

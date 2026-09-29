@@ -20,6 +20,11 @@ class OfficeFactory extends Factory
             'latitude' => 3.1579,
             'longitude' => 101.7116,
             'allowed_radius_meters' => 150,
+            'wifi_ssid' => 'SEMS-Office',
+            'wifi_password' => 'office-secret',
+            'wifi_security' => 'WPA',
+            'allowed_ips' => '127.0.0.1',
+            'network_check_enabled' => true,
         ];
     }
 }

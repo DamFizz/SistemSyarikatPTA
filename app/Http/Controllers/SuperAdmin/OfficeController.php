@@ -30,7 +30,7 @@ class OfficeController extends Controller
 
         AuditLog::record('create', 'office', "Created office/branch \"{$office->name}\"", null, $office->toArray());
 
-        return redirect()->route('super-admin.offices.index')->with('success', 'Office/branch created.');
+        return redirect()->route('super-admin.offices.network.edit', $office)->with('success', 'Branch created. Now set up its WiFi & NFC so staff can clock in.');
     }
 
     public function edit(Office $office): View

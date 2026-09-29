@@ -2,18 +2,18 @@
     <x-slot name="header">
         <div class="flex items-center justify-between">
             <div>
-                <h2 class="text-xl font-semibold text-slate-800">My Team</h2>
+                <h2 class="page-title">My Team</h2>
                 <p class="text-sm text-slate-500 mt-1">{{ $team->total() }} team member(s).</p>
             </div>
-            <a href="{{ route('manager.employees.create') }}" class="inline-flex items-center px-4 py-2 bg-emerald-600 text-white text-sm font-medium rounded-lg hover:bg-emerald-700">
+            <a href="{{ route('manager.employees.create') }}" class="btn-primary">
                 + Add Team Member
             </a>
         </div>
     </x-slot>
 
-    <div class="bg-white rounded-xl border border-slate-200 overflow-hidden">
-        <table class="min-w-full divide-y divide-slate-200 text-sm">
-            <thead class="bg-slate-50">
+    <div class="card overflow-x-auto">
+        <table class="table-modern">
+            <thead>
                 <tr class="text-left text-xs uppercase tracking-wide text-slate-500">
                     <th class="px-4 py-3">Employee</th>
                     <th class="px-4 py-3">Position</th>
@@ -21,7 +21,7 @@
                     <th class="px-4 py-3">Status</th>
                 </tr>
             </thead>
-            <tbody class="divide-y divide-slate-100">
+            <tbody>
                 @forelse ($team as $employee)
                     <tr>
                         <td class="px-4 py-3">

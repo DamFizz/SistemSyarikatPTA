@@ -1,10 +1,10 @@
 <x-app-layout title="Edit Employee">
     <x-slot name="header">
-        <h2 class="text-xl font-semibold text-slate-800">Edit Employee</h2>
+        <h2 class="page-title">Edit Employee</h2>
         <p class="text-sm text-slate-500 mt-1">{{ $employee->full_name }} &middot; {{ $employee->employee_code }}</p>
     </x-slot>
 
-    <form method="POST" action="{{ route('hr.employees.update', $employee) }}" class="bg-white rounded-xl border border-slate-200 p-6 space-y-6">
+    <form method="POST" action="{{ route('hr.employees.update', $employee) }}" class="form-card !space-y-6">
         @csrf
         @method('PUT')
 
@@ -23,7 +23,7 @@
                 </div>
                 <div>
                     <x-input-label for="role" value="System Role" />
-                    <select id="role" name="role" class="mt-1 block w-full rounded-md border-gray-300 focus:border-emerald-500 focus:ring-emerald-500" required>
+                    <select id="role" name="role" class="input mt-1.5 block w-full" required>
                         @foreach (['employee' => 'Employee', 'manager' => 'Manager / Supervisor', 'technician' => 'Technician / IT Support', 'hr_admin' => 'HR / Admin'] as $value => $label)
                             <option value="{{ $value }}" @selected(old('role', $employee->user->role) === $value)>{{ $label }}</option>
                         @endforeach
@@ -55,7 +55,7 @@
                 </div>
                 <div>
                     <x-input-label for="gender" value="Gender" />
-                    <select id="gender" name="gender" class="mt-1 block w-full rounded-md border-gray-300 focus:border-emerald-500 focus:ring-emerald-500">
+                    <select id="gender" name="gender" class="input mt-1.5 block w-full">
                         <option value="">-</option>
                         <option value="male" @selected(old('gender', $employee->gender) === 'male')>Male</option>
                         <option value="female" @selected(old('gender', $employee->gender) === 'female')>Female</option>
@@ -72,7 +72,7 @@
                 </div>
                 <div class="sm:col-span-2 lg:col-span-3">
                     <x-input-label for="address" value="Address" />
-                    <textarea id="address" name="address" rows="2" class="mt-1 block w-full rounded-md border-gray-300 focus:border-emerald-500 focus:ring-emerald-500">{{ old('address', $employee->address) }}</textarea>
+                    <textarea id="address" name="address" rows="2" class="input mt-1.5 block w-full">{{ old('address', $employee->address) }}</textarea>
                 </div>
             </div>
         </div>
@@ -82,7 +82,7 @@
             <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
                 <div>
                     <x-input-label for="department_id" value="Department" />
-                    <select id="department_id" name="department_id" class="mt-1 block w-full rounded-md border-gray-300 focus:border-emerald-500 focus:ring-emerald-500" required>
+                    <select id="department_id" name="department_id" class="input mt-1.5 block w-full" required>
                         @foreach ($departments as $department)
                             <option value="{{ $department->id }}" @selected(old('department_id', $employee->department_id) == $department->id)>{{ $department->name }}</option>
                         @endforeach
@@ -91,7 +91,7 @@
                 </div>
                 <div>
                     <x-input-label for="office_id" value="Office Location" />
-                    <select id="office_id" name="office_id" class="mt-1 block w-full rounded-md border-gray-300 focus:border-emerald-500 focus:ring-emerald-500" required>
+                    <select id="office_id" name="office_id" class="input mt-1.5 block w-full" required>
                         @foreach ($offices as $office)
                             <option value="{{ $office->id }}" @selected(old('office_id', $employee->office_id) == $office->id)>{{ $office->name }}</option>
                         @endforeach
@@ -100,7 +100,7 @@
                 </div>
                 <div>
                     <x-input-label for="manager_id" value="Reporting Manager" />
-                    <select id="manager_id" name="manager_id" class="mt-1 block w-full rounded-md border-gray-300 focus:border-emerald-500 focus:ring-emerald-500">
+                    <select id="manager_id" name="manager_id" class="input mt-1.5 block w-full">
                         <option value="">None</option>
                         @foreach ($managers as $manager)
                             <option value="{{ $manager->id }}" @selected(old('manager_id', $employee->manager_id) == $manager->id)>{{ $manager->full_name }}</option>
@@ -115,7 +115,7 @@
                 </div>
                 <div>
                     <x-input-label for="employment_type" value="Employment Type" />
-                    <select id="employment_type" name="employment_type" class="mt-1 block w-full rounded-md border-gray-300 focus:border-emerald-500 focus:ring-emerald-500">
+                    <select id="employment_type" name="employment_type" class="input mt-1.5 block w-full">
                         @foreach (['full_time' => 'Full Time', 'part_time' => 'Part Time', 'contract' => 'Contract', 'intern' => 'Intern'] as $value => $label)
                             <option value="{{ $value }}" @selected(old('employment_type', $employee->employment_type) === $value)>{{ $label }}</option>
                         @endforeach
@@ -123,7 +123,7 @@
                 </div>
                 <div>
                     <x-input-label for="employment_status" value="Employment Status" />
-                    <select id="employment_status" name="employment_status" class="mt-1 block w-full rounded-md border-gray-300 focus:border-emerald-500 focus:ring-emerald-500">
+                    <select id="employment_status" name="employment_status" class="input mt-1.5 block w-full">
                         @foreach (['active' => 'Active', 'probation' => 'Probation', 'suspended' => 'Suspended', 'resigned' => 'Resigned', 'terminated' => 'Terminated'] as $value => $label)
                             <option value="{{ $value }}" @selected(old('employment_status', $employee->employment_status) === $value)>{{ $label }}</option>
                         @endforeach
@@ -133,8 +133,30 @@
         </div>
 
         <div class="flex justify-end gap-3 pt-2">
-            <a href="{{ route('hr.employees.index') }}" class="px-4 py-2 text-sm text-slate-600 hover:text-slate-900">Cancel</a>
-            <button type="submit" class="px-4 py-2 bg-emerald-600 text-white text-sm font-medium rounded-lg hover:bg-emerald-700">Save Changes</button>
+            <a href="{{ route('hr.employees.index') }}" class="btn-ghost">Cancel</a>
+            <button type="submit" class="btn-primary">Save Changes</button>
         </div>
     </form>
+
+    <div class="card mt-5 flex flex-col gap-4 p-6 sm:flex-row sm:items-center sm:justify-between">
+        <div class="flex items-start gap-3">
+            <span class="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-sky-50 text-sky-600"><x-icon name="device" /></span>
+            <div>
+                <h3 class="card-title">Registered attendance device</h3>
+                <p class="mt-0.5 text-sm text-slate-500">
+                    @if ($employee->registered_device_hash)
+                        Phone registered {{ $employee->device_registered_at?->diffForHumans() }}. Clock-ins from other devices are flagged.
+                    @else
+                        No device registered yet — the next phone used to clock in will be registered.
+                    @endif
+                </p>
+            </div>
+        </div>
+        @if ($employee->registered_device_hash)
+            <form method="POST" action="{{ route('hr.employees.reset-device', $employee) }}" onsubmit="return confirm('Reset the registered device for {{ e($employee->full_name) }}?')">
+                @csrf
+                <button type="submit" class="btn-secondary shrink-0"><x-icon name="refresh" class="h-4 w-4" /> Reset device</button>
+            </form>
+        @endif
+    </div>
 </x-app-layout>

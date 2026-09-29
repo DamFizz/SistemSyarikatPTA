@@ -1,9 +1,9 @@
 <x-app-layout title="Add Branch">
     <x-slot name="header">
-        <h2 class="text-xl font-semibold text-slate-800">Add Office / Branch</h2>
+        <h2 class="page-title">Add Office / Branch</h2>
     </x-slot>
 
-    <form method="POST" action="{{ route('super-admin.offices.store') }}" x-data="{ locating: false, locateError: '' }" class="bg-white rounded-xl border border-slate-200 p-6 space-y-4 max-w-xl">
+    <form method="POST" action="{{ route('super-admin.offices.store') }}" x-data="{ locating: false, locateError: '' }" class="form-card max-w-2xl">
         @csrf
         <div>
             <x-input-label for="name" value="Branch Name" />
@@ -12,7 +12,7 @@
         </div>
         <div>
             <x-input-label for="address" value="Address" />
-            <textarea id="address" name="address" rows="2" class="mt-1 block w-full rounded-md border-gray-300 focus:border-emerald-500 focus:ring-emerald-500" required>{{ old('address') }}</textarea>
+            <textarea id="address" name="address" rows="2" class="input mt-1.5 block w-full" required>{{ old('address') }}</textarea>
             <x-input-error :messages="$errors->get('address')" class="mt-1" />
         </div>
 
@@ -23,11 +23,12 @@
                     (pos) => { document.getElementById('latitude').value = pos.coords.latitude.toFixed(7); document.getElementById('longitude').value = pos.coords.longitude.toFixed(7); locating = false; },
                     (err) => { locateError = 'Unable to get location: ' + err.message; locating = false; }
                 )"
-                class="text-sm text-emerald-600 underline">
+                class="btn-success-soft btn-sm">
+                <x-icon name="map-pin" class="h-4 w-4" />
                 <span x-show="!locating">Use my current GPS location</span>
                 <span x-show="locating" x-cloak>Getting location...</span>
             </button>
-            <p x-show="locateError" x-cloak x-text="locateError" class="text-xs text-red-600 mt-1"></p>
+            <p x-show="locateError" x-cloak x-text="locateError" class="text-xs text-rose-600 mt-1"></p>
         </div>
 
         <div class="grid grid-cols-2 gap-4">
@@ -47,15 +48,9 @@
             <x-text-input id="allowed_radius_meters" name="allowed_radius_meters" type="number" min="10" max="5000" class="mt-1 block w-full" value="{{ old('allowed_radius_meters', 150) }}" required />
             <x-input-error :messages="$errors->get('allowed_radius_meters')" class="mt-1" />
         </div>
-        <div>
-            <x-input-label for="nfc_tag_id" value="NFC Tag ID (optional)" />
-            <x-text-input id="nfc_tag_id" name="nfc_tag_id" type="text" class="mt-1 block w-full" value="{{ old('nfc_tag_id') }}" placeholder="Text written to the physical NFC tag at this checkpoint" />
-            <p class="text-xs text-slate-400 mt-1">Leave empty if this branch only uses QR checkpoint verification.</p>
-            <x-input-error :messages="$errors->get('nfc_tag_id')" class="mt-1" />
-        </div>
         <div class="flex justify-end gap-3 pt-2">
-            <a href="{{ route('super-admin.offices.index') }}" class="px-4 py-2 text-sm text-slate-600 hover:text-slate-900">Cancel</a>
-            <button type="submit" class="px-4 py-2 bg-emerald-600 text-white text-sm font-medium rounded-lg hover:bg-emerald-700">Create Branch</button>
+            <a href="{{ route('super-admin.offices.index') }}" class="btn-ghost">Cancel</a>
+            <button type="submit" class="btn-primary">Create Branch</button>
         </div>
     </form>
 </x-app-layout>

@@ -1,7 +1,6 @@
 <?php
 
 use App\Http\Controllers\HRAdmin\AttendanceController;
-use App\Http\Controllers\HRAdmin\AttendanceQrController;
 use App\Http\Controllers\HRAdmin\DashboardController;
 use App\Http\Controllers\HRAdmin\DepartmentController;
 use App\Http\Controllers\HRAdmin\EmployeeController;
@@ -19,11 +18,10 @@ Route::middleware(['auth', 'verified', 'role:hr_admin,super_admin'])
         Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
 
         Route::resource('employees', EmployeeController::class)->except(['show', 'destroy']);
+        Route::post('/employees/{employee}/reset-device', [EmployeeController::class, 'resetDevice'])->name('employees.reset-device');
         Route::resource('departments', DepartmentController::class)->except(['show', 'destroy']);
 
         Route::get('/attendance', [AttendanceController::class, 'index'])->name('attendance.index');
-        Route::get('/attendance/qr/{office}', [AttendanceQrController::class, 'display'])->name('attendance.qr-display');
-        Route::get('/attendance/qr/{office}/current', [AttendanceQrController::class, 'current'])->name('attendance.qr-current');
 
         Route::get('/overtime', [OvertimeController::class, 'index'])->name('overtime.index');
         Route::post('/overtime/{overtime}/approve', [OvertimeController::class, 'approve'])->name('overtime.approve');

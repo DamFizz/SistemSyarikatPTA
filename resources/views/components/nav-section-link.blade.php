@@ -1,14 +1,8 @@
 @props(['active' => false, 'icon' => null])
 
-@php
-$classes = $active
-    ? 'bg-emerald-500/10 text-emerald-400 font-medium'
-    : 'text-slate-300 hover:bg-slate-800 hover:text-white';
-@endphp
-
-<a {{ $attributes->merge(['class' => "flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm transition $classes"]) }}>
+<a {{ $attributes->merge(['class' => 'nav-link'.($active ? ' nav-link-active' : '')]) }} @if ($active) aria-current="page" @endif>
     @if ($icon)
-        <span class="shrink-0">{{ $icon }}</span>
+        <x-icon :name="$icon" :class="'h-[19px] w-[19px] shrink-0 '.($active ? 'text-emerald-400' : 'text-slate-500')" />
     @endif
-    <span>{{ $slot }}</span>
+    <span class="truncate">{{ $slot }}</span>
 </a>

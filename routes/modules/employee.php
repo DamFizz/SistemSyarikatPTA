@@ -15,8 +15,12 @@ Route::middleware(['auth', 'verified'])
         Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
 
         Route::get('/attendance', [AttendanceController::class, 'index'])->name('attendance.index');
-        Route::post('/attendance/clock-in', [AttendanceController::class, 'clockIn'])->name('attendance.clock-in');
-        Route::post('/attendance/clock-out', [AttendanceController::class, 'clockOut'])->name('attendance.clock-out');
+        Route::get('/attendance/status', [AttendanceController::class, 'status'])->middleware('throttle:attendance-status')->name('attendance.status');
+        Route::middleware('throttle:attendance')->group(function () {
+            Route::post('/attendance/begin', [AttendanceController::class, 'begin'])->name('attendance.begin');
+            Route::post('/attendance/clock-in', [AttendanceController::class, 'clockIn'])->name('attendance.clock-in');
+            Route::post('/attendance/clock-out', [AttendanceController::class, 'clockOut'])->name('attendance.clock-out');
+        });
 
         Route::resource('overtime', OvertimeController::class)->only(['index', 'create', 'store']);
         Route::resource('leave', LeaveController::class)->only(['index', 'create', 'store']);

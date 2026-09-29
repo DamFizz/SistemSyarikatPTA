@@ -1,13 +1,13 @@
 <x-app-layout title="Audit Log">
     <x-slot name="header">
-        <h2 class="text-xl font-semibold text-slate-800">Audit Log</h2>
+        <h2 class="page-title">Audit Log</h2>
         <p class="text-sm text-slate-500 mt-1">Read-only system activity trail. Records cannot be edited or deleted.</p>
     </x-slot>
 
-    <form method="GET" class="bg-white rounded-xl border border-slate-200 p-4 mb-4 flex flex-wrap gap-3 items-end">
+    <form method="GET" class="filter-bar">
         <div>
             <label class="block text-xs text-slate-500 mb-1">User</label>
-            <select name="user_id" class="rounded-md border-gray-300 text-sm focus:border-emerald-500 focus:ring-emerald-500">
+            <select name="user_id" class="input">
                 <option value="">All</option>
                 @foreach ($users as $user)
                     <option value="{{ $user->id }}" @selected(request('user_id') == $user->id)>{{ $user->name }}</option>
@@ -16,7 +16,7 @@
         </div>
         <div>
             <label class="block text-xs text-slate-500 mb-1">Module</label>
-            <select name="module" class="rounded-md border-gray-300 text-sm focus:border-emerald-500 focus:ring-emerald-500">
+            <select name="module" class="input">
                 <option value="">All</option>
                 @foreach ($modules as $module)
                     <option value="{{ $module }}" @selected(request('module') == $module)>{{ ucfirst($module) }}</option>
@@ -25,18 +25,18 @@
         </div>
         <div>
             <label class="block text-xs text-slate-500 mb-1">From</label>
-            <input type="date" name="from" value="{{ request('from') }}" class="rounded-md border-gray-300 text-sm focus:border-emerald-500 focus:ring-emerald-500">
+            <input type="date" name="from" value="{{ request('from') }}" class="input">
         </div>
         <div>
             <label class="block text-xs text-slate-500 mb-1">To</label>
-            <input type="date" name="to" value="{{ request('to') }}" class="rounded-md border-gray-300 text-sm focus:border-emerald-500 focus:ring-emerald-500">
+            <input type="date" name="to" value="{{ request('to') }}" class="input">
         </div>
-        <button type="submit" class="px-4 py-2 bg-slate-800 text-white text-sm rounded-md hover:bg-slate-700">Filter</button>
+        <button type="submit" class="btn-dark">Filter</button>
     </form>
 
-    <div class="bg-white rounded-xl border border-slate-200 overflow-hidden">
-        <table class="min-w-full divide-y divide-slate-200 text-sm">
-            <thead class="bg-slate-50">
+    <div class="card overflow-x-auto">
+        <table class="table-modern">
+            <thead>
                 <tr class="text-left text-xs uppercase tracking-wide text-slate-500">
                     <th class="px-4 py-3">Date/Time</th>
                     <th class="px-4 py-3">User</th>
@@ -46,7 +46,7 @@
                     <th class="px-4 py-3">IP Address</th>
                 </tr>
             </thead>
-            <tbody class="divide-y divide-slate-100">
+            <tbody>
                 @forelse ($logs as $log)
                     <tr>
                         <td class="px-4 py-3 whitespace-nowrap">{{ $log->created_at->format('d M Y, H:i:s') }}</td>

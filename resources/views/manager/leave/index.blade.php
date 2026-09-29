@@ -1,12 +1,12 @@
 <x-app-layout title="Leave Approvals">
     <x-slot name="header">
-        <h2 class="text-xl font-semibold text-slate-800">Leave Approvals</h2>
+        <h2 class="page-title">Leave Approvals</h2>
         <p class="text-sm text-slate-500 mt-1">Department leave requests.</p>
     </x-slot>
 
-    <div class="bg-white rounded-xl border border-slate-200 overflow-hidden">
-        <table class="min-w-full divide-y divide-slate-200 text-sm">
-            <thead class="bg-slate-50">
+    <div class="card overflow-x-auto">
+        <table class="table-modern">
+            <thead>
                 <tr class="text-left text-xs uppercase tracking-wide text-slate-500">
                     <th class="px-4 py-3">Employee</th>
                     <th class="px-4 py-3">Type</th>
@@ -16,7 +16,7 @@
                     <th class="px-4 py-3"></th>
                 </tr>
             </thead>
-            <tbody class="divide-y divide-slate-100">
+            <tbody>
                 @forelse ($leaveRequests as $leave)
                     <tr>
                         <td class="px-4 py-3 font-medium text-slate-800">{{ $leave->employee->full_name }}</td>
@@ -28,11 +28,11 @@
                             @if ($leave->status === 'pending')
                                 <form method="POST" action="{{ route('manager.leave.approve', $leave) }}" class="inline">
                                     @csrf
-                                    <button class="text-emerald-600 hover:text-emerald-800 font-medium">Approve</button>
+                                    <button class="btn-success-soft btn-sm">Approve</button>
                                 </form>
                                 <form method="POST" action="{{ route('manager.leave.reject', $leave) }}" class="inline">
                                     @csrf
-                                    <button class="text-red-600 hover:text-red-800 font-medium">Reject</button>
+                                    <button class="btn-danger-soft btn-sm">Reject</button>
                                 </form>
                             @endif
                         </td>

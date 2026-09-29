@@ -3,89 +3,108 @@
 namespace App\Services;
 
 use App\Models\Attendance;
-use App\Models\AttendanceQrToken;
 use App\Models\Employee;
 use App\Models\Office;
 use App\Models\Overtime;
+use App\Support\AttendanceCapture;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
 
 class AttendanceService
 {
-    public function clockIn(Employee $employee, float $lat, float $lng, string $selfieDataUrl, ?string $ip, ?string $deviceInfo, ?string $qrToken = null, ?string $nfcTagId = null): Attendance
-    {
-        $today = Carbon::today();
+    /** GPS readings less precise than this are rejected outright. */
+    public const MAX_GPS_ACCURACY_METERS = 500;
 
-        if ($employee->attendance()->whereDate('attendance_date', $today)->whereNotNull('clock_in_time')->exists()) {
-            throw ValidationException::withMessages(['clock_in' => 'You have already clocked in today.']);
+    /** GPS readings less precise than this are accepted but flagged for review. */
+    public const FLAG_GPS_ACCURACY_METERS = 100;
+
+    public const MAX_SELFIE_BYTES = 3 * 1024 * 1024;
+
+    public const MIN_SELFIE_DIMENSION = 120;
+
+    public const STATE_NOT_CLOCKED_IN = 'not_clocked_in';
+
+    public const STATE_CLOCKED_IN = 'clocked_in';
+
+    public const STATE_COMPLETED = 'completed';
+
+    public function todayRecord(Employee $employee): ?Attendance
+    {
+        return $employee->attendance()->whereDate('attendance_date', Carbon::today())->first();
+    }
+
+    public function state(Employee $employee): string
+    {
+        $today = $this->todayRecord($employee);
+
+        return match (true) {
+            ! $today || ! $today->clock_in_time => self::STATE_NOT_CLOCKED_IN,
+            ! $today->clock_out_time => self::STATE_CLOCKED_IN,
+            default => self::STATE_COMPLETED,
+        };
+    }
+
+    /**
+     * Throws unless the request comes from the office WiFi (public IP allow-list).
+     */
+    public function assertOnOfficeNetwork(Office $office, ?string $ip, string $field = 'attendance'): void
+    {
+        if (! $office->network_check_enabled) {
+            return;
         }
 
-        $office = $employee->office;
-        $distance = (int) round($office->distanceTo($lat, $lng));
-
-        if ($distance > $office->allowed_radius_meters) {
+        if (! $office->isNetworkConfigured()) {
             throw ValidationException::withMessages([
-                'clock_in' => "You are {$distance} meters away from your workplace. Clock-in is only available within {$office->allowed_radius_meters} meters.",
+                $field => 'The office WiFi network has not been configured yet. Please contact your system administrator.',
             ]);
         }
 
-        [$verificationMethod, $qrTokenId] = $this->verifyCheckpoint($office, $qrToken, $nfcTagId);
+        if (! $office->acceptsNetwork($ip)) {
+            throw ValidationException::withMessages([
+                $field => 'You are not connected to the office WiFi. Tap the NFC tag to connect, then try again.',
+            ]);
+        }
+    }
 
-        $selfiePath = $this->storeSelfie($selfieDataUrl, $employee->id);
+    public function clockIn(Employee $employee, AttendanceCapture $capture): Attendance
+    {
+        if ($this->state($employee) !== self::STATE_NOT_CLOCKED_IN) {
+            throw ValidationException::withMessages(['attendance' => 'You have already clocked in today.']);
+        }
+
+        $office = $employee->office;
+        $this->assertOnOfficeNetwork($office, $capture->ip);
+        $distance = $this->assertWithinGeofence($office, $capture, 'Clock-in');
+        [$selfiePath, $selfieHash] = $this->storeSelfie($capture->selfieDataUrl, $employee->id, 'in');
+
+        $flags = $this->detectFlags($employee, $office, $capture);
 
         $shift = $employee->currentShift();
-        $status = $this->determineStatus(now(), $shift);
 
         return Attendance::create([
             'employee_id' => $employee->id,
             'shift_id' => $shift?->id,
-            'attendance_date' => $today,
+            'attendance_date' => Carbon::today(),
             'clock_in_time' => now(),
-            'clock_in_lat' => $lat,
-            'clock_in_lng' => $lng,
+            'clock_in_lat' => $capture->latitude,
+            'clock_in_lng' => $capture->longitude,
             'clock_in_distance_meters' => $distance,
+            'clock_in_accuracy_meters' => $capture->accuracy !== null ? (int) round($capture->accuracy) : null,
             'selfie_path' => $selfiePath,
-            'qr_token_id' => $qrTokenId,
-            'verification_method' => $verificationMethod,
-            'device_info' => $deviceInfo,
-            'ip_address' => $ip,
-            'status' => $status,
+            'selfie_hash' => $selfieHash,
+            'verification_method' => $office->network_check_enabled ? 'wifi' : 'testing',
+            'device_info' => Str::limit((string) $capture->userAgent, 250, ''),
+            'device_hash' => $capture->deviceHash,
+            'ip_address' => $capture->ip,
+            'status' => $this->determineStatus(now(), $shift),
+            'is_flagged' => $flags !== [],
+            'flag_reasons' => $flags ?: null,
         ]);
     }
 
-    /**
-     * Verify the checkpoint via QR token or NFC tag. Returns [method, qr_token_id|null].
-     *
-     * @return array{0: string, 1: int|null}
-     */
-    private function verifyCheckpoint(Office $office, ?string $qrToken, ?string $nfcTagId): array
-    {
-        if ($nfcTagId) {
-            if (! $office->nfc_tag_id || ! hash_equals($office->nfc_tag_id, $nfcTagId)) {
-                throw ValidationException::withMessages(['clock_in' => 'NFC tag not recognized for this office. Please use QR instead.']);
-            }
-
-            return ['nfc', null];
-        }
-
-        if ($qrToken) {
-            $token = AttendanceQrToken::where('token', $qrToken)
-                ->where('office_id', $office->id)
-                ->where('expires_at', '>', now())
-                ->first();
-
-            if (! $token) {
-                throw ValidationException::withMessages(['clock_in' => 'QR code expired or invalid. Please scan the current attendance QR.']);
-            }
-
-            return ['qr', $token->id];
-        }
-
-        throw ValidationException::withMessages(['clock_in' => 'Checkpoint verification (QR or NFC) is required.']);
-    }
-
-    public function clockOut(Employee $employee, float $lat, float $lng): array
+    public function clockOut(Employee $employee, AttendanceCapture $capture): array
     {
         $attendance = $employee->attendance()
             ->whereDate('attendance_date', Carbon::today())
@@ -94,17 +113,15 @@ class AttendanceService
             ->first();
 
         if (! $attendance) {
-            throw ValidationException::withMessages(['clock_out' => 'No active clock-in found for today.']);
+            throw ValidationException::withMessages(['attendance' => 'No active clock-in found for today.']);
         }
 
         $office = $employee->office;
-        $distance = (int) round($office->distanceTo($lat, $lng));
+        $this->assertOnOfficeNetwork($office, $capture->ip);
+        $distance = $this->assertWithinGeofence($office, $capture, 'Clock-out');
+        [$selfiePath, $selfieHash] = $this->storeSelfie($capture->selfieDataUrl, $employee->id, 'out');
 
-        if ($distance > $office->allowed_radius_meters) {
-            throw ValidationException::withMessages([
-                'clock_out' => "You are {$distance} meters away from your workplace. Clock-out is only available within {$office->allowed_radius_meters} meters.",
-            ]);
-        }
+        $flags = $this->detectFlags($employee, $office, $capture, $attendance);
 
         $clockOutTime = now();
         $workingMinutes = max(0, (int) abs($clockOutTime->diffInMinutes($attendance->clock_in_time)));
@@ -114,11 +131,20 @@ class AttendanceService
             $workingMinutes = max(0, $workingMinutes - $shift->break_duration_minutes);
         }
 
+        $allFlags = array_values(array_unique(array_merge($attendance->flag_reasons ?? [], $flags)));
+
         $attendance->update([
             'clock_out_time' => $clockOutTime,
-            'clock_out_lat' => $lat,
-            'clock_out_lng' => $lng,
+            'clock_out_lat' => $capture->latitude,
+            'clock_out_lng' => $capture->longitude,
+            'clock_out_distance_meters' => $distance,
+            'clock_out_accuracy_meters' => $capture->accuracy !== null ? (int) round($capture->accuracy) : null,
+            'clock_out_selfie_path' => $selfiePath,
+            'clock_out_selfie_hash' => $selfieHash,
+            'clock_out_ip_address' => $capture->ip,
             'working_minutes' => $workingMinutes,
+            'is_flagged' => $allFlags !== [],
+            'flag_reasons' => $allFlags ?: null,
         ]);
 
         $potentialOtMinutes = 0;
@@ -159,6 +185,71 @@ class AttendanceService
         ];
     }
 
+    private function assertWithinGeofence(Office $office, AttendanceCapture $capture, string $action): int
+    {
+        if ($capture->accuracy !== null && $capture->accuracy > self::MAX_GPS_ACCURACY_METERS) {
+            throw ValidationException::withMessages([
+                'attendance' => 'Your GPS signal is too weak (±'.round($capture->accuracy).'m). Turn on precise location / GPS and try again.',
+            ]);
+        }
+
+        $distance = (int) round($office->distanceTo($capture->latitude, $capture->longitude));
+
+        if ($distance > $office->allowed_radius_meters) {
+            throw ValidationException::withMessages([
+                'attendance' => "You are {$distance} meters away from your workplace. {$action} is only available within {$office->allowed_radius_meters} meters.",
+            ]);
+        }
+
+        return $distance;
+    }
+
+    /**
+     * Soft anomalies: the action is allowed but HR sees it highlighted for review.
+     *
+     * @return list<string>
+     */
+    private function detectFlags(Employee $employee, Office $office, AttendanceCapture $capture, ?Attendance $existing = null): array
+    {
+        $flags = [];
+
+        if (! $office->network_check_enabled) {
+            $flags[] = 'Office WiFi check disabled (testing mode)';
+        }
+
+        if ($capture->accuracy !== null && $capture->accuracy > self::FLAG_GPS_ACCURACY_METERS) {
+            $flags[] = 'Weak GPS accuracy (±'.round($capture->accuracy).'m)';
+        }
+
+        if (! $capture->deviceHash) {
+            $flags[] = 'Device could not be identified';
+        } elseif (! $employee->registered_device_hash) {
+            $employee->forceFill([
+                'registered_device_hash' => $capture->deviceHash,
+                'device_registered_at' => now(),
+            ])->save();
+        } elseif (! hash_equals($employee->registered_device_hash, $capture->deviceHash)) {
+            $flags[] = 'Unrecognised device (not the employee\'s registered phone)';
+        }
+
+        if ($capture->deviceHash) {
+            $sharedDevice = Attendance::whereDate('attendance_date', Carbon::today())
+                ->where('device_hash', $capture->deviceHash)
+                ->where('employee_id', '!=', $employee->id)
+                ->exists();
+
+            if ($sharedDevice) {
+                $flags[] = 'Same device used by another employee today (possible buddy punching)';
+            }
+        }
+
+        if ($existing && $existing->device_hash && $capture->deviceHash && ! hash_equals($existing->device_hash, $capture->deviceHash)) {
+            $flags[] = 'Clocked out from a different device than clock-in';
+        }
+
+        return $flags;
+    }
+
     private function determineStatus(Carbon $clockInTime, $shift): string
     {
         if (! $shift) {
@@ -171,18 +262,53 @@ class AttendanceService
         return $clockInTime->greaterThan($graceDeadline) ? Attendance::STATUS_LATE : Attendance::STATUS_PRESENT;
     }
 
-    private function storeSelfie(string $dataUrl, int $employeeId): string
+    /**
+     * Validate that the selfie is a genuine, fresh camera image and store it privately.
+     *
+     * @return array{0: string, 1: string} [path, sha256]
+     */
+    private function storeSelfie(string $dataUrl, int $employeeId, string $type): array
     {
-        if (! preg_match('/^data:image\/(\w+);base64,/', $dataUrl, $matches)) {
-            throw ValidationException::withMessages(['clock_in' => 'Invalid selfie image.']);
+        $invalid = fn (string $message) => ValidationException::withMessages(['selfie' => $message]);
+
+        if (! preg_match('/^data:image\/(jpeg|png|webp);base64,/', $dataUrl)) {
+            throw $invalid('Invalid selfie image. Please take a live photo with your camera.');
         }
 
-        $extension = $matches[1] === 'jpeg' ? 'jpg' : $matches[1];
-        $content = base64_decode(substr($dataUrl, strpos($dataUrl, ',') + 1));
+        $binary = base64_decode(substr($dataUrl, strpos($dataUrl, ',') + 1), true);
 
-        $path = "selfies/{$employeeId}_" . now()->format('YmdHis') . ".{$extension}";
-        Storage::disk('public')->put($path, $content);
+        if ($binary === false || strlen($binary) === 0 || strlen($binary) > self::MAX_SELFIE_BYTES) {
+            throw $invalid('Selfie image is empty or too large.');
+        }
 
-        return $path;
+        $info = @getimagesizefromstring($binary);
+
+        if (! $info || ! in_array($info['mime'], ['image/jpeg', 'image/png', 'image/webp'], true)) {
+            throw $invalid('Selfie is not a valid image.');
+        }
+
+        if ($info[0] < self::MIN_SELFIE_DIMENSION || $info[1] < self::MIN_SELFIE_DIMENSION) {
+            throw $invalid('Selfie resolution is too low. Please allow full camera access.');
+        }
+
+        $hash = hash('sha256', $binary);
+
+        $reused = Attendance::where('selfie_hash', $hash)->orWhere('clock_out_selfie_hash', $hash)->exists();
+
+        if ($reused) {
+            throw $invalid('This photo has already been used. Please take a new live selfie.');
+        }
+
+        $extension = match ($info['mime']) {
+            'image/png' => 'png',
+            'image/webp' => 'webp',
+            default => 'jpg',
+        };
+
+        // Private disk: selfies are only served through an authorised route, never a public URL.
+        $path = "selfies/{$employeeId}/".now()->format('Ymd_His')."_{$type}_".Str::random(16).".{$extension}";
+        Storage::disk('local')->put($path, $binary);
+
+        return [$path, $hash];
     }
 }

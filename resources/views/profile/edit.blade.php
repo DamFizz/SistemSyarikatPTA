@@ -1,28 +1,46 @@
-<x-app-layout>
+<x-app-layout title="My Profile">
     <x-slot name="header">
-        <h2 class="font-semibold text-xl text-gray-800 leading-tight">
-            {{ __('Profile') }}
-        </h2>
+        <p class="eyebrow">Account</p>
+        <h2 class="page-title mt-1">My Profile</h2>
+        <p class="muted mt-1">Manage your personal details, password and account security.</p>
     </x-slot>
 
-    <div class="py-12">
-        <div class="max-w-7xl mx-auto sm:px-6 lg:px-8 space-y-6">
-            <div class="p-4 sm:p-8 bg-white shadow sm:rounded-lg">
-                <div class="max-w-xl">
-                    @include('profile.partials.update-profile-information-form')
+    <div class="grid gap-6 lg:grid-cols-3">
+        <div class="surface-dark p-6 lg:row-span-3 lg:self-start">
+            <div class="relative">
+                <div class="flex h-16 w-16 items-center justify-center rounded-2xl bg-gradient-to-br from-emerald-400 to-teal-600 text-2xl font-bold text-white shadow-lg shadow-emerald-500/30">
+                    {{ strtoupper(substr($user->name, 0, 1)) }}
                 </div>
-            </div>
+                <div class="mt-4 text-lg font-semibold text-white">{{ $user->name }}</div>
+                <div class="text-sm text-slate-400">{{ $user->email }}</div>
+                <div class="mt-4 inline-flex chip bg-emerald-400/10 text-emerald-300 ring-1 ring-emerald-400/20 capitalize">{{ str_replace('_', ' ', $user->role) }}</div>
 
-            <div class="p-4 sm:p-8 bg-white shadow sm:rounded-lg">
-                <div class="max-w-xl">
-                    @include('profile.partials.update-password-form')
-                </div>
+                @if ($user->employee)
+                    <dl class="mt-6 space-y-3 border-t border-white/10 pt-5 text-sm">
+                        <div class="flex justify-between gap-3"><dt class="text-slate-500">Employee ID</dt><dd class="font-mono text-slate-200">{{ $user->employee->employee_code }}</dd></div>
+                        <div class="flex justify-between gap-3"><dt class="text-slate-500">Position</dt><dd class="text-right text-slate-200">{{ $user->employee->position }}</dd></div>
+                        <div class="flex justify-between gap-3"><dt class="text-slate-500">Department</dt><dd class="text-right text-slate-200">{{ $user->employee->department?->name }}</dd></div>
+                        <div class="flex justify-between gap-3"><dt class="text-slate-500">Office</dt><dd class="text-right text-slate-200">{{ $user->employee->office?->name }}</dd></div>
+                    </dl>
+                @endif
             </div>
+        </div>
 
-            <div class="p-4 sm:p-8 bg-white shadow sm:rounded-lg">
-                <div class="max-w-xl">
-                    @include('profile.partials.delete-user-form')
-                </div>
+        <div class="card p-6 sm:p-8 lg:col-span-2">
+            <div class="max-w-xl">
+                @include('profile.partials.update-profile-information-form')
+            </div>
+        </div>
+
+        <div class="card p-6 sm:p-8 lg:col-span-2">
+            <div class="max-w-xl">
+                @include('profile.partials.update-password-form')
+            </div>
+        </div>
+
+        <div class="card border-rose-100 p-6 sm:p-8 lg:col-span-2">
+            <div class="max-w-xl">
+                @include('profile.partials.delete-user-form')
             </div>
         </div>
     </div>

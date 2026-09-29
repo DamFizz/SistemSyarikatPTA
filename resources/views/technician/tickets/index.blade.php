@@ -1,12 +1,12 @@
 <x-app-layout title="Ticket Queue">
     <x-slot name="header">
-        <h2 class="text-xl font-semibold text-slate-800">Helpdesk Ticket Queue</h2>
+        <h2 class="page-title">Helpdesk Ticket Queue</h2>
     </x-slot>
 
-    <form method="GET" class="bg-white rounded-xl border border-slate-200 p-4 mb-4 flex flex-wrap gap-3 items-end">
+    <form method="GET" class="filter-bar">
         <div>
             <label class="block text-xs text-slate-500 mb-1">Status</label>
-            <select name="status" class="rounded-md border-gray-300 text-sm focus:border-emerald-500 focus:ring-emerald-500">
+            <select name="status" class="input">
                 <option value="">Open (default)</option>
                 @foreach (['open', 'assigned', 'in_progress', 'waiting_user', 'resolved', 'closed'] as $status)
                     <option value="{{ $status }}" @selected(request('status') == $status)>{{ str($status)->replace('_', ' ')->title() }}</option>
@@ -14,15 +14,15 @@
             </select>
         </div>
         <label class="flex items-center gap-2 text-sm text-slate-600">
-            <input type="checkbox" name="mine" value="1" @checked(request('mine')) class="rounded border-gray-300 text-emerald-600 focus:ring-emerald-500">
+            <input type="checkbox" name="mine" value="1" @checked(request('mine')) >
             My tickets only
         </label>
-        <button type="submit" class="px-4 py-2 bg-slate-800 text-white text-sm rounded-md hover:bg-slate-700">Filter</button>
+        <button type="submit" class="btn-dark">Filter</button>
     </form>
 
-    <div class="bg-white rounded-xl border border-slate-200 overflow-hidden">
-        <table class="min-w-full divide-y divide-slate-200 text-sm">
-            <thead class="bg-slate-50">
+    <div class="card overflow-x-auto">
+        <table class="table-modern">
+            <thead>
                 <tr class="text-left text-xs uppercase tracking-wide text-slate-500">
                     <th class="px-4 py-3">Ticket</th>
                     <th class="px-4 py-3">Employee</th>
@@ -32,7 +32,7 @@
                     <th class="px-4 py-3"></th>
                 </tr>
             </thead>
-            <tbody class="divide-y divide-slate-100">
+            <tbody>
                 @forelse ($tickets as $ticket)
                     <tr>
                         <td class="px-4 py-3">
@@ -44,7 +44,7 @@
                         <td class="px-4 py-3"><x-status-badge :status="$ticket->priority" /></td>
                         <td class="px-4 py-3"><x-status-badge :status="$ticket->status" /></td>
                         <td class="px-4 py-3 text-right">
-                            <a href="{{ route('technician.tickets.show', $ticket) }}" class="text-emerald-600 hover:text-emerald-800 font-medium">Open</a>
+                            <a href="{{ route('technician.tickets.show', $ticket) }}" class="btn-secondary btn-sm">Open</a>
                         </td>
                     </tr>
                 @empty

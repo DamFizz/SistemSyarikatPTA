@@ -1,12 +1,12 @@
 <x-app-layout title="Overtime Approvals">
     <x-slot name="header">
-        <h2 class="text-xl font-semibold text-slate-800">Overtime Approvals</h2>
+        <h2 class="page-title">Overtime Approvals</h2>
         <p class="text-sm text-slate-500 mt-1">Department overtime requests.</p>
     </x-slot>
 
-    <div class="bg-white rounded-xl border border-slate-200 overflow-hidden">
-        <table class="min-w-full divide-y divide-slate-200 text-sm">
-            <thead class="bg-slate-50">
+    <div class="card overflow-x-auto">
+        <table class="table-modern">
+            <thead>
                 <tr class="text-left text-xs uppercase tracking-wide text-slate-500">
                     <th class="px-4 py-3">Employee</th>
                     <th class="px-4 py-3">Date</th>
@@ -17,7 +17,7 @@
                     <th class="px-4 py-3"></th>
                 </tr>
             </thead>
-            <tbody class="divide-y divide-slate-100">
+            <tbody>
                 @forelse ($overtimes as $ot)
                     <tr>
                         <td class="px-4 py-3 font-medium text-slate-800">{{ $ot->employee->full_name }}</td>
@@ -30,11 +30,11 @@
                             @if ($ot->status === 'pending')
                                 <form method="POST" action="{{ route('manager.overtime.approve', $ot) }}" class="inline">
                                     @csrf
-                                    <button class="text-emerald-600 hover:text-emerald-800 font-medium">Approve</button>
+                                    <button class="btn-success-soft btn-sm">Approve</button>
                                 </form>
                                 <form method="POST" action="{{ route('manager.overtime.reject', $ot) }}" class="inline">
                                     @csrf
-                                    <button class="text-red-600 hover:text-red-800 font-medium">Reject</button>
+                                    <button class="btn-danger-soft btn-sm">Reject</button>
                                 </form>
                             @endif
                         </td>

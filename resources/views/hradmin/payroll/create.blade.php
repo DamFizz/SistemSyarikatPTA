@@ -1,9 +1,9 @@
 <x-app-layout title="New Payroll Period">
     <x-slot name="header">
-        <h2 class="text-xl font-semibold text-slate-800">New Payroll Period</h2>
+        <h2 class="page-title">New Payroll Period</h2>
     </x-slot>
 
-    <form method="POST" action="{{ route('hr.payroll.store') }}" class="bg-white rounded-xl border border-slate-200 p-6 space-y-4 max-w-xl">
+    <form method="POST" action="{{ route('hr.payroll.store') }}" class="form-card max-w-2xl">
         @csrf
         <div>
             <x-input-label for="period_name" value="Period Name" />
@@ -23,8 +23,8 @@
             </div>
         </div>
         <div class="flex justify-end gap-3 pt-2">
-            <a href="{{ route('hr.payroll.index') }}" class="px-4 py-2 text-sm text-slate-600 hover:text-slate-900">Cancel</a>
-            <button type="submit" class="px-4 py-2 bg-emerald-600 text-white text-sm font-medium rounded-lg hover:bg-emerald-700">Create Period</button>
+            <a href="{{ route('hr.payroll.index') }}" class="btn-ghost">Cancel</a>
+            <button type="submit" class="btn-primary">Create Period</button>
         </div>
     </form>
 </x-app-layout>

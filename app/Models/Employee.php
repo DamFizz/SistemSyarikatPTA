@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Attributes\Fillable;
+use Illuminate\Database\Eloquent\Attributes\Hidden;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -12,7 +13,9 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
     'user_id', 'employee_code', 'full_name', 'ic_number', 'phone', 'gender', 'dob',
     'address', 'profile_photo', 'department_id', 'office_id', 'manager_id', 'position',
     'employment_type', 'employment_status', 'join_date',
+    'registered_device_hash', 'device_registered_at',
 ])]
+#[Hidden(['registered_device_hash'])]
 class Employee extends Model
 {
     use HasFactory;
@@ -22,6 +25,7 @@ class Employee extends Model
         return [
             'dob' => 'date',
             'join_date' => 'date',
+            'device_registered_at' => 'datetime',
         ];
     }
 

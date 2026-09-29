@@ -19,7 +19,6 @@ class StoreOfficeRequest extends FormRequest
             'latitude' => ['required', 'numeric', 'between:-90,90'],
             'longitude' => ['required', 'numeric', 'between:-180,180'],
             'allowed_radius_meters' => ['required', 'integer', 'min:10', 'max:5000'],
-            'nfc_tag_id' => ['nullable', 'string', 'max:255', 'unique:offices,nfc_tag_id'],
         ];
     }
 }

@@ -1,9 +1,9 @@
 <x-app-layout title="Announcements">
     <x-slot name="header">
         <div class="flex items-center justify-between">
-            <h2 class="text-xl font-semibold text-slate-800">Announcements</h2>
+            <h2 class="page-title">Announcements</h2>
             @if (Auth::user()->hasRole('super_admin', 'hr_admin', 'manager'))
-                <a href="{{ route('announcements.create') }}" class="inline-flex items-center px-4 py-2 bg-emerald-600 text-white text-sm font-medium rounded-lg hover:bg-emerald-700">
+                <a href="{{ route('announcements.create') }}" class="btn-primary">
                     + New Announcement
                 </a>
             @endif
@@ -12,7 +12,7 @@
 
     <div class="space-y-4">
         @forelse ($announcements as $announcement)
-            <div class="bg-white rounded-xl border border-slate-200 p-5">
+            <div class="card p-5">
                 <div class="flex items-start justify-between">
                     <div>
                         <div class="flex items-center gap-2">
@@ -31,7 +31,7 @@
                 @endif
             </div>
         @empty
-            <div class="bg-white rounded-xl border border-slate-200 p-8 text-center text-slate-400">No announcements yet.</div>
+            <div class="card p-8 text-center text-slate-400">No announcements yet.</div>
         @endforelse
     </div>
 

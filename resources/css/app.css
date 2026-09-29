@@ -5,3 +5,213 @@
 [x-cloak] {
     display: none !important;
 }
+
+@layer base {
+    html {
+        -webkit-tap-highlight-color: transparent;
+    }
+
+    body {
+        @apply bg-canvas text-slate-700;
+        font-feature-settings: 'cv11', 'ss01';
+    }
+
+    h1, h2, h3, h4 {
+        @apply text-slate-900 tracking-tight;
+    }
+
+    ::selection {
+        @apply bg-emerald-200 text-emerald-950;
+    }
+
+    a {
+        @apply transition-colors;
+    }
+
+    /* Plain links inside content get the accent colour. */
+    main a:not([class*='btn']):not([class*='text-']):not(.nav-link) {
+        @apply text-emerald-700 hover:text-emerald-900;
+    }
+}
+
+@layer components {
+    /* ---------- Surfaces ---------- */
+    .card {
+        @apply bg-white rounded-2xl border border-slate-200/80 shadow-soft;
+    }
+
+    .card-hover {
+        @apply transition duration-200 hover:-translate-y-0.5 hover:shadow-lift hover:border-slate-300/80;
+    }
+
+    .card-header {
+        @apply flex items-center justify-between gap-3 px-5 py-4 border-b border-slate-100;
+    }
+
+    .card-title {
+        @apply text-sm font-semibold text-slate-900;
+    }
+
+    .surface-dark {
+        @apply relative overflow-hidden rounded-2xl bg-ink-900 text-slate-300 border border-white/5;
+    }
+
+    .surface-dark::before {
+        content: '';
+        @apply pointer-events-none absolute -top-24 -right-16 h-64 w-64 rounded-full bg-emerald-500/25 blur-3xl;
+    }
+
+    /* ---------- Typography ---------- */
+    .page-title {
+        @apply text-2xl sm:text-[1.7rem] font-bold text-slate-900 tracking-tight;
+    }
+
+    .eyebrow {
+        @apply text-[11px] font-semibold uppercase tracking-[0.14em] text-emerald-600;
+    }
+
+    .muted {
+        @apply text-sm text-slate-500;
+    }
+
+    /* ---------- Buttons ---------- */
+    .btn {
+        @apply inline-flex items-center justify-center gap-2 rounded-xl px-4 py-2.5 text-sm font-semibold transition duration-150
+               focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-emerald-500
+               disabled:opacity-50 disabled:cursor-not-allowed active:scale-[0.98];
+    }
+
+    .btn-primary {
+        @apply btn text-white bg-gradient-to-b from-emerald-500 to-emerald-600 shadow-sm shadow-emerald-600/30
+               ring-1 ring-inset ring-white/10 hover:from-emerald-500 hover:to-emerald-700 hover:shadow-md hover:shadow-emerald-600/30;
+    }
+
+    .btn-dark {
+        @apply btn text-white bg-ink-900 hover:bg-ink-700 shadow-sm;
+    }
+
+    .btn-secondary {
+        @apply btn text-slate-700 bg-white border border-slate-200 shadow-sm hover:bg-slate-50 hover:border-slate-300;
+    }
+
+    .btn-ghost {
+        @apply btn text-slate-600 hover:bg-slate-100 hover:text-slate-900;
+    }
+
+    .btn-danger {
+        @apply btn text-white bg-rose-600 hover:bg-rose-700 shadow-sm shadow-rose-600/20;
+    }
+
+    .btn-danger-soft {
+        @apply btn text-rose-700 bg-rose-50 hover:bg-rose-100;
+    }
+
+    .btn-success-soft {
+        @apply btn text-emerald-700 bg-emerald-50 hover:bg-emerald-100;
+    }
+
+    .btn-sm {
+        @apply px-3 py-1.5 text-xs rounded-lg;
+    }
+
+    .btn-lg {
+        @apply px-6 py-3.5 text-base rounded-2xl;
+    }
+
+    /* ---------- Forms ---------- */
+    .input {
+        @apply rounded-xl border-slate-200 bg-white text-sm text-slate-800 shadow-sm placeholder:text-slate-400
+               focus:border-emerald-500 focus:ring-4 focus:ring-emerald-500/15 transition;
+    }
+
+    .label {
+        @apply block text-[13px] font-medium text-slate-700;
+    }
+
+    .filter-bar {
+        @apply card p-4 mb-5 flex flex-wrap gap-3 items-end;
+    }
+
+    .filter-bar label {
+        @apply !text-[11px] !font-semibold !uppercase !tracking-wider !text-slate-400;
+    }
+
+    .form-card {
+        @apply card p-6 sm:p-8 space-y-5;
+    }
+
+    /* @csrf / @method inputs must not push the first visible field down. */
+    .form-card > input[type='hidden'] + :not(input[type='hidden']) {
+        margin-top: 0 !important;
+    }
+
+    input[type='checkbox'] {
+        @apply rounded-md border-slate-300 text-emerald-600 focus:ring-emerald-500/30;
+    }
+
+    /* ---------- Tables ---------- */
+    .table-modern {
+        @apply min-w-full text-sm;
+    }
+
+    .table-modern thead {
+        @apply bg-slate-50/70;
+    }
+
+    .table-modern thead th {
+        @apply px-4 py-3 text-left text-[11px] font-semibold uppercase tracking-wider text-slate-400 whitespace-nowrap border-b border-slate-100;
+    }
+
+    .table-modern tbody tr {
+        @apply border-b border-slate-100 last:border-0 transition-colors hover:bg-slate-50/60;
+    }
+
+    .table-modern tbody td {
+        @apply text-slate-600;
+    }
+
+    /* ---------- Feedback ---------- */
+    .alert {
+        @apply flex items-start gap-3 rounded-2xl border px-4 py-3 text-sm;
+    }
+
+    .alert-success {
+        @apply alert bg-emerald-50/80 border-emerald-200/70 text-emerald-800;
+    }
+
+    .alert-error {
+        @apply alert bg-rose-50/80 border-rose-200/70 text-rose-700;
+    }
+
+    .alert-warning {
+        @apply alert bg-amber-50/80 border-amber-200/70 text-amber-800;
+    }
+
+    .chip {
+        @apply inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-medium;
+    }
+
+    /* ---------- Navigation ---------- */
+    .nav-link {
+        @apply relative flex items-center gap-3 rounded-xl px-3 py-2.5 text-[13.5px] font-medium text-slate-400 transition
+               hover:bg-white/[0.04] hover:text-white;
+    }
+
+    .nav-link-active {
+        @apply bg-white/[0.07] text-white;
+    }
+
+    .nav-link-active::before {
+        content: '';
+        @apply absolute -left-3 top-1/2 h-5 w-1 -translate-y-1/2 rounded-r-full bg-emerald-400 shadow-[0_0_12px_2px_rgba(52,211,153,0.6)];
+    }
+
+    .nav-section {
+        @apply px-3 pt-5 pb-1.5 text-[10.5px] font-semibold uppercase tracking-[0.16em] text-slate-500;
+    }
+
+    .bg-grid {
+        background-image: radial-gradient(circle at 1px 1px, rgba(15, 23, 42, 0.06) 1px, transparent 0);
+        background-size: 22px 22px;
+    }
+}

@@ -1,10 +1,10 @@
 <x-app-layout title="Add Team Member">
     <x-slot name="header">
-        <h2 class="text-xl font-semibold text-slate-800">Add Team Member</h2>
+        <h2 class="page-title">Add Team Member</h2>
         <p class="text-sm text-slate-500 mt-1">Added to your department, reporting directly to you. New accounts start as "Employee" role on probation.</p>
     </x-slot>
 
-    <form method="POST" action="{{ route('manager.employees.store') }}" class="bg-white rounded-xl border border-slate-200 p-6 space-y-6 max-w-3xl">
+    <form method="POST" action="{{ route('manager.employees.store') }}" class="form-card !space-y-6 max-w-3xl">
         @csrf
 
         <div>
@@ -51,7 +51,7 @@
                 </div>
                 <div>
                     <x-input-label for="gender" value="Gender" />
-                    <select id="gender" name="gender" class="mt-1 block w-full rounded-md border-gray-300 focus:border-emerald-500 focus:ring-emerald-500">
+                    <select id="gender" name="gender" class="input mt-1.5 block w-full">
                         <option value="">-</option>
                         <option value="male" @selected(old('gender') === 'male')>Male</option>
                         <option value="female" @selected(old('gender') === 'female')>Female</option>
@@ -68,7 +68,7 @@
                 </div>
                 <div class="sm:col-span-2 lg:col-span-3">
                     <x-input-label for="address" value="Address" />
-                    <textarea id="address" name="address" rows="2" class="mt-1 block w-full rounded-md border-gray-300 focus:border-emerald-500 focus:ring-emerald-500">{{ old('address') }}</textarea>
+                    <textarea id="address" name="address" rows="2" class="input mt-1.5 block w-full">{{ old('address') }}</textarea>
                 </div>
             </div>
         </div>
@@ -78,7 +78,7 @@
             <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
                 <div>
                     <x-input-label for="office_id" value="Office Location" />
-                    <select id="office_id" name="office_id" class="mt-1 block w-full rounded-md border-gray-300 focus:border-emerald-500 focus:ring-emerald-500" required>
+                    <select id="office_id" name="office_id" class="input mt-1.5 block w-full" required>
                         <option value="">Select office</option>
                         @foreach ($offices as $office)
                             <option value="{{ $office->id }}" @selected(old('office_id') == $office->id)>{{ $office->name }}</option>
@@ -93,7 +93,7 @@
                 </div>
                 <div>
                     <x-input-label for="employment_type" value="Employment Type" />
-                    <select id="employment_type" name="employment_type" class="mt-1 block w-full rounded-md border-gray-300 focus:border-emerald-500 focus:ring-emerald-500">
+                    <select id="employment_type" name="employment_type" class="input mt-1.5 block w-full">
                         @foreach (['full_time' => 'Full Time', 'part_time' => 'Part Time', 'contract' => 'Contract', 'intern' => 'Intern'] as $value => $label)
                             <option value="{{ $value }}" @selected(old('employment_type') === $value)>{{ $label }}</option>
                         @endforeach
@@ -104,8 +104,8 @@
         </div>
 
         <div class="flex justify-end gap-3 pt-2">
-            <a href="{{ route('manager.employees.index') }}" class="px-4 py-2 text-sm text-slate-600 hover:text-slate-900">Cancel</a>
-            <button type="submit" class="px-4 py-2 bg-emerald-600 text-white text-sm font-medium rounded-lg hover:bg-emerald-700">Add Team Member</button>
+            <a href="{{ route('manager.employees.index') }}" class="btn-ghost">Cancel</a>
+            <button type="submit" class="btn-primary">Add Team Member</button>
         </div>
     </form>
 </x-app-layout>
