@@ -25,9 +25,9 @@
         <div class="grid gap-3 p-5 sm:grid-cols-2 lg:grid-cols-3">
             @forelse ($team as $member)
                 @php $record = $member->attendance->first(); @endphp
-                <div class="flex items-center gap-3 rounded-2xl border border-slate-100 bg-slate-50/50 p-3">
+                <div class="flex items-center gap-3 glass-inset p-3">
                     <div class="relative">
-                        <div class="flex h-10 w-10 items-center justify-center rounded-xl bg-white text-sm font-bold text-slate-700 ring-1 ring-slate-200">{{ strtoupper(substr($member->full_name, 0, 1)) }}</div>
+                        <div class="flex h-10 w-10 items-center justify-center rounded-full bg-white/80 text-sm font-bold text-slate-700 ring-1 ring-white shadow-sm">{{ strtoupper(substr($member->full_name, 0, 1)) }}</div>
                         <span @class([
                             'absolute -bottom-0.5 -right-0.5 h-3 w-3 rounded-full ring-2 ring-white',
                             'bg-emerald-500' => $record?->clock_in_time && ! $record?->clock_out_time,

@@ -215,7 +215,7 @@
 
                             <div class="flex flex-col gap-2 sm:flex-row">
                                 <button type="button" x-show="!selfie" @click="capture()" :disabled="!cameraReady"
-                                        class="inline-flex w-full items-center justify-center gap-2 rounded-xl bg-white px-5 py-3 text-sm font-semibold text-ink-900 transition hover:bg-slate-100 disabled:cursor-not-allowed disabled:opacity-40 sm:w-auto sm:py-2.5">
+                                        class="inline-flex w-full items-center justify-center gap-2 rounded-full bg-white px-5 py-3 text-sm font-semibold text-ink-900 transition hover:bg-slate-100 disabled:cursor-not-allowed disabled:opacity-40 sm:w-auto sm:py-2.5">
                                     <x-icon name="camera" class="h-4 w-4" /> Take selfie
                                 </button>
                                 <button type="button" x-show="selfie" x-cloak @click="submit()" :disabled="busy || locationState !== 'ok' || restDayMissing"
@@ -251,16 +251,16 @@
             <div class="card p-5">
                 <h3 class="card-title">Today</h3>
                 <div class="mt-4 grid grid-cols-2 gap-3">
-                    <div class="rounded-2xl bg-slate-50 p-4">
+                    <div class="glass-inset p-4">
                         <div class="text-xs font-medium text-slate-500">Clock in</div>
                         <div class="mt-1 font-mono text-2xl text-slate-900">{{ $today?->clock_in_time?->format('H:i') ?? '--:--' }}</div>
                     </div>
-                    <div class="rounded-2xl bg-slate-50 p-4">
+                    <div class="glass-inset p-4">
                         <div class="text-xs font-medium text-slate-500">Clock out</div>
                         <div class="mt-1 font-mono text-2xl text-slate-900">{{ $today?->clock_out_time?->format('H:i') ?? '--:--' }}</div>
                     </div>
                 </div>
-                <div class="mt-3 flex items-center justify-between rounded-2xl border border-slate-100 px-4 py-3 text-sm">
+                <div class="mt-3 flex items-center justify-between rounded-2xl border border-slate-900/[0.06] px-4 py-3 text-sm">
                     <span class="text-slate-500">Status</span>
                     @if ($today)
                         <x-status-badge :status="$today->status" />
@@ -269,7 +269,7 @@
                     @endif
                 </div>
                 @if ($today?->working_minutes)
-                    <div class="mt-3 flex items-center justify-between rounded-2xl border border-slate-100 px-4 py-3 text-sm">
+                    <div class="mt-3 flex items-center justify-between rounded-2xl border border-slate-900/[0.06] px-4 py-3 text-sm">
                         <span class="text-slate-500">Worked</span>
                         <span class="font-semibold text-slate-900">{{ intdiv($today->working_minutes, 60) }}h {{ $today->working_minutes % 60 }}m</span>
                     </div>

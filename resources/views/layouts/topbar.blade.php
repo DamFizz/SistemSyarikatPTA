@@ -1,6 +1,6 @@
-<header class="sticky top-0 z-20 bg-gradient-to-b from-canvas from-70% to-canvas/0 px-4 pb-2 pt-3 sm:px-6 lg:px-10">
-    <div class="mx-auto flex h-14 max-w-7xl items-center gap-3 rounded-2xl border border-slate-200/70 bg-white/90 px-3 shadow-soft backdrop-blur-xl sm:px-4">
-        <button @click="sidebarOpen = ! sidebarOpen" class="rounded-xl p-2 text-slate-500 hover:bg-slate-100 hover:text-slate-800 lg:hidden" aria-label="Open menu">
+<header class="sticky top-0 z-20 px-4 pb-2 pt-3 sm:px-6 lg:px-10">
+    <div class="glass mx-auto flex h-14 max-w-7xl items-center gap-3 rounded-full !bg-white/60 px-2 sm:px-3">
+        <button @click="sidebarOpen = ! sidebarOpen" class="rounded-full p-2 text-slate-500 hover:bg-white/70 hover:text-slate-800 lg:hidden" aria-label="Open menu">
             <x-icon name="menu" />
         </button>
 
@@ -12,7 +12,7 @@
 
         <div class="ms-auto flex items-center gap-1.5 sm:gap-2">
             <div x-data="{ now: new Date() }" x-init="setInterval(() => now = new Date(), 1000)"
-                 class="hidden items-center gap-2 rounded-xl border border-slate-200/80 bg-white px-3 py-1.5 text-xs text-slate-500 md:flex">
+                 class="glass-thin hidden items-center gap-2 rounded-full px-3 py-1.5 text-xs text-slate-500 md:flex">
                 <span class="relative flex h-2 w-2">
                     <span class="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-400 opacity-60"></span>
                     <span class="relative inline-flex h-2 w-2 rounded-full bg-emerald-500"></span>
@@ -21,7 +21,7 @@
                 <span class="font-mono font-medium text-slate-800" x-text="now.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit', second: '2-digit' })">{{ now()->format('H:i:s') }}</span>
             </div>
 
-            <a href="{{ route('announcements.index') }}" class="relative rounded-xl p-2 text-slate-500 hover:bg-slate-100 hover:text-slate-800" title="Announcements">
+            <a href="{{ route('announcements.index') }}" class="relative rounded-full p-2 text-slate-500 hover:bg-white/70 hover:text-slate-800" title="Announcements">
                 <x-icon name="bell" />
                 @if (\App\Models\Announcement::unseenBy(auth()->user())->where('created_at', '>=', now()->subDays(30))->exists())
                     <span class="absolute right-1.5 top-1.5 h-2.5 w-2.5 rounded-full bg-rose-500 ring-2 ring-white"></span>
@@ -30,8 +30,8 @@
 
             <x-dropdown align="right" width="56">
                 <x-slot name="trigger">
-                    <button class="flex items-center gap-2 rounded-xl p-1 pe-2 hover:bg-slate-100">
-                        <span class="flex h-8 w-8 items-center justify-center rounded-lg bg-gradient-to-br from-emerald-400 to-teal-600 text-xs font-bold text-white">
+                    <button class="flex items-center gap-2 rounded-full p-1 pe-2.5 hover:bg-white/70">
+                        <span class="flex h-8 w-8 items-center justify-center rounded-full bg-gradient-to-br from-emerald-400 to-teal-600 text-xs font-bold text-white shadow-[inset_0_1px_0_rgba(255,255,255,0.35)]">
                             {{ strtoupper(substr(Auth::user()->name, 0, 1)) }}
                         </span>
                         <span class="hidden max-w-[10rem] truncate text-sm font-medium text-slate-700 sm:block">{{ Auth::user()->name }}</span>
@@ -40,7 +40,7 @@
                 </x-slot>
 
                 <x-slot name="content">
-                    <div class="border-b border-slate-100 px-4 py-3">
+                    <div class="border-b border-slate-900/[0.06] px-4 py-3">
                         <div class="truncate text-sm font-semibold text-slate-900">{{ Auth::user()->name }}</div>
                         <div class="truncate text-xs text-slate-500">{{ Auth::user()->email }}</div>
                     </div>

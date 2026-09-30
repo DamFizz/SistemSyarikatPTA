@@ -45,7 +45,7 @@
         </button>
     </form>
 
-    <div class="mt-7 flex items-center gap-2 rounded-2xl bg-slate-50 px-4 py-3 text-xs text-slate-500">
+    <div class="glass-inset mt-7 flex items-center gap-2 px-4 py-3 text-xs text-slate-500">
         <x-icon name="lock" class="h-4 w-4 shrink-0 text-slate-400" />
         Protected by role-based access &amp; full audit logging.
     </div>

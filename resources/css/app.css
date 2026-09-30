@@ -6,7 +6,22 @@
     display: none !important;
 }
 
+/*
+ | Liquid glass design language
+ | --------------------------------------------------------------
+ | Soft ambient colour sits behind everything; surfaces are frosted
+ | translucent glass with a bright rim, a gentle top sheen and a
+ | diffuse shadow. Colour stays neutral with a single emerald accent.
+ */
+
 @layer base {
+    :root {
+        --glass-rim: inset 0 1px 0 0 rgba(255, 255, 255, 0.85), inset 0 0 0 1px rgba(255, 255, 255, 0.35);
+        --glass-shadow: 0 1px 2px rgba(15, 23, 42, 0.04), 0 12px 32px -14px rgba(15, 23, 42, 0.16);
+        --glass-shadow-lift: 0 2px 6px rgba(15, 23, 42, 0.05), 0 24px 48px -18px rgba(15, 23, 42, 0.24);
+        --glass-sheen: linear-gradient(180deg, rgba(255, 255, 255, 0.72) 0%, rgba(255, 255, 255, 0.44) 100%);
+    }
+
     html {
         -webkit-tap-highlight-color: transparent;
     }
@@ -14,6 +29,21 @@
     body {
         @apply bg-canvas text-slate-700;
         font-feature-settings: 'cv11', 'ss01';
+    }
+
+    /* Ambient light behind the glass (fixed so it stays put while scrolling, incl. iOS). */
+    body::before {
+        content: '';
+        position: fixed;
+        inset: 0;
+        z-index: -1;
+        pointer-events: none;
+        background:
+            radial-gradient(38rem 30rem at 8% -4%, rgba(16, 185, 129, 0.30), transparent 70%),
+            radial-gradient(34rem 28rem at 96% 6%, rgba(56, 189, 248, 0.26), transparent 70%),
+            radial-gradient(40rem 32rem at 70% 104%, rgba(167, 139, 250, 0.22), transparent 70%),
+            radial-gradient(30rem 26rem at 18% 92%, rgba(45, 212, 191, 0.16), transparent 70%),
+            #eef2f6;
     }
 
     h1, h2, h3, h4 {
@@ -35,25 +65,48 @@
 }
 
 @layer components {
+    /* ---------- Glass primitives ---------- */
+    .glass {
+        background: var(--glass-sheen);
+        box-shadow: var(--glass-rim), var(--glass-shadow);
+        @apply border border-white/60 backdrop-blur-2xl backdrop-saturate-[1.8];
+    }
+
+    .glass-thin {
+        box-shadow: var(--glass-rim);
+        @apply bg-white/45 border border-white/60 backdrop-blur-xl backdrop-saturate-150;
+    }
+
+    /* Recessed well inside a glass card (small stat tiles, grouped rows). */
+    .glass-inset {
+        @apply rounded-2xl bg-white/45 ring-1 ring-inset ring-slate-900/[0.04];
+    }
+
     /* ---------- Surfaces ---------- */
     .card {
-        @apply bg-white rounded-2xl border border-slate-200/80 shadow-soft;
+        @apply glass rounded-3xl;
     }
 
     .card-hover {
-        @apply transition duration-200 hover:-translate-y-0.5 hover:shadow-lift hover:border-slate-300/80;
+        @apply transition duration-300 hover:-translate-y-0.5;
+    }
+
+    .card-hover:hover {
+        box-shadow: var(--glass-rim), var(--glass-shadow-lift);
     }
 
     .card-header {
-        @apply flex items-center justify-between gap-3 px-5 py-4 border-b border-slate-100;
+        @apply flex items-center justify-between gap-3 px-5 py-4 border-b border-slate-900/[0.05];
     }
 
     .card-title {
         @apply text-sm font-semibold text-slate-900;
     }
 
+    /* Dark tinted glass for hero panels. */
     .surface-dark {
-        @apply relative overflow-hidden rounded-2xl bg-ink-900 text-slate-300 border border-white/5;
+        box-shadow: inset 0 1px 0 0 rgba(255, 255, 255, 0.10), 0 24px 48px -20px rgba(6, 10, 19, 0.55);
+        @apply relative overflow-hidden rounded-3xl bg-ink-900/[0.92] text-slate-300 border border-white/10 backdrop-blur-2xl;
     }
 
     .surface-dark::before {
@@ -63,7 +116,7 @@
 
     /* ---------- Typography ---------- */
     .page-title {
-        @apply text-2xl sm:text-[1.7rem] font-bold text-slate-900 tracking-tight;
+        @apply text-2xl sm:text-[1.75rem] font-bold text-slate-900 tracking-tight;
     }
 
     .eyebrow {
@@ -74,54 +127,58 @@
         @apply text-sm text-slate-500;
     }
 
-    /* ---------- Buttons ---------- */
+    /* ---------- Buttons (capsules) ---------- */
     .btn {
-        @apply inline-flex items-center justify-center gap-2 rounded-xl px-4 py-2.5 text-sm font-semibold transition duration-150
-               focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-emerald-500
-               disabled:opacity-50 disabled:cursor-not-allowed active:scale-[0.98];
+        @apply inline-flex items-center justify-center gap-2 rounded-full px-4 py-2.5 text-sm font-semibold transition duration-200
+               focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-offset-transparent focus-visible:ring-emerald-500
+               disabled:opacity-50 disabled:cursor-not-allowed active:scale-[0.97];
     }
 
     .btn-primary {
-        @apply btn text-white bg-gradient-to-b from-emerald-500 to-emerald-600 shadow-sm shadow-emerald-600/30
-               ring-1 ring-inset ring-white/10 hover:from-emerald-500 hover:to-emerald-700 hover:shadow-md hover:shadow-emerald-600/30;
+        box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.35), 0 8px 20px -8px rgba(5, 150, 105, 0.65);
+        @apply btn text-white bg-gradient-to-b from-emerald-400 to-emerald-600 hover:from-emerald-400 hover:to-emerald-700;
     }
 
     .btn-dark {
-        @apply btn text-white bg-ink-900 hover:bg-ink-700 shadow-sm;
+        box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.12), 0 8px 20px -10px rgba(6, 10, 19, 0.6);
+        @apply btn text-white bg-slate-900/90 backdrop-blur hover:bg-slate-900;
     }
 
     .btn-secondary {
-        @apply btn text-slate-700 bg-white border border-slate-200 shadow-sm hover:bg-slate-50 hover:border-slate-300;
+        box-shadow: var(--glass-rim), 0 2px 8px -3px rgba(15, 23, 42, 0.14);
+        @apply btn text-slate-700 bg-white/60 border border-white/70 backdrop-blur-xl hover:bg-white/85 hover:text-slate-900;
     }
 
     .btn-ghost {
-        @apply btn text-slate-600 hover:bg-slate-100 hover:text-slate-900;
+        @apply btn text-slate-600 hover:bg-white/60 hover:text-slate-900;
     }
 
     .btn-danger {
-        @apply btn text-white bg-rose-600 hover:bg-rose-700 shadow-sm shadow-rose-600/20;
+        box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.3), 0 8px 20px -8px rgba(225, 29, 72, 0.6);
+        @apply btn text-white bg-gradient-to-b from-rose-500 to-rose-600 hover:to-rose-700;
     }
 
     .btn-danger-soft {
-        @apply btn text-rose-700 bg-rose-50 hover:bg-rose-100;
+        @apply btn text-rose-700 bg-rose-500/10 hover:bg-rose-500/15;
     }
 
     .btn-success-soft {
-        @apply btn text-emerald-700 bg-emerald-50 hover:bg-emerald-100;
+        @apply btn text-emerald-700 bg-emerald-500/10 hover:bg-emerald-500/15;
     }
 
     .btn-sm {
-        @apply px-3 py-1.5 text-xs rounded-lg;
+        @apply px-3.5 py-1.5 text-xs;
     }
 
     .btn-lg {
-        @apply px-6 py-3.5 text-base rounded-2xl;
+        @apply px-6 py-3.5 text-base;
     }
 
     /* ---------- Forms ---------- */
     .input {
-        @apply rounded-xl border-slate-200 bg-white text-sm text-slate-800 shadow-sm placeholder:text-slate-400
-               focus:border-emerald-500 focus:ring-4 focus:ring-emerald-500/15 transition;
+        box-shadow: inset 0 1px 2px rgba(15, 23, 42, 0.05);
+        @apply rounded-xl border-slate-900/10 bg-white/65 text-sm text-slate-800 backdrop-blur placeholder:text-slate-400
+               focus:border-emerald-500 focus:bg-white/90 focus:ring-4 focus:ring-emerald-500/15 transition;
     }
 
     .label {
@@ -147,7 +204,7 @@
     }
 
     input[type='checkbox'] {
-        @apply rounded-md border-slate-300 text-emerald-600 focus:ring-emerald-500/30;
+        @apply rounded-md border-slate-900/20 bg-white/70 text-emerald-600 focus:ring-emerald-500/30;
     }
 
     /* ---------- Tables ---------- */
@@ -156,15 +213,15 @@
     }
 
     .table-modern thead {
-        @apply bg-slate-50/70;
+        @apply bg-white/30;
     }
 
     .table-modern thead th {
-        @apply px-4 py-3 text-left text-[11px] font-semibold uppercase tracking-wider text-slate-400 whitespace-nowrap border-b border-slate-100;
+        @apply px-4 py-3 text-left text-[11px] font-semibold uppercase tracking-wider text-slate-400 whitespace-nowrap border-b border-slate-900/[0.05];
     }
 
     .table-modern tbody tr {
-        @apply border-b border-slate-100 last:border-0 transition-colors hover:bg-slate-50/60;
+        @apply border-b border-slate-900/[0.05] last:border-0 transition-colors hover:bg-white/45;
     }
 
     /* Keep rows on one line; the card around the table scrolls sideways on phones. */
@@ -174,47 +231,58 @@
 
     /* ---------- Feedback ---------- */
     .alert {
-        @apply flex items-start gap-3 rounded-2xl border px-4 py-3 text-sm;
+        box-shadow: var(--glass-rim);
+        @apply flex items-start gap-3 rounded-2xl border px-4 py-3 text-sm backdrop-blur-xl;
     }
 
     .alert-success {
-        @apply alert bg-emerald-50/80 border-emerald-200/70 text-emerald-800;
+        @apply alert bg-emerald-50/70 border-emerald-200/60 text-emerald-800;
     }
 
     .alert-error {
-        @apply alert bg-rose-50/80 border-rose-200/70 text-rose-700;
+        @apply alert bg-rose-50/70 border-rose-200/60 text-rose-700;
     }
 
     .alert-warning {
-        @apply alert bg-amber-50/80 border-amber-200/70 text-amber-800;
+        @apply alert bg-amber-50/70 border-amber-200/60 text-amber-800;
     }
 
     .chip {
         @apply inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-medium;
     }
 
-    /* ---------- Navigation ---------- */
+    /* ---------- Navigation (light glass sidebar) ---------- */
     .nav-link {
-        @apply relative flex items-center gap-3 rounded-xl px-3 py-2.5 text-[13.5px] font-medium text-slate-400 transition
-               hover:bg-white/[0.04] hover:text-white;
+        @apply relative flex items-center gap-3 rounded-2xl px-3 py-2.5 text-[13.5px] font-medium text-slate-500 transition
+               hover:bg-white/55 hover:text-slate-900;
     }
 
     .nav-link-active {
-        @apply bg-white/[0.07] text-white;
+        box-shadow: var(--glass-rim), 0 4px 14px -6px rgba(15, 23, 42, 0.18);
+        @apply bg-white/80 text-slate-900;
     }
 
     .nav-link-active::before {
         content: '';
-        @apply absolute -left-3 top-1/2 h-5 w-1 -translate-y-1/2 rounded-r-full bg-emerald-400 shadow-[0_0_12px_2px_rgba(52,211,153,0.6)];
+        @apply absolute -left-3 top-1/2 h-5 w-1 -translate-y-1/2 rounded-r-full bg-emerald-500 shadow-[0_0_10px_1px_rgba(16,185,129,0.45)];
     }
 
     .nav-section {
-        @apply px-3 pt-5 pb-1.5 text-[10.5px] font-semibold uppercase tracking-[0.16em] text-slate-500;
+        @apply px-3 pt-5 pb-1.5 text-[10.5px] font-semibold uppercase tracking-[0.16em] text-slate-400;
     }
 
-    .bg-grid {
-        background-image: radial-gradient(circle at 1px 1px, rgba(15, 23, 42, 0.06) 1px, transparent 0);
-        background-size: 22px 22px;
+    /* Apple-style segmented control. */
+    .segmented {
+        @apply inline-flex gap-1 rounded-full bg-slate-900/[0.06] p-1 backdrop-blur-xl;
+    }
+
+    .segmented-item {
+        @apply shrink-0 rounded-full px-4 py-1.5 text-sm font-medium text-slate-500 transition hover:text-slate-900;
+    }
+
+    .segmented-item-active {
+        box-shadow: var(--glass-rim), 0 2px 8px -2px rgba(15, 23, 42, 0.18);
+        @apply bg-white text-slate-900;
     }
 }
 
@@ -223,5 +291,15 @@
     .h-viewport {
         height: 100vh;
         height: 100dvh;
+    }
+
+    /* Reduce blur cost for users who ask for less motion / on low-power setups. */
+    @media (prefers-reduced-transparency: reduce) {
+        .glass,
+        .glass-thin,
+        .card {
+            background: rgba(255, 255, 255, 0.94);
+            backdrop-filter: none;
+        }
     }
 }

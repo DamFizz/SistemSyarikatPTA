@@ -60,26 +60,21 @@
 
 <aside
     :class="sidebarOpen ? 'translate-x-0' : '-translate-x-full'"
-    class="fixed left-0 top-0 z-40 flex h-viewport w-[17rem] max-w-[85vw] flex-col overscroll-contain bg-ink-900 text-slate-300 transition-transform duration-300 ease-out lg:inset-y-3 lg:left-3 lg:h-auto lg:max-w-none lg:translate-x-0 lg:rounded-3xl lg:shadow-2xl lg:shadow-ink-950/20"
+    class="fixed left-0 top-0 z-40 flex h-viewport w-[17rem] max-w-[85vw] flex-col overscroll-contain border-r border-white/60 bg-white/80 text-slate-600 shadow-[var(--glass-rim),var(--glass-shadow-lift)] backdrop-blur-2xl backdrop-saturate-[1.8] transition-transform duration-300 ease-out lg:inset-y-3 lg:left-3 lg:h-auto lg:max-w-none lg:translate-x-0 lg:rounded-[1.75rem] lg:border lg:bg-white/50"
 >
-    {{-- Decorative glow --}}
-    <div class="pointer-events-none absolute inset-0 overflow-hidden lg:rounded-3xl">
-        <div class="absolute -top-20 -left-16 h-56 w-56 rounded-full bg-emerald-500/20 blur-3xl"></div>
-        <div class="absolute bottom-10 -right-24 h-48 w-48 rounded-full bg-teal-400/10 blur-3xl"></div>
-    </div>
 
     <div class="relative flex h-20 shrink-0 items-center gap-3 px-6">
         <x-application-logo />
         <div class="leading-tight">
-            <div class="text-[15px] font-bold tracking-tight text-white">SEMS</div>
-            <div class="text-[11px] text-slate-500">Smart Employee Management</div>
+            <div class="text-[15px] font-bold tracking-tight text-slate-900">SEMS</div>
+            <div class="text-[11px] text-slate-400">Smart Employee Management</div>
         </div>
-        <button @click="sidebarOpen = false" class="ms-auto rounded-lg p-1.5 text-slate-500 hover:bg-white/5 hover:text-white lg:hidden" aria-label="Close menu">
+        <button @click="sidebarOpen = false" class="ms-auto rounded-full p-1.5 text-slate-400 hover:bg-white/70 hover:text-slate-900 lg:hidden" aria-label="Close menu">
             <x-icon name="x" />
         </button>
     </div>
 
-    <nav class="relative flex-1 space-y-0.5 overflow-y-auto overscroll-contain px-3 pb-4 [scrollbar-width:thin] [scrollbar-color:rgba(255,255,255,0.08)_transparent]">
+    <nav class="relative flex-1 space-y-0.5 overflow-y-auto overscroll-contain px-3 pb-4 [scrollbar-width:thin] [scrollbar-color:rgba(15,23,42,0.12)_transparent]">
         @foreach ($groups as $label => $items)
             @if ($label)
                 <div class="nav-section">{{ $label }}</div>
@@ -92,18 +87,18 @@
         @endforeach
     </nav>
 
-    <div class="relative m-3 rounded-2xl border border-white/5 bg-white/[0.03] p-3">
+    <div class="glass-thin relative m-3 rounded-2xl p-3">
         <div class="flex items-center gap-3">
             <div class="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-emerald-400 to-teal-600 text-sm font-bold text-white">
                 {{ strtoupper(substr($user->name, 0, 1)) }}
             </div>
             <div class="min-w-0 flex-1">
-                <div class="truncate text-[13px] font-semibold text-white">{{ $user->name }}</div>
-                <div class="truncate text-[11px] capitalize text-emerald-400/90">{{ str_replace('_', ' ', $role) }}</div>
+                <div class="truncate text-[13px] font-semibold text-slate-900">{{ $user->name }}</div>
+                <div class="truncate text-[11px] capitalize text-emerald-600">{{ str_replace('_', ' ', $role) }}</div>
             </div>
             <form method="POST" action="{{ route('logout') }}">
                 @csrf
-                <button type="submit" class="rounded-lg p-2 text-slate-500 transition hover:bg-white/5 hover:text-rose-400" title="Log out">
+                <button type="submit" class="rounded-full p-2 text-slate-400 transition hover:bg-rose-500/10 hover:text-rose-600" title="Log out">
                     <x-icon name="logout" class="h-[18px] w-[18px]" />
                 </button>
             </form>

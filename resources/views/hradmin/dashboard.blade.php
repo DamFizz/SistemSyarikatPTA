@@ -66,7 +66,7 @@
                 </div>
                 <a href="{{ route('hr.attendance.index', ['flagged' => 1]) }}" class="btn-ghost btn-sm">Review</a>
             </div>
-            <ul class="divide-y divide-slate-100">
+            <ul class="divide-y divide-slate-900/[0.05]">
                 @forelse ($flaggedRecords as $record)
                     <li class="flex items-start gap-3 px-5 py-3.5">
                         <div class="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-rose-50 text-sm font-bold text-rose-600">{{ strtoupper(substr($record->employee->full_name, 0, 1)) }}</div>

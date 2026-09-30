@@ -17,12 +17,9 @@
     </head>
     <body class="font-sans antialiased">
         <div x-data="{ sidebarOpen: false }" x-effect="document.documentElement.classList.toggle('overflow-hidden', sidebarOpen)" @keydown.escape.window="sidebarOpen = false" class="relative min-h-screen">
-            {{-- Soft ambient glow behind the content area --}}
-            <div class="pointer-events-none fixed inset-x-0 top-0 h-72 bg-gradient-to-b from-emerald-100/50 via-canvas/0 to-transparent"></div>
-
             @include('layouts.sidebar')
 
-            <div x-show="sidebarOpen" x-cloak x-transition.opacity @click="sidebarOpen = false" class="fixed left-0 top-0 z-30 h-viewport w-full bg-ink-950/60 backdrop-blur-sm lg:hidden"></div>
+            <div x-show="sidebarOpen" x-cloak x-transition.opacity @click="sidebarOpen = false" class="fixed left-0 top-0 z-30 h-viewport w-full bg-slate-900/25 backdrop-blur-md lg:hidden"></div>
 
             <div class="relative flex min-h-screen flex-col lg:pl-[18rem]">
                 @include('layouts.topbar')
@@ -38,7 +35,7 @@
                 <main class="flex-1 px-4 pb-10 pt-4 sm:px-6 sm:pt-6 lg:px-10">
                     <div class="mx-auto w-full max-w-7xl">
                         @if ($urgentAnnouncement)
-                            <div class="mb-5 flex items-center gap-3 rounded-2xl bg-gradient-to-r from-rose-600 to-rose-500 px-4 py-3 text-sm text-white shadow-lg shadow-rose-600/20">
+                            <div class="mb-5 flex items-center gap-3 rounded-2xl border border-white/20 bg-gradient-to-r from-rose-500/90 to-rose-400/90 px-4 py-3 text-sm text-white shadow-[inset_0_1px_0_rgba(255,255,255,0.3),0_12px_28px_-12px_rgba(225,29,72,0.6)] backdrop-blur-xl">
                                 <span class="relative flex h-2.5 w-2.5 shrink-0">
                                     <span class="absolute inline-flex h-full w-full animate-ping rounded-full bg-white/70"></span>
                                     <span class="relative inline-flex h-2.5 w-2.5 rounded-full bg-white"></span>

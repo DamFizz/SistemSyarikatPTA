@@ -66,7 +66,7 @@
                             <span class="font-medium text-slate-700">{{ $balance->leaveType->name }}</span>
                             <span class="tabular-nums text-slate-500"><span class="font-semibold text-slate-900">{{ rtrim(rtrim($balance->remaining_days, '0'), '.') }}</span> / {{ rtrim(rtrim($balance->allocated_days, '0'), '.') }} days</span>
                         </div>
-                        <div class="mt-2 h-1.5 overflow-hidden rounded-full bg-slate-100">
+                        <div class="mt-2 h-1.5 overflow-hidden rounded-full bg-slate-900/[0.07]">
                             <div class="h-full rounded-full bg-gradient-to-r from-emerald-400 to-teal-500" style="width: {{ $pct }}%"></div>
                         </div>
                     </div>
@@ -81,7 +81,7 @@
                 <h3 class="card-title">Latest announcements</h3>
                 <a href="{{ route('announcements.index') }}" class="btn-ghost btn-sm">View all <x-icon name="arrow-right" class="h-3.5 w-3.5" /></a>
             </div>
-            <ul class="divide-y divide-slate-100">
+            <ul class="divide-y divide-slate-900/[0.05]">
                 @forelse ($announcements as $announcement)
                     <li class="flex gap-4 px-5 py-4">
                         <span @class([

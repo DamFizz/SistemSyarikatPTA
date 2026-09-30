@@ -19,7 +19,7 @@
                 <span class="text-slate-600">This week</span>
                 <span class="tabular-nums text-slate-500"><span class="font-semibold text-slate-900">{{ $hours($summary['week_hours']) }}h</span> / {{ $hours($summary['week_limit']) }}h</span>
             </div>
-            <div class="mt-1.5 h-1.5 overflow-hidden rounded-full bg-slate-100">
+            <div class="mt-1.5 h-1.5 overflow-hidden rounded-full bg-slate-900/[0.07]">
                 <div class="h-full rounded-full bg-gradient-to-r {{ $bar($weekPct) }}" style="width: {{ $weekPct }}%"></div>
             </div>
         </div>
@@ -34,14 +34,14 @@
                 @endif
             </div>
             @if ($summary['ot_cap_applies'])
-                <div class="mt-1.5 h-1.5 overflow-hidden rounded-full bg-slate-100">
+                <div class="mt-1.5 h-1.5 overflow-hidden rounded-full bg-slate-900/[0.07]">
                     <div class="h-full rounded-full bg-gradient-to-r {{ $bar($otPct) }}" style="width: {{ $otPct }}%"></div>
                 </div>
             @endif
         </div>
 
         <div class="flex items-center justify-between gap-3 rounded-2xl border px-3.5 py-2.5
-            {{ $summary['rest_day_required'] ? 'border-rose-200 bg-rose-50 text-rose-700' : ($summary['consecutive_days'] >= 5 ? 'border-amber-200 bg-amber-50 text-amber-800' : 'border-slate-100 text-slate-600') }}">
+            {{ $summary['rest_day_required'] ? 'border-rose-200 bg-rose-50 text-rose-700' : ($summary['consecutive_days'] >= 5 ? 'border-amber-200 bg-amber-50 text-amber-800' : 'border-slate-900/[0.06] text-slate-600') }}">
             <span>Days worked in a row</span>
             <span class="font-semibold">{{ $summary['consecutive_days'] }} / {{ \App\Services\WorkHoursService::MAX_CONSECUTIVE_DAYS }}</span>
         </div>

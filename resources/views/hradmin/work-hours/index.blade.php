@@ -39,7 +39,7 @@
                 <x-text-input id="weekly_hours_limit" name="weekly_hours_limit" type="number" step="0.5" min="1" class="mt-1.5 block w-full" :value="old('weekly_hours_limit', $fmt($settings['weekly_hours_limit']))" required />
                 <p class="mt-1.5 text-xs text-slate-400">Clock-in is blocked once an employee reaches this many hours in a Monday–Sunday week.</p>
             </div>
-            <label class="flex cursor-pointer items-start gap-3 rounded-2xl border border-slate-200 p-4">
+            <label class="flex cursor-pointer items-start gap-3 glass-inset p-4">
                 <input type="hidden" name="rest_day_enforced" value="0">
                 <input type="checkbox" name="rest_day_enforced" value="1" class="mt-0.5" @checked($settings['rest_day_enforced'])>
                 <div>
@@ -61,7 +61,7 @@
                     <span class="chip bg-amber-50 text-amber-700 ring-1 ring-amber-600/15">{{ $pendingCount }} to review</span>
                 @endif
             </div>
-            <ul class="divide-y divide-slate-100">
+            <ul class="divide-y divide-slate-900/[0.05]">
                 @forelse ($justifications as $item)
                     <li class="px-5 py-4" x-data="{ open: false }">
                         <div class="flex flex-wrap items-start justify-between gap-3">

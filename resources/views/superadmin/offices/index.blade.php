@@ -28,15 +28,15 @@
                 <p class="mt-1 line-clamp-2 text-sm text-slate-500">{{ $office->address }}</p>
 
                 <dl class="mt-4 grid grid-cols-3 gap-2 text-center">
-                    <div class="rounded-xl bg-slate-50 px-2 py-2.5">
+                    <div class="glass-inset !rounded-xl px-2 py-2.5">
                         <dt class="text-[11px] text-slate-400">Radius</dt>
                         <dd class="text-sm font-semibold text-slate-900">{{ $office->allowed_radius_meters }}m</dd>
                     </div>
-                    <div class="rounded-xl bg-slate-50 px-2 py-2.5">
+                    <div class="glass-inset !rounded-xl px-2 py-2.5">
                         <dt class="text-[11px] text-slate-400">Staff</dt>
                         <dd class="text-sm font-semibold text-slate-900">{{ $office->employees_count }}</dd>
                     </div>
-                    <div class="rounded-xl bg-slate-50 px-2 py-2.5">
+                    <div class="glass-inset !rounded-xl px-2 py-2.5">
                         <dt class="text-[11px] text-slate-400">WiFi</dt>
                         <dd class="truncate text-sm font-semibold text-slate-900" title="{{ $office->wifi_ssid }}">{{ $office->wifi_ssid ?: '—' }}</dd>
                     </div>
@@ -46,7 +46,7 @@
                     <x-icon name="map-pin" class="h-3.5 w-3.5" /> {{ $office->latitude }}, {{ $office->longitude }}
                 </a>
 
-                <div class="mt-5 flex gap-2 border-t border-slate-100 pt-4">
+                <div class="mt-5 flex gap-2 border-t border-slate-900/[0.06] pt-4">
                     <a href="{{ route('super-admin.offices.network.edit', $office) }}" class="btn-dark btn-sm flex-1"><x-icon name="wifi" class="h-4 w-4" /> WiFi &amp; NFC</a>
                     <a href="{{ route('super-admin.offices.edit', $office) }}" class="btn-secondary btn-sm flex-1"><x-icon name="pencil" class="h-4 w-4" /> Edit location</a>
                 </div>

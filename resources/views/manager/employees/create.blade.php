@@ -32,7 +32,7 @@
             </div>
         </div>
 
-        <div class="border-t border-slate-100 pt-6">
+        <div class="border-t border-slate-900/[0.06] pt-6">
             <h3 class="text-sm font-semibold text-slate-700 mb-3">Profile</h3>
             <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
                 <div>
@@ -73,7 +73,7 @@
             </div>
         </div>
 
-        <div class="border-t border-slate-100 pt-6">
+        <div class="border-t border-slate-900/[0.06] pt-6">
             <h3 class="text-sm font-semibold text-slate-700 mb-3">Employment Details</h3>
             <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
                 <div>

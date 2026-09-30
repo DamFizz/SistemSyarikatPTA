@@ -21,7 +21,7 @@
                 </div>
                 <a href="{{ route('super-admin.offices.index') }}" class="btn-ghost btn-sm">Manage</a>
             </div>
-            <ul class="divide-y divide-slate-100">
+            <ul class="divide-y divide-slate-900/[0.05]">
                 @forelse ($offices as $office)
                     <li class="flex items-center gap-4 px-5 py-3.5">
                         <div class="min-w-0 flex-1">

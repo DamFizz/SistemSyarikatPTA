@@ -21,8 +21,8 @@
     <div x-data="announcementManager(@js($deletableIds))">
         @if ($canManage)
             {{-- Bulk action bar --}}
-            <div class="sticky top-[5.25rem] z-10 mb-4 flex flex-wrap items-center gap-2 rounded-2xl border px-3 py-2.5 shadow-soft transition sm:px-4"
-                 :class="selected.length ? 'border-rose-200 bg-rose-50/95 backdrop-blur' : 'border-slate-200/80 bg-white/95 backdrop-blur'">
+            <div class="sticky top-[5.25rem] z-10 mb-4 flex flex-wrap items-center gap-2 rounded-full border px-4 py-2 shadow-[var(--glass-rim),var(--glass-shadow)] transition sm:px-5"
+                 :class="selected.length ? 'border-rose-200/70 bg-rose-50/80 backdrop-blur-2xl' : 'border-white/60 bg-white/55 backdrop-blur-2xl'">
                 <label class="flex cursor-pointer items-center gap-2.5 text-sm font-medium text-slate-700">
                     <input type="checkbox" :checked="allSelected" :indeterminate="selected.length > 0 && !allSelected" @change="toggleAll()">
                     <span x-text="selected.length ? selected.length + ' selected' : 'Select all on this page'"></span>
@@ -108,8 +108,8 @@
 
             {{-- Confirmation modal --}}
             <div x-show="confirm.open" x-cloak class="fixed inset-0 z-50 flex items-end justify-center p-4 sm:items-center" @keydown.escape.window="confirm.open = false">
-                <div x-show="confirm.open" x-transition.opacity class="absolute inset-0 bg-ink-950/60 backdrop-blur-sm" @click="confirm.open = false"></div>
-                <div x-show="confirm.open" x-transition class="relative w-full max-w-md rounded-3xl bg-white p-6 shadow-2xl">
+                <div x-show="confirm.open" x-transition.opacity class="absolute inset-0 bg-slate-900/25 backdrop-blur-md" @click="confirm.open = false"></div>
+                <div x-show="confirm.open" x-transition class="glass relative w-full max-w-md rounded-[1.75rem] !bg-white/80 p-6">
                     <div class="flex h-12 w-12 items-center justify-center rounded-2xl bg-rose-50 text-rose-600">
                         <x-icon name="warning" class="h-6 w-6" />
                     </div>

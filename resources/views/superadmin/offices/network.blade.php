@@ -101,7 +101,7 @@
                     <p class="mt-1.5 text-xs text-slate-400">One per line. Supports single IPs and CIDR ranges (IPv4 &amp; IPv6).</p>
                     <x-input-error :messages="$errors->get('allowed_ips')" class="mt-1.5" />
 
-                    <div class="mt-4 flex items-start gap-3 rounded-2xl p-3.5 text-sm {{ $currentIpAllowed ? 'bg-emerald-50 text-emerald-800' : 'bg-slate-50 text-slate-600' }}">
+                    <div class="mt-4 flex items-start gap-3 rounded-2xl p-3.5 text-sm {{ $currentIpAllowed ? 'bg-emerald-500/10 text-emerald-800' : 'bg-white/45 text-slate-600' }}">
                         <x-icon :name="$currentIpAllowed ? 'check-circle' : 'info'" class="mt-0.5 h-5 w-5 shrink-0" />
                         <div>
                             Your device is currently on <span class="font-mono font-semibold">{{ $currentIp }}</span>
@@ -112,7 +112,7 @@
                 </div>
 
                 <label class="mt-6 flex cursor-pointer items-start gap-3 rounded-2xl border p-4 transition"
-                       :class="testing ? 'border-amber-300 bg-amber-50/70' : 'border-slate-200 hover:border-slate-300'">
+                       :class="testing ? 'border-amber-300 bg-amber-50/70' : 'border-white/70 bg-white/40 hover:bg-white/60'">
                     <input type="hidden" name="testing_mode" value="0">
                     <input type="checkbox" name="testing_mode" value="1" x-model="testing" class="mt-0.5">
                     <div>
@@ -159,7 +159,7 @@
                     @endif
                 </div>
                 @if ($wifiQrSvg)
-                    <div class="mt-4 flex flex-col items-center rounded-2xl border border-dashed border-slate-200 p-5 print:border-0">
+                    <div class="mt-4 flex flex-col items-center rounded-2xl border border-dashed border-slate-900/10 p-5 print:border-0">
                         <div class="rounded-2xl bg-white p-3 shadow-soft [&>svg]:h-48 [&>svg]:w-48">{!! $wifiQrSvg !!}</div>
                         <div class="mt-3 text-sm font-semibold text-slate-900">{{ $office->wifi_ssid }}</div>
                         <div class="text-xs text-slate-500">Scan with your camera to join the office WiFi</div>

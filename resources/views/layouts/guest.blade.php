@@ -39,7 +39,7 @@
                     </p>
 
                     {{-- Illustrative attendance card --}}
-                    <div class="mt-10 max-w-sm rounded-3xl border border-white/10 bg-white/[0.04] p-5 backdrop-blur-md shadow-2xl">
+                    <div class="mt-10 max-w-sm rounded-[1.75rem] border border-white/15 bg-white/[0.06] p-5 shadow-[inset_0_1px_0_rgba(255,255,255,0.18),0_24px_48px_-20px_rgba(0,0,0,0.6)] backdrop-blur-2xl">
                         <div class="flex flex-wrap items-center justify-between gap-3">
                             <span class="text-xs font-medium text-slate-400">Today &middot; {{ now()->format('D, d M') }}</span>
                             <span class="chip bg-emerald-400/10 text-emerald-300 ring-1 ring-emerald-400/20">
@@ -65,8 +65,7 @@
             </aside>
 
             {{-- Form panel --}}
-            <main class="relative flex flex-1 flex-col items-center justify-center bg-canvas px-5 py-12 sm:px-8">
-                <div class="pointer-events-none absolute inset-x-0 top-0 h-64 bg-gradient-to-b from-emerald-100/60 to-transparent lg:hidden"></div>
+            <main class="relative flex flex-1 flex-col items-center justify-center px-5 py-12 sm:px-8">
 
                 <div class="relative w-full max-w-[26rem]">
                     <div class="mb-8 flex items-center gap-3 lg:hidden">
@@ -74,7 +73,7 @@
                         <span class="text-lg font-bold tracking-tight text-slate-900">SEMS</span>
                     </div>
 
-                    <div class="card p-7 sm:p-9 shadow-lift">
+                    <div class="card rounded-[2rem] p-7 sm:p-9">
                         {{ $slot }}
                     </div>
                 </div>
