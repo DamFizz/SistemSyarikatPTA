@@ -13,29 +13,43 @@ class ClientIpResolutionTest extends TestCase
 {
     use RefreshDatabase;
 
-    private const RAILWAY_PROXY = '10.0.4.12';
+    /** Railway's internal proxy connects from carrier-grade NAT space. */
+    private const RAILWAY_PROXY = '100.64.0.8';
+
+    private const RAILWAY_EDGE = '152.233.15.121';
 
     private const FASTLY_EDGE = '151.101.2.15';
 
-    private const CLIENT = '175.139.10.20';
+    private const CLIENT = '14.1.188.19';
 
-    public static function proxyChains(): array
+    private function employeeOnOffice(string $allowedIps): User
+    {
+        $user = User::factory()->create(['role' => User::ROLE_EMPLOYEE]);
+        Employee::factory()->create(['user_id' => $user->id, 'office_id' => Office::factory()->create(['allowed_ips' => $allowedIps])]);
+
+        return $user;
+    }
+
+    /**
+     * Chains as observed on the live Railway deployment (the edge strips client-sent
+     * X-Forwarded-For, so the client is always the left-most entry).
+     */
+    public static function railwayChains(): array
     {
         return [
-            'direct Railway edge' => [self::CLIENT],
+            'Railway edge (changes every request)' => [self::CLIENT.', '.self::RAILWAY_EDGE],
+            'another Railway edge' => [self::CLIENT.', 152.233.68.98'],
             'Railway behind Fastly' => [self::CLIENT.', '.self::FASTLY_EDGE],
-            'spoofed office IP is ignored (direct)' => ['60.50.1.1, '.self::CLIENT],
-            'spoofed office IP is ignored (Fastly)' => ['60.50.1.1, '.self::CLIENT.', '.self::FASTLY_EDGE],
+            'single hop' => [self::CLIENT],
         ];
     }
 
-    #[DataProvider('proxyChains')]
-    public function test_real_client_ip_is_resolved_behind_railway_and_fastly(string $forwardedFor): void
+    #[DataProvider('railwayChains')]
+    public function test_real_client_ip_is_resolved_on_railway(string $forwardedFor): void
     {
-        $user = User::factory()->create(['role' => User::ROLE_EMPLOYEE]);
-        Employee::factory()->create(['user_id' => $user->id, 'office_id' => Office::factory()->create(['allowed_ips' => self::CLIENT])]);
+        config(['attendance.behind_platform_proxy' => true]);
 
-        $this->actingAs($user)
+        $this->actingAs($this->employeeOnOffice(self::CLIENT))
             ->withServerVariables(['REMOTE_ADDR' => self::RAILWAY_PROXY])
             ->withHeaders(['X-Forwarded-For' => $forwardedFor])
             ->getJson(route('employee.attendance.status'))
@@ -43,22 +57,35 @@ class ClientIpResolutionTest extends TestCase
             ->assertJson(['ip' => self::CLIENT, 'on_office_network' => true]);
     }
 
-    public function test_spoofing_the_office_ip_does_not_unlock_attendance(): void
+    public function test_without_a_platform_proxy_forwarded_headers_cannot_be_spoofed(): void
     {
-        $user = User::factory()->create(['role' => User::ROLE_EMPLOYEE]);
-        Employee::factory()->create(['user_id' => $user->id, 'office_id' => Office::factory()->create(['allowed_ips' => '60.50.1.1'])]);
+        config(['attendance.behind_platform_proxy' => false]);
 
-        $this->actingAs($user)
-            ->withServerVariables(['REMOTE_ADDR' => self::RAILWAY_PROXY])
-            ->withHeaders(['X-Forwarded-For' => '60.50.1.1, 8.8.4.4, '.self::FASTLY_EDGE])
+        // e.g. a LAN-hosted server: the "proxy" is just the client itself.
+        $this->actingAs($this->employeeOnOffice('60.50.1.1'))
+            ->withServerVariables(['REMOTE_ADDR' => '192.168.1.20'])
+            ->withHeaders(['X-Forwarded-For' => '60.50.1.1'])
             ->getJson(route('employee.attendance.status'))
-            ->assertJson(['ip' => '8.8.4.4', 'on_office_network' => false]);
+            ->assertJson(['on_office_network' => false]);
+    }
+
+    public function test_local_reverse_proxy_and_fastly_edge_are_skipped_without_platform_mode(): void
+    {
+        config(['attendance.behind_platform_proxy' => false]);
+
+        $this->actingAs($this->employeeOnOffice(self::CLIENT))
+            ->withServerVariables(['REMOTE_ADDR' => '127.0.0.1'])
+            ->withHeaders(['X-Forwarded-For' => self::CLIENT.', '.self::FASTLY_EDGE])
+            ->getJson(route('employee.attendance.status'))
+            ->assertJson(['ip' => self::CLIENT]);
     }
 
     public function test_network_probe_reports_the_resolved_ip(): void
     {
+        config(['attendance.behind_platform_proxy' => true]);
+
         $this->withServerVariables(['REMOTE_ADDR' => self::RAILWAY_PROXY])
-            ->withHeaders(['X-Forwarded-For' => self::CLIENT.', '.self::FASTLY_EDGE])
+            ->withHeaders(['X-Forwarded-For' => self::CLIENT.', '.self::RAILWAY_EDGE])
             ->getJson(route('network-probe'))
             ->assertOk()
             ->assertJson(['resolved_ip' => self::CLIENT, 'ip_version' => 4, 'connecting_proxy' => self::RAILWAY_PROXY]);

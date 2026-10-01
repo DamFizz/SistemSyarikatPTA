@@ -20,6 +20,7 @@ class NetworkProbeController extends Controller
             'x_real_ip' => $request->headers->get('X-Real-IP'),
             'fastly_client_ip' => $request->headers->get('Fastly-Client-IP'),
             'connecting_proxy' => $request->server->get('REMOTE_ADDR'),
+            'platform_proxy_mode' => (bool) config('attendance.behind_platform_proxy'),
             'build' => substr((string) env('RAILWAY_GIT_COMMIT_SHA', 'local'), 0, 7),
         ])->header('Cache-Control', 'no-store');
     }

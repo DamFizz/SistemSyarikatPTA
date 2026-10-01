@@ -8,6 +8,13 @@ return [
     'selfie_retention_months' => (int) env('SELFIE_RETENTION_MONTHS', 0),
 
     /*
+    | True when the app runs behind a hosting platform's proxy that strips client-supplied
+    | X-Forwarded-For (Railway does). Then the left-most forwarded address is the real client.
+    | Detected automatically on Railway; set TRUST_PLATFORM_PROXY explicitly elsewhere.
+    */
+    'behind_platform_proxy' => (bool) env('TRUST_PLATFORM_PROXY', env('RAILWAY_ENVIRONMENT_NAME') !== null || env('RAILWAY_ENVIRONMENT') !== null || env('RAILWAY_PROJECT_ID') !== null),
+
+    /*
     | CDN / edge proxies that may sit between the employee and the app (in addition
     | to the proxy that connects directly). Fastly's published ranges:
     | https://api.fastly.com/public-ip-list — Railway routes some traffic through Fastly.
