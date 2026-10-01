@@ -1,9 +1,11 @@
 <?php
 
 use App\Http\Middleware\EnsureUserHasRole;
+use App\Http\Middleware\TrustEdgeProxies;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
+use Illuminate\Http\Middleware\TrustProxies;
 use Illuminate\Http\Request;
 
 return Application::configure(basePath: dirname(__DIR__))
@@ -13,9 +15,9 @@ return Application::configure(basePath: dirname(__DIR__))
         health: '/up',
     )
     ->withMiddleware(function (Middleware $middleware): void {
-        // Railway terminates TLS at its edge proxy. Trusting it lets $request->ip()
-        // return the employee's real public IP, which the office WiFi check relies on.
-        $middleware->trustProxies(at: '*');
+        // Railway (and sometimes Fastly in front of it) proxies every request. This lets
+        // $request->ip() return the employee's real public IP for the office WiFi check.
+        $middleware->replace(TrustProxies::class, TrustEdgeProxies::class);
 
         $middleware->alias([
             'role' => EnsureUserHasRole::class,

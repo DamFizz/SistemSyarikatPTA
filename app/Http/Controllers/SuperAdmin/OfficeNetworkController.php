@@ -20,6 +20,12 @@ class OfficeNetworkController extends Controller
         return view('superadmin.offices.network', [
             'office' => $office,
             'currentIp' => $request->ip(),
+            'currentIpEntry' => Office::networkEntryFor((string) $request->ip()),
+            'proxyChain' => [
+                'x_forwarded_for' => $request->headers->get('X-Forwarded-For'),
+                'x_real_ip' => $request->headers->get('X-Real-IP'),
+                'connecting_ip' => $request->server->get('REMOTE_ADDR'),
+            ],
             'currentIpAllowed' => $office->isNetworkConfigured() && $office->acceptsNetwork($request->ip()),
             'wifiQrSvg' => $payload ? QrCodeService::svg($payload, 220) : null,
         ]);

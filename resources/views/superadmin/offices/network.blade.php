@@ -34,10 +34,30 @@
                   testing: @js((bool) old('testing_mode', ! $office->network_check_enabled)),
                   showPassword: false,
                   currentIp: @js($currentIp),
-                  addCurrentIp() {
+                  currentIpEntry: @js($currentIpEntry),
+                  detecting: false,
+                  detected: { v4: null, v6: null, error: '' },
+                  add(entry) {
                       const list = this.ips.split(/[\s,;]+/).filter(Boolean);
-                      if (!list.includes(this.currentIp)) list.push(this.currentIp);
+                      if (entry && !list.includes(entry)) list.push(entry);
                       this.ips = list.join('\n');
+                  },
+                  v6Network(ip) {
+                      const [head, tail] = ip.split('::');
+                      const h = head ? head.split(':') : [];
+                      const t = tail === undefined ? [] : (tail ? tail.split(':') : []);
+                      const groups = tail === undefined ? h : [...h, ...Array(8 - h.length - t.length).fill('0'), ...t];
+                      return groups.slice(0, 4).map((g) => parseInt(g || '0', 16).toString(16)).join(':') + '::/64';
+                  },
+                  async detectBoth() {
+                      this.detecting = true;
+                      this.detected = { v4: null, v6: null, error: '' };
+                      const get = (url) => fetch(url, { cache: 'no-store' }).then((r) => r.json()).then((j) => j.ip).catch(() => null);
+                      const [v4, v6] = await Promise.all([get('https://api.ipify.org?format=json'), get('https://api6.ipify.org?format=json')]);
+                      this.detected.v4 = v4;
+                      this.detected.v6 = v6 && v6.includes(':') ? this.v6Network(v6) : null;
+                      if (!v4 && !v6) this.detected.error = 'Could not reach the IP lookup service.';
+                      this.detecting = false;
                   },
               }">
             @csrf
@@ -93,20 +113,46 @@
                 <div class="mt-6">
                     <div class="flex flex-wrap items-center justify-between gap-2">
                         <x-input-label for="allowed_ips" value="Allowed public IPs / ranges" />
-                        <button type="button" @click="addCurrentIp()" class="btn-success-soft btn-sm">
-                            <x-icon name="plus" class="h-3.5 w-3.5" /> Add my current IP (<span class="font-mono" x-text="currentIp"></span>)
-                        </button>
+                        <div class="flex flex-wrap gap-2">
+                            <button type="button" @click="add(currentIpEntry)" class="btn-success-soft btn-sm">
+                                <x-icon name="plus" class="h-3.5 w-3.5" /> Add my current network (<span class="font-mono" x-text="currentIpEntry"></span>)
+                            </button>
+                            <button type="button" @click="detectBoth()" :disabled="detecting" class="btn-secondary btn-sm">
+                                <x-icon name="refresh" class="h-3.5 w-3.5" /> <span x-text="detecting ? 'Detecting…' : 'Detect IPv4 & IPv6'"></span>
+                            </button>
+                        </div>
                     </div>
                     <textarea id="allowed_ips" name="allowed_ips" x-model="ips" rows="4" class="input mt-2 block w-full font-mono text-[13px]" placeholder="175.139.12.34&#10;60.50.0.0/24"></textarea>
                     <p class="mt-1.5 text-xs text-slate-400">One per line. Supports single IPs and CIDR ranges (IPv4 &amp; IPv6).</p>
                     <x-input-error :messages="$errors->get('allowed_ips')" class="mt-1.5" />
+
+                    {{-- Devices on the same WiFi may use IPv4 or IPv6 — register both so PCs and phones all match. --}}
+                    <div x-show="detected.v4 || detected.v6 || detected.error" x-cloak class="glass-inset mt-4 space-y-2 p-4 text-sm">
+                        <p class="text-xs text-slate-500">This WiFi's public addresses. Add both so every device (PC or phone) is recognised:</p>
+                        <template x-for="[label, value] in [['IPv4', detected.v4], ['IPv6 network', detected.v6]]" :key="label">
+                            <div class="flex flex-wrap items-center justify-between gap-2">
+                                <span><span class="text-slate-500" x-text="label + ':'"></span> <span class="font-mono font-semibold text-slate-900" x-text="value || 'not available on this network'"></span></span>
+                                <button type="button" x-show="value" @click="add(value)" class="btn-success-soft btn-sm"><x-icon name="plus" class="h-3.5 w-3.5" /> Add</button>
+                            </div>
+                        </template>
+                        <p x-show="detected.error" class="text-xs text-rose-600" x-text="detected.error"></p>
+                    </div>
 
                     <div class="mt-4 flex items-start gap-3 rounded-2xl p-3.5 text-sm {{ $currentIpAllowed ? 'bg-emerald-500/10 text-emerald-800' : 'bg-white/45 text-slate-600' }}">
                         <x-icon :name="$currentIpAllowed ? 'check-circle' : 'info'" class="mt-0.5 h-5 w-5 shrink-0" />
                         <div>
                             Your device is currently on <span class="font-mono font-semibold">{{ $currentIp }}</span>
                             — {{ $currentIpAllowed ? 'this network is allowed.' : 'not in the allowed list.' }}
-                            <div class="mt-0.5 text-xs opacity-75">To register the office network, connect this device to the office WiFi and click “Add my current IP”.</div>
+                            <div class="mt-0.5 text-xs opacity-75">Connect this device to the office WiFi, click “Add my current network” and “Detect IPv4 &amp; IPv6”, then save. IPv6 is matched by its /64 network, so every device on the WiFi is covered.</div>
+                            <details class="mt-2 text-xs opacity-75">
+                                <summary class="cursor-pointer">Proxy diagnostics</summary>
+                                <div class="mt-1 space-y-0.5 break-all font-mono">
+                                    <div>X-Forwarded-For: {{ $proxyChain['x_forwarded_for'] ?? '—' }}</div>
+                                    <div>X-Real-IP: {{ $proxyChain['x_real_ip'] ?? '—' }}</div>
+                                    <div>Connecting proxy: {{ $proxyChain['connecting_ip'] ?? '—' }}</div>
+                                    <div>Resolved client IP: {{ $currentIp }}</div>
+                                </div>
+                            </details>
                         </div>
                     </div>
                 </div>

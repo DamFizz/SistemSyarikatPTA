@@ -90,7 +90,35 @@ class Office extends Model
             return true;
         }
 
-        return $ip !== null && $this->isNetworkConfigured() && IpUtils::checkIp($ip, $this->allowedIpList());
+        return $ip !== null && $this->isNetworkConfigured() && IpUtils::checkIp($ip, $this->matchRanges());
+    }
+
+    /**
+     * Allowed entries ready for matching. A bare IPv6 address is widened to its /64:
+     * every device on one WiFi shares that prefix, but each gets its own (rotating) address.
+     *
+     * @return list<string>
+     */
+    public function matchRanges(): array
+    {
+        return array_map(
+            fn (string $entry) => str_contains($entry, ':') && ! str_contains($entry, '/') ? self::networkEntryFor($entry) : $entry,
+            $this->allowedIpList(),
+        );
+    }
+
+    /**
+     * What to store for an address: IPv4 as-is, IPv6 as its /64 network.
+     */
+    public static function networkEntryFor(string $ip): string
+    {
+        if (! filter_var($ip, FILTER_VALIDATE_IP, FILTER_FLAG_IPV6)) {
+            return $ip;
+        }
+
+        $packed = inet_pton($ip);
+
+        return inet_ntop(substr($packed, 0, 8).str_repeat("\0", 8)).'/64';
     }
 
     /**
