@@ -12,7 +12,7 @@
                 <template x-if="phase === 'late'"><span class="text-rose-600">You're <b x-text="lateLabel"></b> late — clock in now</span></template>
                 <template x-if="phase === 'ended'"><span>Today's shift has ended</span></template>
                 <template x-if="r.state === 'clocked_in'"><span class="text-emerald-700">Clocked in at <b x-text="r.clocked_in_at"></b> ✓</span></template>
-                <template x-if="r.state === 'off'"><span>No clock-in needed today</span></template>
+                <template x-if="r.state === 'off'"><span x-text="r.off_reason === 'holiday' && r.holiday_name ? ('Public holiday — ' + r.holiday_name) : 'No clock-in needed today'"></span></template>
             </span>
         </span>
         <span class="shrink-0 font-mono text-sm font-semibold tabular-nums"

@@ -33,7 +33,7 @@
             <span>Clocked in at <span class="font-semibold text-emerald-300" x-text="r.clocked_in_at"></span> ✓</span>
         </template>
         <template x-if="r.state === 'off'">
-            <span x-text="@js($offLabels)[r.off_reason] || 'No clock-in needed today.'"></span>
+            <span x-text="r.off_reason === 'holiday' && r.holiday_name ? ('Public holiday — ' + r.holiday_name + '. Enjoy your day!') : (@js($offLabels)[r.off_reason] || 'No clock-in needed today.')"></span>
         </template>
     </p>
 

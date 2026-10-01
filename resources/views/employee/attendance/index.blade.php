@@ -56,6 +56,13 @@
                         </div>
                     @endif
 
+                    @if ($holiday)
+                        <div class="mt-6 flex items-start gap-3 rounded-2xl border border-sky-300/20 bg-sky-400/10 px-4 py-3 text-sm text-sky-100">
+                            <x-icon name="sparkles" class="mt-0.5 h-5 w-5 shrink-0" />
+                            <span>Today is a public holiday — <strong>{{ $holiday->name }}</strong>. Clocking in is optional; if you work, it's recorded as holiday work for HR.</span>
+                        </div>
+                    @endif
+
                     {{-- ---------- Phase: completed ---------- --}}
                     <div x-show="phase === 'completed'" x-cloak class="flex flex-col items-center py-14 text-center">
                         <div class="flex h-20 w-20 items-center justify-center rounded-full bg-emerald-400/10 ring-1 ring-emerald-400/30">

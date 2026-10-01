@@ -44,6 +44,7 @@
             ['Overtime Records', 'hr.overtime.index', ['hr.overtime.*'], 'clock'],
             ['Leave Records', 'hr.leave.index', ['hr.leave.*'], 'calendar'],
             ['Working Hours', 'hr.work-hours.index', ['hr.work-hours.*'], 'shield'],
+            ['Public Holidays', 'hr.public-holidays.index', ['hr.public-holidays.*'], 'sparkles'],
             ['Payroll', 'hr.payroll.index', ['hr.payroll.*'], 'banknotes'],
             ['Helpdesk Tickets', 'hr.tickets.index', ['hr.tickets.*'], 'lifebuoy'],
             ['Reports', 'hr.reports.index', ['hr.reports.*'], 'chart'],

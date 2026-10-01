@@ -18,6 +18,7 @@ class DatabaseSeeder extends Seeder
             LeaveTypeSeeder::class,
             TicketCategorySeeder::class,
             UserSeeder::class,
+            PublicHolidaySeeder::class,
         ]);
     }
 }

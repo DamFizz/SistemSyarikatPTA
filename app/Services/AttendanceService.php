@@ -7,6 +7,7 @@ use App\Models\AttendancePhoto;
 use App\Models\Employee;
 use App\Models\Office;
 use App\Models\Overtime;
+use App\Models\PublicHoliday;
 use App\Models\RestDayJustification;
 use App\Support\AttendanceCapture;
 use Carbon\Carbon;
@@ -98,6 +99,10 @@ class AttendanceService
 
         if ($restDayDue) {
             $flags[] = 'Working without the weekly rest day (justification sent to HR)';
+        }
+
+        if ($holiday = PublicHoliday::forDate(today())) {
+            $flags[] = "Worked on a public holiday ({$holiday->name})";
         }
 
         $shift = $employee->currentShift();

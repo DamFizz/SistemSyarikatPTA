@@ -7,6 +7,7 @@ use App\Http\Controllers\HRAdmin\EmployeeController;
 use App\Http\Controllers\HRAdmin\LeaveController;
 use App\Http\Controllers\HRAdmin\OvertimeController;
 use App\Http\Controllers\HRAdmin\PayrollController;
+use App\Http\Controllers\HRAdmin\PublicHolidayController;
 use App\Http\Controllers\HRAdmin\ReportController;
 use App\Http\Controllers\HRAdmin\TicketController;
 use App\Http\Controllers\HRAdmin\WorkHoursController;
@@ -31,6 +32,8 @@ Route::middleware(['auth', 'verified', 'role:hr_admin,super_admin'])
         Route::get('/leave', [LeaveController::class, 'index'])->name('leave.index');
         Route::post('/leave/{leaveRequest}/approve', [LeaveController::class, 'approve'])->name('leave.approve');
         Route::post('/leave/{leaveRequest}/reject', [LeaveController::class, 'reject'])->name('leave.reject');
+
+        Route::resource('public-holidays', PublicHolidayController::class)->only(['index', 'store', 'destroy']);
 
         Route::get('/work-hours', [WorkHoursController::class, 'index'])->name('work-hours.index');
         Route::put('/work-hours/settings', [WorkHoursController::class, 'updateSettings'])->name('work-hours.settings');

@@ -5,6 +5,7 @@ namespace App\Services;
 use App\Models\Attendance;
 use App\Models\Employee;
 use App\Models\LeaveRequest;
+use App\Models\PublicHoliday;
 use App\Models\User;
 use Carbon\Carbon;
 
@@ -39,6 +40,7 @@ class ShiftReminderService
             'name' => (string) str($employee->full_name)->before(' '),
             'state' => 'off',
             'off_reason' => null,
+            'holiday_name' => PublicHoliday::forDate(today())?->name,
             'shift_name' => null,
             'start' => null,
             'start_label' => null,
@@ -85,6 +87,10 @@ class ShiftReminderService
     {
         if (! in_array($employee->employment_status, ['active', 'probation'], true)) {
             return 'inactive';
+        }
+
+        if (PublicHoliday::forDate(today())) {
+            return 'holiday';
         }
 
         if ($today && in_array($today->status, [Attendance::STATUS_ON_LEAVE, Attendance::STATUS_PUBLIC_HOLIDAY, Attendance::STATUS_ABSENT], true)) {

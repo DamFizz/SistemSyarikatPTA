@@ -41,27 +41,7 @@
                     @if ($reminder ?? null)
                         @include('auth.partials.shift-panel')
                     @else
-                        {{-- Illustrative attendance card --}}
-                        <div class="mt-10 max-w-sm rounded-[1.75rem] border border-white/15 bg-white/[0.06] p-5 shadow-[inset_0_1px_0_rgba(255,255,255,0.18),0_24px_48px_-20px_rgba(0,0,0,0.6)] backdrop-blur-2xl">
-                            <div class="flex flex-wrap items-center justify-between gap-3">
-                                <span class="text-xs font-medium text-slate-400">Today &middot; {{ now()->format('D, d M') }}</span>
-                                <span class="chip bg-emerald-400/10 text-emerald-300 ring-1 ring-emerald-400/20">
-                                    <span class="h-1.5 w-1.5 rounded-full bg-emerald-400"></span> On duty
-                                </span>
-                            </div>
-                            <div class="mt-4 flex items-end gap-2">
-                                <span class="font-mono text-4xl font-medium tracking-tight text-white">08:52</span>
-                                <span class="pb-1 text-sm text-slate-400">clocked in</span>
-                            </div>
-                            <div class="mt-5 grid grid-cols-3 gap-2 text-[11px]">
-                                @foreach ([['wifi', 'Office WiFi'], ['map-pin', 'In geofence'], ['camera', 'Selfie']] as [$icon, $label])
-                                    <div class="flex flex-col items-center gap-1.5 rounded-2xl bg-white/[0.04] px-2 py-3 text-slate-300">
-                                        <x-icon :name="$icon" class="h-5 w-5 text-emerald-400" />
-                                        {{ $label }}
-                                    </div>
-                                @endforeach
-                            </div>
-                        </div>
+                        @include('auth.partials.clock-panel')
                     @endif
                 </div>
 

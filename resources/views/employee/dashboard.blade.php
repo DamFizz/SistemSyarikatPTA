@@ -1,6 +1,6 @@
 @php
     $hour = now()->hour;
-    $greeting = $hour < 12 ? 'Good morning' : ($hour < 17 ? 'Good afternoon' : 'Good evening');
+    $greeting = $hour >= 5 && $hour < 12 ? 'Good morning' : ($hour >= 12 && $hour < 17 ? 'Good afternoon' : 'Good evening');
     $firstName = str(Auth::user()->name)->before(' ');
 @endphp
 
