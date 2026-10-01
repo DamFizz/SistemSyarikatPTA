@@ -6,13 +6,15 @@ use App\Http\Controllers\Employee\LeaveController;
 use App\Http\Controllers\Employee\OvertimeController;
 use App\Http\Controllers\Employee\PayslipController;
 use App\Http\Controllers\Employee\TicketController;
+use App\Http\Middleware\EnsureEmployeeProfile;
 use Illuminate\Support\Facades\Route;
 
-Route::middleware(['auth', 'verified'])
+Route::middleware(['auth', 'verified', EnsureEmployeeProfile::class])
     ->prefix('employee')
     ->name('employee.')
     ->group(function () {
-        Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
+        // The dashboard copes without a profile (and must not redirect, or it would loop).
+        Route::get('/dashboard', [DashboardController::class, 'index'])->withoutMiddleware(EnsureEmployeeProfile::class)->name('dashboard');
 
         Route::get('/attendance', [AttendanceController::class, 'index'])->name('attendance.index');
         Route::get('/attendance/status', [AttendanceController::class, 'status'])->middleware('throttle:attendance-status')->name('attendance.status');

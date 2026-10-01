@@ -1,0 +1,7 @@
+@extends('errors.layout')
+@section('title', 'Something went wrong')
+@section('code', '500')
+@section('icon', 'warning')
+@section('tone', 'bg-rose-500/10 text-rose-600')
+@section('heading', 'Something went wrong')
+@section('message', 'An unexpected error occurred. It has been logged — please try again in a moment.')

@@ -11,6 +11,13 @@
         <p class="muted mt-1">{{ $employee?->position }} &middot; {{ $employee?->department?->name }}</p>
     </x-slot>
 
+    @if (! $employee)
+        <div class="card flex flex-col items-center gap-3 p-10 text-center">
+            <span class="flex h-14 w-14 items-center justify-center rounded-2xl bg-amber-500/10 text-amber-600"><x-icon name="user" class="h-7 w-7" /></span>
+            <h3 class="text-lg font-semibold">Your employee profile isn't set up yet</h3>
+            <p class="muted max-w-md">Attendance, leave, overtime and payslips become available once HR links your account to an employee profile.</p>
+        </div>
+    @else
     <div class="grid gap-5 lg:grid-cols-3">
         {{-- Today hero --}}
         <div class="surface-dark p-6 sm:p-7 lg:col-span-2">
@@ -102,4 +109,5 @@
             </ul>
         </div>
     </div>
+    @endif
 </x-app-layout>

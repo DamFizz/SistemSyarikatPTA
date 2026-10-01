@@ -55,6 +55,15 @@ class ClientIpResolutionTest extends TestCase
             ->assertJson(['ip' => '8.8.4.4', 'on_office_network' => false]);
     }
 
+    public function test_network_probe_reports_the_resolved_ip(): void
+    {
+        $this->withServerVariables(['REMOTE_ADDR' => self::RAILWAY_PROXY])
+            ->withHeaders(['X-Forwarded-For' => self::CLIENT.', '.self::FASTLY_EDGE])
+            ->getJson(route('network-probe'))
+            ->assertOk()
+            ->assertJson(['resolved_ip' => self::CLIENT, 'ip_version' => 4, 'connecting_proxy' => self::RAILWAY_PROXY]);
+    }
+
     public function test_ipv6_devices_on_the_same_wifi_share_the_64_network(): void
     {
         $this->assertSame('2001:e68:5432:9a00::/64', Office::networkEntryFor('2001:e68:5432:9a00:1c2d:3e4f:aaaa:bbbb'));

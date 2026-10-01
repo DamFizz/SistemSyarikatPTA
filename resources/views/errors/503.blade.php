@@ -1,0 +1,7 @@
+@extends('errors.layout')
+@section('title', 'Maintenance')
+@section('code', '503')
+@section('icon', 'wrench')
+@section('tone', 'bg-sky-500/10 text-sky-600')
+@section('heading', 'Back shortly')
+@section('message', 'SEMS is being updated. Please try again in a few minutes.')

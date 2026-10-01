@@ -3,6 +3,7 @@
 use App\Http\Controllers\AnnouncementController;
 use App\Http\Controllers\AttendanceSelfieController;
 use App\Http\Controllers\DashboardController;
+use App\Http\Controllers\NetworkProbeController;
 use App\Http\Controllers\PayslipController;
 use App\Http\Controllers\ProfileController;
 use Illuminate\Support\Facades\Route;
@@ -10,6 +11,8 @@ use Illuminate\Support\Facades\Route;
 Route::get('/', function () {
     return redirect()->route('login');
 });
+
+Route::get('/network-probe', NetworkProbeController::class)->middleware('throttle:30,1')->name('network-probe');
 
 Route::get('/dashboard', [DashboardController::class, 'index'])
     ->middleware(['auth', 'verified'])

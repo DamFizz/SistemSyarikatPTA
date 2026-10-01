@@ -10,7 +10,8 @@
         ],
     ];
 
-    if ($role !== 'super_admin') {
+    // Self-service pages only make sense for accounts linked to an employee profile.
+    if ($user->employee) {
         $groups['My Workspace'] = [
             ['Attendance', 'employee.attendance.index', ['employee.attendance.*'], 'fingerprint'],
             [$role === 'hr_admin' ? 'Request Overtime' : 'Overtime', 'employee.overtime.index', ['employee.overtime.*'], 'clock'],

@@ -1,0 +1,7 @@
+@extends('errors.layout')
+@section('title', 'No access')
+@section('code', '403')
+@section('icon', 'lock')
+@section('tone', 'bg-amber-500/10 text-amber-600')
+@section('heading', 'You don’t have access to this page')
+@section('message', $exception->getMessage() && $exception->getMessage() !== 'This action is unauthorized.' ? $exception->getMessage() : 'Your role doesn’t include this page. If you think this is a mistake, contact your administrator.')

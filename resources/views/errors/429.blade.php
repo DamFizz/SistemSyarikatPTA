@@ -1,0 +1,7 @@
+@extends('errors.layout')
+@section('title', 'Slow down')
+@section('code', '429')
+@section('icon', 'warning')
+@section('tone', 'bg-amber-500/10 text-amber-600')
+@section('heading', 'Too many attempts')
+@section('message', 'Please wait a minute before trying again.')
