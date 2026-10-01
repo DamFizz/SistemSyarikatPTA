@@ -74,5 +74,34 @@
                 </footer>
             </div>
         </div>
+
+        {{-- Clock-in countdown for employees who haven't clocked in yet (skipped on the attendance page itself) --}}
+        @php
+            $shiftReminder = auth()->user()->employee && ! request()->routeIs('employee.attendance.*')
+                ? app(\App\Services\ShiftReminderService::class)->forUser(auth()->user())
+                : null;
+        @endphp
+        @if ($shiftReminder && $shiftReminder['state'] === 'upcoming')
+            <div x-data="shiftCountdown(@js($shiftReminder))">
+                <a href="{{ route('employee.attendance.index') }}" x-show="phase === 'warning'" x-cloak x-transition
+                   class="glass fixed bottom-4 right-4 z-[45] flex items-center gap-3 rounded-full py-2 pl-2 pr-4 sm:bottom-6 sm:right-6"
+                   :class="urgent ? '!bg-rose-50/80' : '!bg-amber-50/80'">
+                    <span class="relative h-9 w-9">
+                        <svg viewBox="0 0 36 36" class="h-9 w-9 -rotate-90">
+                            <circle cx="18" cy="18" r="15" fill="none" stroke="rgba(15,23,42,0.08)" stroke-width="3.5" />
+                            <circle cx="18" cy="18" r="15" fill="none" stroke-width="3.5" stroke-linecap="round" :stroke="urgent ? '#f43f5e' : '#f59e0b'"
+                                    stroke-dasharray="94.25" :stroke-dashoffset="94.25 * (1 - progress)" />
+                        </svg>
+                        <x-icon name="fingerprint" class="absolute inset-0 m-auto h-4 w-4 text-slate-700" />
+                    </span>
+                    <span class="leading-tight">
+                        <span class="block text-[11px] font-medium text-slate-500">Clock in before <span x-text="r.start_label"></span></span>
+                        <span class="block font-mono text-base font-semibold tabular-nums" :class="urgent ? 'text-rose-600' : 'text-amber-700'" x-text="countdown"></span>
+                    </span>
+                </a>
+
+                <x-shift-overlays :cta-href="route('employee.attendance.index')" />
+            </div>
+        @endif
     </body>
 </html>

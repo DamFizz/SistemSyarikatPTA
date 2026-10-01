@@ -1,4 +1,4 @@
-<x-guest-layout>
+<x-guest-layout :reminder="$reminder ?? null">
     <div class="mb-7">
         <h2 class="text-2xl font-bold">Welcome back</h2>
         <p class="muted mt-1.5">Sign in to continue to your workspace.</p>
