@@ -16,10 +16,10 @@
     <div class="flex items-start justify-between gap-3">
         <div class="min-w-0">
             <div class="text-[13px] font-medium text-slate-500">{{ $label }}</div>
-            <div class="mt-2 text-[1.75rem] font-bold leading-none tracking-tight text-slate-900 tabular-nums">{{ $value }}</div>
+            <div class="mt-2 text-[1.45rem] font-bold leading-none sm:text-[1.75rem] tracking-tight text-slate-900 tabular-nums" data-countup>{{ $value }}</div>
         </div>
         @if ($icon)
-            <span class="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl ring-1 {{ $tones[$tone] ?? $tones['emerald'] }}">
+            <span class="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl ring-1 transition duration-300 ease-spring group-hover:-rotate-6 group-hover:scale-110 {{ $tones[$tone] ?? $tones['emerald'] }}">
                 <x-icon :name="$icon" class="h-5 w-5" />
             </span>
         @endif

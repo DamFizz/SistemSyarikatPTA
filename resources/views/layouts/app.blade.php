@@ -4,7 +4,8 @@
         <meta charset="utf-8">
         <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
         <meta name="csrf-token" content="{{ csrf_token() }}">
-        <meta name="theme-color" content="#0a1020">
+        <meta name="theme-color" content="#e8f1f0">
+        @include('layouts.partials.app-meta')
 
         <title>{{ isset($title) ? $title.' · '.config('app.name') : config('app.name', 'SEMS') }}</title>
 
@@ -16,10 +17,12 @@
         @vite(['resources/css/app.css', 'resources/js/app.js'])
     </head>
     <body class="font-sans antialiased">
+        @include('layouts.partials.ambient')
+
         <div x-data="{ sidebarOpen: false }" x-effect="document.documentElement.classList.toggle('overflow-hidden', sidebarOpen)" @keydown.escape.window="sidebarOpen = false" class="relative min-h-screen">
             @include('layouts.sidebar')
 
-            <div x-show="sidebarOpen" x-cloak x-transition.opacity @click="sidebarOpen = false" class="fixed left-0 top-0 z-30 h-viewport w-full bg-slate-900/25 backdrop-blur-md lg:hidden"></div>
+            <div x-show="sidebarOpen" x-cloak x-transition.opacity @click="sidebarOpen = false" class="fixed left-0 top-0 z-[35] h-viewport w-full bg-slate-900/25 backdrop-blur-md lg:hidden"></div>
 
             <div class="relative flex min-h-screen flex-col lg:pl-[18rem]">
                 @include('layouts.topbar')
@@ -32,7 +35,7 @@
                         ->first();
                 @endphp
 
-                <main class="flex-1 px-4 pb-10 pt-4 sm:px-6 sm:pt-6 lg:px-10">
+                <main class="pb-tabbar flex-1 px-4 pt-3 sm:px-6 sm:pt-6 lg:px-10 lg:pb-10">
                     <div class="mx-auto w-full max-w-7xl">
                         @if ($urgentAnnouncement)
                             <div class="mb-5 flex items-center gap-3 rounded-2xl border border-white/20 bg-gradient-to-r from-rose-500/90 to-rose-400/90 px-4 py-3 text-sm text-white shadow-[inset_0_1px_0_rgba(255,255,255,0.3),0_12px_28px_-12px_rgba(225,29,72,0.6)] backdrop-blur-xl">
@@ -88,10 +91,12 @@
                     </div>
                 </main>
 
-                <footer class="px-4 pb-6 text-center text-xs text-slate-400 sm:px-6 lg:px-10">
+                <footer class="hidden px-4 pb-6 text-center text-xs text-slate-400 sm:px-6 lg:block lg:px-10">
                     &copy; {{ now()->year }} {{ config('app.name', 'SEMS') }} &middot; Smart Employee Management System
                 </footer>
             </div>
+
+            @include('layouts.tabbar')
         </div>
 
         {{-- Clock-in countdown for employees who haven't clocked in yet (skipped on the attendance page itself) --}}
@@ -103,7 +108,7 @@
         @if ($shiftReminder && $shiftReminder['state'] === 'upcoming')
             <div x-data="shiftCountdown(@js($shiftReminder))">
                 <a href="{{ route('employee.attendance.index') }}" x-show="phase === 'warning'" x-cloak x-transition
-                   class="glass fixed bottom-4 right-4 z-[45] flex items-center gap-3 rounded-full py-2 pl-2 pr-4 sm:bottom-6 sm:right-6"
+                   class="glass fixed bottom-[calc(var(--tabbar-h)+1.5rem+var(--safe-bottom))] right-4 z-[45] flex items-center gap-3 rounded-full py-2 pl-2 pr-4 animate-float sm:right-6 lg:bottom-6"
                    :class="urgent ? '!bg-rose-50/80' : '!bg-amber-50/80'">
                     <span class="relative h-9 w-9">
                         <svg viewBox="0 0 36 36" class="h-9 w-9 -rotate-90">

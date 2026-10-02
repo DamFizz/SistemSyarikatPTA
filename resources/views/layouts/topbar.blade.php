@@ -1,8 +1,9 @@
-<header class="sticky top-0 z-20 px-4 pb-2 pt-3 sm:px-6 lg:px-10">
+<header class="sticky top-0 z-20 px-4 pb-2 pt-[max(0.75rem,env(safe-area-inset-top))] [view-transition-name:topbar] sm:px-6 lg:px-10">
     <div class="glass mx-auto flex h-14 max-w-7xl items-center gap-3 rounded-full !bg-white/60 px-2 sm:px-3">
-        <button @click="sidebarOpen = ! sidebarOpen" class="rounded-full p-2 text-slate-500 hover:bg-white/70 hover:text-slate-800 lg:hidden" aria-label="Open menu">
-            <x-icon name="menu" />
-        </button>
+        {{-- Phones navigate with the bottom tab bar; the logo takes the menu button's place. --}}
+        <a href="{{ route('dashboard') }}" class="ms-1 transition active:scale-90 lg:hidden" aria-label="Home">
+            <x-application-logo size="h-8 w-8" />
+        </a>
 
         <div class="flex min-w-0 items-center gap-2 text-sm">
             <span class="hidden text-slate-400 sm:inline">SEMS</span>
@@ -21,10 +22,10 @@
                 <span class="font-mono font-medium text-slate-800" x-text="now.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit', second: '2-digit' })">{{ now()->format('H:i:s') }}</span>
             </div>
 
-            <a href="{{ route('announcements.index') }}" class="relative rounded-full p-2 text-slate-500 hover:bg-white/70 hover:text-slate-800" title="Announcements">
+            <a href="{{ route('announcements.index') }}" class="relative rounded-full p-2 text-slate-500 transition hover:bg-white/70 hover:text-slate-800 active:scale-90" title="Announcements">
                 <x-icon name="bell" />
                 @if (\App\Models\Announcement::unseenBy(auth()->user())->where('created_at', '>=', now()->subDays(30))->exists())
-                    <span class="absolute right-1.5 top-1.5 h-2.5 w-2.5 rounded-full bg-rose-500 ring-2 ring-white"></span>
+                    <span class="absolute right-1.5 top-1.5 flex h-2.5 w-2.5"><span class="absolute inline-flex h-full w-full animate-ping rounded-full bg-rose-400 opacity-70"></span><span class="relative h-2.5 w-2.5 rounded-full bg-rose-500 ring-2 ring-white"></span></span>
                 @endif
             </a>
 

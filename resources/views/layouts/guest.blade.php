@@ -4,7 +4,8 @@
         <meta charset="utf-8">
         <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
         <meta name="csrf-token" content="{{ csrf_token() }}">
-        <meta name="theme-color" content="#0a1020">
+        <meta name="theme-color" content="#e8f1f0">
+        @include('layouts.partials.app-meta')
 
         <title>{{ config('app.name', 'SEMS') }} · Sign in</title>
 
@@ -16,6 +17,7 @@
         @vite(['resources/css/app.css', 'resources/js/app.js'])
     </head>
     <body class="font-sans antialiased">
+        @include('layouts.partials.ambient')
         <div class="flex min-h-screen" @if ($reminder ?? null) x-data="shiftCountdown(@js($reminder), { sheet: true })" @endif>
             {{-- Brand panel --}}
             <aside class="relative hidden w-[46%] max-w-2xl overflow-hidden bg-ink-900 lg:flex lg:flex-col">
@@ -52,7 +54,7 @@
             <main class="relative flex min-w-0 flex-1 flex-col items-center justify-center px-5 py-12 sm:px-8">
 
                 <div class="relative w-full max-w-[26rem]">
-                    <div class="mb-8 flex items-center gap-3 lg:hidden">
+                    <div class="mb-8 flex animate-rise items-center gap-3 lg:hidden">
                         <x-application-logo size="h-10 w-10" />
                         <span class="text-lg font-bold tracking-tight text-slate-900">SEMS</span>
                     </div>
@@ -61,7 +63,7 @@
                         @include('auth.partials.shift-compact')
                     @endif
 
-                    <div class="card rounded-[2rem] p-7 sm:p-9">
+                    <div class="card animate-rise rounded-[2rem] p-7 sm:p-9">
                         {{ $slot }}
                     </div>
                 </div>
