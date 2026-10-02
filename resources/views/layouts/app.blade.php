@@ -16,9 +16,12 @@
 
         @vite(['resources/css/app.css', 'resources/js/app.js'])
 
-        {{-- Chrome fetches a page as soon as a finger touches its link, so it opens near-instantly. --}}
+        {{-- Chrome fetches the tab bar's pages up front, and any other page as soon as a finger touches its link. --}}
         <script type="speculationrules">
-            {"prefetch": [{"where": {"and": [{"href_matches": "/*"}, {"not": {"href_matches": ["/logout", "/login/*", "/announcements", "/payslips/*/download", "/attachments/*", "/attendance/*"]}}]}, "eagerness": "moderate"}]}
+            {"prefetch": [
+                {"where": {"and": [{"selector_matches": ".tabrow a.tab, a.tab-action"}, {"not": {"href_matches": "/announcements"}}]}, "eagerness": "eager"},
+                {"where": {"and": [{"href_matches": "/*"}, {"not": {"href_matches": ["/logout", "/login/*", "/announcements", "/payslips/*/download", "/attachments/*", "/attendance/*"]}}]}, "eagerness": "moderate"}
+            ]}
         </script>
     </head>
     <body class="font-sans antialiased">

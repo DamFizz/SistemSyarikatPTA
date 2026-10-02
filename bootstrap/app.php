@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Middleware\CompressResponse;
 use App\Http\Middleware\EnsureUserHasRole;
 use App\Http\Middleware\TrustEdgeProxies;
 use Illuminate\Foundation\Application;
@@ -18,6 +19,9 @@ return Application::configure(basePath: dirname(__DIR__))
         // Railway (and sometimes Fastly in front of it) proxies every request. This lets
         // $request->ip() return the employee's real public IP for the office WiFi check.
         $middleware->replace(TrustProxies::class, TrustEdgeProxies::class);
+
+        // Pages and JSON go out gzip-compressed (the hosting edge does not compress).
+        $middleware->append(CompressResponse::class);
 
         $middleware->alias([
             'role' => EnsureUserHasRole::class,

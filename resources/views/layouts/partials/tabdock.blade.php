@@ -49,7 +49,8 @@
              void lens.offsetWidth;
              lens.classList.add('is-moving');
              bar.style.setProperty('--tab-index', index);
-             setTimeout(() => location.assign(href), 260);
+             // Start loading right away: this page keeps animating until the next one is ready.
+             setTimeout(() => location.assign(href), 90);
          },
          go(event, then) {
              if (this.leaving || event.metaKey || event.ctrlKey || event.shiftKey) return;
@@ -57,8 +58,8 @@
              this.leaving = true;
              event.currentTarget.classList.add('tile-picked');
              navigator.vibrate?.(8);
-             setTimeout(() => { this.menu = false; }, 140);
-             setTimeout(then, 520);
+             setTimeout(() => { this.menu = false; }, 90);
+             setTimeout(then, 200);
          },
      }"
      x-init="fit()" @resize.window.debounce.200ms="fit()"
