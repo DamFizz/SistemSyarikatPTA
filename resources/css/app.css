@@ -515,13 +515,17 @@
 
     /* ---------- "More": the tab bar morphs into the full menu ---------- */
     /*
-     | Performance: the panel is laid out once at its final size and only *revealed* —
-     | clip-path grows from the capsule's outline and a transform adds the spring.
-     | Nothing changes size while it animates, so there is no layout work per frame.
+     | Choreography (open):
+     |   1. the shape grows out of the capsule's outline (clip-path, one iOS-style curve)
+     |   2. the glass fill cross-fades with the tabs underneath
+     |   3. the contents rise in with a soft spring (transform/opacity: GPU only)
+     | Close plays it backwards. The panel is laid out once at its final size and has no
+     | backdrop blur, so revealing it costs almost nothing per frame.
      */
     .tabdock {
         --bar-h: var(--tabbar-h);
         --action-gap: calc(var(--bar-h) + 0.625rem);
+        --morph-ease: cubic-bezier(0.32, 0.72, 0, 1);
     }
 
     .tabbar-min .tabdock {
@@ -534,54 +538,83 @@
 
     .menupanel {
         height: min(76vh, var(--menu-h, 36rem));
-        border-radius: 2rem;
-        transform-origin: 50% 100%;
+        contain: layout paint;
         /* Closed: clipped down to exactly the capsule tab bar. */
         clip-path: inset(calc(100% - var(--bar-h)) var(--action-gap) 0 0 round 2.15rem);
-        background: linear-gradient(180deg, rgba(255, 255, 255, 0.5), rgba(255, 255, 255, 0.2)), rgba(244, 247, 250, 0.84);
-        -webkit-backdrop-filter: blur(16px) saturate(190%);
-        backdrop-filter: blur(16px) saturate(190%);
-        box-shadow: var(--lg-specular);
-        transition:
-            clip-path 0.36s cubic-bezier(0.4, 0, 0.2, 1),
-            opacity 0.14s ease 0.24s,
-            visibility 0s linear 0.38s;
-        @apply invisible pointer-events-none absolute inset-x-0 bottom-0 z-10 flex flex-col opacity-0;
+        transition: clip-path 0.42s var(--morph-ease), visibility 0s linear 0.42s;
+        @apply invisible pointer-events-none absolute inset-x-0 bottom-0 z-10;
     }
 
     .tabdock.menu-open .menupanel {
         clip-path: inset(0 0 0 0 round 2rem);
-        transition:
-            clip-path 0.5s cubic-bezier(0.22, 1, 0.36, 1),
-            opacity 0.1s ease,
-            visibility 0s;
-        animation: menu-spring 0.62s cubic-bezier(0.3, 1.25, 0.5, 1);
-        @apply visible pointer-events-auto opacity-100;
+        transition: clip-path 0.55s var(--morph-ease), visibility 0s;
+        @apply visible pointer-events-auto;
     }
 
-    .tabdock.menu-open .tabrow {
+    /* The glass fill: starts as the tab bar's look and cross-fades in. */
+    .menupanel-fill {
+        background:
+            linear-gradient(180deg, rgba(255, 255, 255, 0.7), rgba(255, 255, 255, 0.25)),
+            #eef2f6;
+        box-shadow: var(--lg-specular);
+        @apply absolute inset-0 rounded-[2rem];
+    }
+
+    .menupanel-body {
+        opacity: 0;
+        transform: translateY(18px) scale(0.97);
+        transform-origin: 50% 100%;
+        transition: opacity 0.14s ease, transform 0.3s var(--morph-ease);
+        @apply relative flex h-full flex-col;
+    }
+
+    .tabdock.menu-open .menupanel-body {
+        opacity: 1;
+        transform: none;
+        transition: opacity 0.28s ease 0.08s, transform 0.62s cubic-bezier(0.25, 1.25, 0.4, 1) 0.04s;
+    }
+
+    /* Nothing inside the panel blurs its backdrop: keeps every animation frame cheap. */
+    .menupanel-body .btn-secondary,
+    .menupanel-body .btn-danger-soft {
+        -webkit-backdrop-filter: none;
+        backdrop-filter: none;
+    }
+
+    .menupanel-body .btn-secondary {
+        background: rgba(255, 255, 255, 0.75);
+    }
+
+    /* Tabs and the round action hand over to the panel (and come back on close). */
+    /* The tab bar sits above the panel: the panel lifts out from behind it while the bar fades. */
+    .tabdock .tabbar {
+        z-index: 20;
+        transition: opacity 0.22s ease 0.18s, height 0.45s cubic-bezier(0.2, 0.8, 0.2, 1.15);
+    }
+
+    .tabdock.menu-open .tabbar {
         @apply pointer-events-none;
         opacity: 0;
-        transition: opacity 0.15s ease;
+        transition: opacity 0.22s ease 0.03s, height 0.45s cubic-bezier(0.2, 0.8, 0.2, 1.15);
     }
 
-    /* The round action is absorbed into the glass (transform + opacity only). */
     .tabdock.menu-open .tab-action {
         @apply pointer-events-none;
         opacity: 0;
-        transform: scale(0.5);
+        transform: scale(0.6);
+        transition: opacity 0.16s ease, transform 0.3s var(--morph-ease);
     }
 
     /* Menu tiles pop in one after another, with a little bounce. */
     .tile {
-        transform: translateY(10px) scale(0.6);
-        transition: transform 0.25s ease, opacity 0.12s ease;
+        transform: translateY(8px) scale(0.85);
+        transition: transform 0.2s ease, opacity 0.1s ease;
         @apply flex flex-col items-center gap-1.5 rounded-2xl p-1.5 text-center text-[11px] font-medium leading-tight text-slate-700 opacity-0;
     }
 
     .tabdock.menu-open .tile {
         transform: none;
-        transition: transform 0.5s cubic-bezier(0.3, 1.6, 0.5, 1) calc(0.08s + var(--d, 0) * 18ms), opacity 0.25s ease calc(0.08s + var(--d, 0) * 18ms);
+        transition: transform 0.5s cubic-bezier(0.3, 1.45, 0.5, 1) calc(0.12s + var(--d, 0) * 16ms), opacity 0.25s ease calc(0.12s + var(--d, 0) * 16ms);
         @apply opacity-100;
     }
 
@@ -603,7 +636,7 @@
     }
 
     .tile-icon {
-        background: rgba(255, 255, 255, 0.6);
+        background: rgba(255, 255, 255, 0.7);
         box-shadow: var(--lg-specular), 0 6px 14px -8px rgba(15, 23, 42, 0.3);
         @apply flex h-[3.25rem] w-[3.25rem] items-center justify-center rounded-[1.1rem] text-slate-600;
     }
@@ -617,7 +650,7 @@
         @apply font-semibold text-emerald-800;
     }
 
-    /* Dim the page behind the open menu (no full-screen blur: that was the costly part). */
+    /* Dim the page behind the open menu (opacity only). */
     .menu-scrim {
         @apply fixed inset-0 -z-10 bg-slate-900/25;
     }
@@ -778,15 +811,3 @@
     }
 }
 
-/* The menu settles with a springy overshoot as it opens out of the tab bar. */
-@keyframes menu-spring {
-    0% {
-        transform: scale(0.97, 0.9);
-    }
-    55% {
-        transform: scale(1.008, 1.02);
-    }
-    100% {
-        transform: none;
-    }
-}
