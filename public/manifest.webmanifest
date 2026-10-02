@@ -1,4 +1,5 @@
 {
+    "id": "/",
     "name": "SEMS — Smart Employee Management",
     "short_name": "SEMS",
     "description": "Attendance, leave, overtime, payroll and helpdesk.",

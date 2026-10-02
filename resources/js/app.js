@@ -122,6 +122,66 @@ Alpine.data('shiftCountdown', (reminder, options = {}) => ({
     },
 }));
 
+/* ------------------------------------------------------------------
+ | "Install the SEMS app" (Progressive Web App).
+ | Chrome/Edge fire beforeinstallprompt when the site can be installed; we keep the
+ | event so the Install button on My Profile can open the browser's own dialog.
+ | Safari and Firefox never fire it, so the card shows the manual steps instead.
+ * ------------------------------------------------------------------ */
+let installPrompt = null;
+
+window.addEventListener('beforeinstallprompt', (event) => {
+    event.preventDefault();
+    installPrompt = event;
+    window.dispatchEvent(new CustomEvent('sems:installable'));
+});
+
+window.addEventListener('appinstalled', () => {
+    installPrompt = null;
+    window.dispatchEvent(new CustomEvent('sems:installed'));
+});
+
+if ('serviceWorker' in navigator && window.isSecureContext) {
+    window.addEventListener('load', () => navigator.serviceWorker.register('/sw.js').catch(() => {}));
+}
+
+const detectPlatform = () => {
+    const ua = navigator.userAgent;
+    const ios = /iPhone|iPad|iPod/.test(ua) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+    if (ios) return 'ios';
+    if (/SamsungBrowser/.test(ua)) return 'samsung';
+    if (/Android/.test(ua)) return /Firefox/.test(ua) ? 'android-firefox' : 'android';
+    if (/Firefox/.test(ua)) return 'desktop-firefox';
+    if (/Edg\//.test(ua)) return 'desktop-edge';
+    if (/Safari/.test(ua) && !/Chrome|Chromium/.test(ua)) return 'desktop-safari';
+    return 'desktop-chrome';
+};
+
+Alpine.data('installApp', () => ({
+    canPrompt: !!installPrompt,
+    installed: window.matchMedia('(display-mode: standalone)').matches || navigator.standalone === true,
+    platform: detectPlatform(),
+    busy: false,
+    declined: false,
+
+    init() {
+        window.addEventListener('sems:installable', () => { this.canPrompt = true; });
+        window.addEventListener('sems:installed', () => { this.installed = true; this.canPrompt = false; });
+    },
+
+    async install() {
+        if (!installPrompt || this.busy) return;
+        this.busy = true;
+        installPrompt.prompt();
+        const { outcome } = await installPrompt.userChoice;
+        installPrompt = null;
+        this.canPrompt = false;
+        this.busy = false;
+        if (outcome === 'accepted') this.installed = true;
+        else this.declined = true;
+    },
+}));
+
 Alpine.start();
 
 /* ------------------------------------------------------------------

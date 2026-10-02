@@ -6,7 +6,7 @@
     </x-slot>
 
     <div class="grid gap-6 lg:grid-cols-3">
-        <div class="surface-dark p-6 lg:row-span-3 lg:self-start">
+        <div class="surface-dark p-6 lg:row-span-4 lg:self-start">
             <div class="relative">
                 @include('profile.partials.update-photo-form')
                 <div class="mt-4 text-lg font-semibold text-white">{{ $user->name }}</div>
@@ -21,6 +21,12 @@
                         <div class="flex justify-between gap-3"><dt class="text-slate-500">Office</dt><dd class="text-right text-slate-200">{{ $user->employee->office?->name }}</dd></div>
                     </dl>
                 @endif
+            </div>
+        </div>
+
+        <div class="card p-6 sm:p-8 lg:col-span-2">
+            <div class="max-w-xl">
+                @include('profile.partials.install-app')
             </div>
         </div>
 

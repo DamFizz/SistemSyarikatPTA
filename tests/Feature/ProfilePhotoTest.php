@@ -20,7 +20,7 @@ class ProfilePhotoTest extends TestCase
         $employee = Employee::factory()->create(['department_id' => Department::factory(), 'office_id' => Office::factory()]);
         $user = $employee->user;
 
-        $this->actingAs($user)->get(route('profile.edit'))->assertOk()->assertSee('Profile photo');
+        $this->actingAs($user)->get(route('profile.edit'))->assertOk()->assertSee('Profile photo')->assertSee('Install the SEMS app');
 
         $this->actingAs($user)->post(route('profile.photo.update'), [
             'photo' => UploadedFile::fake()->image('me.png', 800, 600),
