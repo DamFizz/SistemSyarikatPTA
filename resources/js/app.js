@@ -190,10 +190,13 @@ Alpine.data('installApp', () => ({
  */
 Alpine.data('lightbox', () => ({
     open: false,
+    closing: false,
     items: [],
     index: 0,
     loaded: false,
     origin: null,
+    direction: 0,
+    sliding: false,
     touchX: null,
 
     get item() {
@@ -215,53 +218,96 @@ Alpine.data('lightbox', () => ({
         this.items = links.map((a) => ({ src: a.href, caption: a.dataset.caption || a.title || '', thumb: a }));
         this.index = Math.max(0, links.indexOf(link));
         this.loaded = false;
+        this.closing = false;
+        this.direction = 0;
         this.origin = link.getBoundingClientRect();
         this.open = true;
         navigator.vibrate?.(6);
     },
 
-    /** Zoom the picture out of the thumbnail it came from (transform only — GPU). */
-    zoomIn() {
+    /**
+     * Runs when the picture has loaded. On open it zooms out of its thumbnail; after an
+     * arrow / swipe it slides in from the side it is coming from. Transform only (GPU).
+     */
+    reveal() {
         this.loaded = true;
         const img = this.$refs.img;
-        if (!img || !this.origin || reduceMotion) return;
-        const to = img.getBoundingClientRect();
-        const from = this.origin;
-        this.origin = null;
-        img.animate([
-            { transform: `translate(${from.left + from.width / 2 - (to.left + to.width / 2)}px, ${from.top + from.height / 2 - (to.top + to.height / 2)}px) scale(${from.width / to.width})`, borderRadius: '40%', opacity: 0.6 },
-            { transform: 'none', borderRadius: '1.5rem', opacity: 1 },
-        ], { duration: 420, easing: 'cubic-bezier(0.3, 1.2, 0.4, 1)' });
+        if (!img || reduceMotion) return;
+
+        if (this.origin) {
+            const to = img.getBoundingClientRect();
+            const from = this.origin;
+            this.origin = null;
+            img.animate([
+                { transform: `translate(${from.left + from.width / 2 - (to.left + to.width / 2)}px, ${from.top + from.height / 2 - (to.top + to.height / 2)}px) scale(${from.width / to.width})`, borderRadius: '40%', opacity: 0.6 },
+                { transform: 'none', borderRadius: '1.5rem', opacity: 1 },
+            ], { duration: 420, easing: 'cubic-bezier(0.3, 1.2, 0.4, 1)' });
+        } else if (this.direction) {
+            img.animate([
+                { transform: `translateX(${this.direction * 70}px) scale(0.94)`, opacity: 0 },
+                { transform: 'none', opacity: 1 },
+            ], { duration: 340, easing: 'cubic-bezier(0.25, 1.15, 0.4, 1)' });
+            this.direction = 0;
+        }
     },
 
     close() {
-        if (!this.open) return;
+        if (!this.open || this.closing) return;
+        this.closing = true;
+
+        const finish = () => {
+            if (!this.open) return;
+            this.open = false;
+            this.closing = false;
+        };
+
         const img = this.$refs.img;
         const thumb = this.item?.thumb;
         const from = img?.getBoundingClientRect();
         const to = thumb?.getBoundingClientRect();
         const visible = to && to.bottom > 0 && to.top < window.innerHeight && to.width > 0;
-        if (img && from && visible && !reduceMotion) {
-            const shrink = img.animate([
+
+        if (img && from && from.width && visible && !reduceMotion) {
+            img.animate([
                 { transform: 'none', opacity: 1 },
                 { transform: `translate(${to.left + to.width / 2 - (from.left + from.width / 2)}px, ${to.top + to.height / 2 - (from.top + from.height / 2)}px) scale(${to.width / from.width})`, borderRadius: '40%', opacity: 0.4 },
-            ], { duration: 260, easing: 'cubic-bezier(0.4, 0, 0.2, 1)', fill: 'forwards' });
-            const done = () => {
-                if (!this.open) return;
-                this.open = false;
-                shrink.cancel(); // or the next opening would start from the shrunken frame
-            };
-            shrink.finished.then(done);
-            setTimeout(done, 400); // in case animations are paused (e.g. a background tab)
+            ], { duration: 280, easing: 'cubic-bezier(0.4, 0, 0.2, 1)', fill: 'forwards' }).finished.then(finish);
+        } else if (img && !reduceMotion) {
+            img.animate([{ opacity: 1, transform: 'none' }, { opacity: 0, transform: 'scale(0.9)' }], { duration: 200, easing: 'ease-in', fill: 'forwards' }).finished.then(finish);
         } else {
-            this.open = false;
+            finish();
         }
+
+        setTimeout(finish, 450); // in case animations are paused (e.g. a background tab)
     },
 
+    /** Slide the current picture out to one side, then bring the next one in from the other. */
     step(delta) {
-        if (this.items.length < 2) return;
-        this.index = (this.index + delta + this.items.length) % this.items.length;
-        this.loaded = false;
+        if (this.items.length < 2 || this.sliding || this.closing) return;
+        const next = (this.index + delta + this.items.length) % this.items.length;
+        const img = this.$refs.img;
+        navigator.vibrate?.(5);
+
+        const swap = () => {
+            this.sliding = false;
+            this.direction = delta;
+            this.loaded = false;
+            this.index = next;
+        };
+
+        if (!img || reduceMotion) {
+            swap();
+            return;
+        }
+
+        this.sliding = true;
+        img.animate([
+            { transform: 'none', opacity: 1 },
+            { transform: `translateX(${-delta * 70}px) scale(0.94)`, opacity: 0 },
+        ], { duration: 170, easing: 'cubic-bezier(0.4, 0, 1, 1)', fill: 'forwards' }).finished.then((animation) => {
+            swap();
+            animation.cancel();
+        });
     },
 
     swipeStart(event) {
