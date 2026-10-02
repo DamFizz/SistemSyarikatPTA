@@ -1,10 +1,11 @@
 <?php
 
 /*
- | Production router for PHP's built-in web server (used on Railway).
+ | Router for PHP's built-in web server. `php artisan serve` (used on Railway) picks this
+ | file up automatically because it sits in the project root.
  |
- | `php artisan serve` hands static files to the built-in server, which sends them with no
- | cache headers and no compression — so every page change re-downloaded the CSS and JS.
+ | Laravel's default router hands static files to the built-in server, which sends them with
+ | no cache headers and no compression — so every page change re-downloaded the CSS and JS.
  | This router serves public files itself:
  |   - /build/assets/* (content-hashed by Vite): cached for a year, immutable
  |   - other public files: cached for a day, revalidated with an ETag
