@@ -327,7 +327,7 @@ function initRefraction() {
         if (!w || !h || style.display === 'none') return;
 
         const radius = Math.min(parseFloat(style.borderTopLeftRadius) || 0, w / 2, h / 2);
-        const bezel = Math.max(6, Math.min(20, Math.min(w, h) * 0.32));
+        const bezel = Math.max(8, Math.min(24, Math.min(w, h) * 0.36));
         const id = (el.dataset.refractId ||= `lg-lens-${seq++}`);
 
         defs.querySelector(`#${id}`)?.remove();
@@ -342,10 +342,27 @@ function initRefraction() {
         map.setAttribute('href', lensMap(w, h, radius, bezel));
         for (const [k, v] of Object.entries({ x: 0, y: 0, width: w, height: h, result: 'lens', preserveAspectRatio: 'none' })) map.setAttribute(k, v);
 
-        const displace = document.createElementNS(NS, 'feDisplacementMap');
-        for (const [k, v] of Object.entries({ in: 'SourceGraphic', in2: 'lens', scale: Math.round(bezel * 1.6), xChannelSelector: 'R', yChannelSelector: 'G' })) displace.setAttribute(k, v);
+        // Red, green and blue bend by slightly different amounts — the faint colour
+        // fringing (chromatic aberration) that real glass edges show.
+        const node = (tag, attrs) => {
+            const el = document.createElementNS(NS, tag);
+            for (const [k, v] of Object.entries(attrs)) el.setAttribute(k, v);
+            return el;
+        };
+        const strength = bezel * 2.2;
+        const channel = (name, scale, matrix) => [
+            node('feDisplacementMap', { in: 'SourceGraphic', in2: 'lens', scale: Math.round(scale), xChannelSelector: 'R', yChannelSelector: 'G', result: `${name}-bent` }),
+            node('feColorMatrix', { in: `${name}-bent`, type: 'matrix', values: matrix, result: name }),
+        ];
 
-        filter.append(map, displace);
+        filter.append(
+            map,
+            ...channel('red', strength * 1.12, '1 0 0 0 0  0 0 0 0 0  0 0 0 0 0  0 0 0 1 0'),
+            ...channel('green', strength, '0 0 0 0 0  0 1 0 0 0  0 0 0 0 0  0 0 0 1 0'),
+            ...channel('blue', strength * 0.88, '0 0 0 0 0  0 0 0 0 0  0 0 1 0 0  0 0 0 1 0'),
+            node('feBlend', { in: 'red', in2: 'green', mode: 'screen', result: 'rg' }),
+            node('feBlend', { in: 'rg', in2: 'blue', mode: 'screen' }),
+        );
         defs.appendChild(filter);
 
         const base = style.backdropFilter && style.backdropFilter !== 'none' ? style.backdropFilter : '';

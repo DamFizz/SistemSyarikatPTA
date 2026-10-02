@@ -1,22 +1,22 @@
 {{-- Content blurs away as it slides under the floating controls. --}}
 <div class="scroll-edge" aria-hidden="true"></div>
 
-<header class="sticky top-0 z-20 px-4 pb-2 pt-[max(0.75rem,env(safe-area-inset-top))] [view-transition-name:topbar] sm:px-6 lg:px-10">
+<header class="sticky top-0 z-20 px-4 pb-2 pt-[max(0.75rem,env(safe-area-inset-top))] sm:px-6 lg:px-10">
     {{-- Phones (iOS 26): separate floating glass controls, compact title in between. --}}
     <div class="flex h-12 items-center gap-3 lg:hidden">
-        <a href="{{ route('dashboard') }}" class="lg lg-press flex h-12 w-12 shrink-0 items-center justify-center rounded-full" data-refract aria-label="Home">
+        <a href="{{ route('dashboard') }}" class="lg lg-press flex h-12 w-12 shrink-0 items-center justify-center rounded-full [view-transition-name:bar-home]" data-refract aria-label="Home">
             <x-application-logo size="h-8 w-8" />
         </a>
 
         <div class="bar-title min-w-0 flex-1 truncate text-center text-[15px] font-semibold text-slate-900">{{ $title ?? 'Dashboard' }}</div>
 
-        <div class="lg flex h-12 shrink-0 items-center gap-0.5 rounded-full px-1.5" data-refract>
+        <div class="lg flex h-12 shrink-0 items-center gap-0.5 rounded-full px-1.5 [view-transition-name:bar-actions]" data-refract>
             @include('layouts.partials.topbar-actions')
         </div>
     </div>
 
     {{-- Larger screens: one glass capsule. --}}
-    <div class="lg mx-auto hidden h-14 max-w-7xl items-center gap-3 rounded-full px-3 lg:flex" data-refract>
+    <div class="lg mx-auto hidden h-14 max-w-7xl items-center gap-3 rounded-full px-3 [view-transition-name:bar-desktop] lg:flex" data-refract>
         <div class="flex min-w-0 items-center gap-2 ps-2 text-sm">
             <span class="text-slate-500">SEMS</span>
             <span class="text-slate-400">/</span>

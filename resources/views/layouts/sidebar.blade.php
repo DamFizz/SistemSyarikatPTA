@@ -2,67 +2,12 @@
     $user = auth()->user();
     $role = $user->role;
 
-    // [label, route, active pattern, icon]
-    $groups = [
-        null => [
-            ['Dashboard', 'dashboard', ['dashboard', '*.dashboard'], 'home'],
-            ['Announcements', 'announcements.index', ['announcements.*'], 'megaphone'],
-        ],
-    ];
-
-    // Self-service pages only make sense for accounts linked to an employee profile.
-    if ($user->employee) {
-        $groups['My Workspace'] = [
-            ['Attendance', 'employee.attendance.index', ['employee.attendance.*'], 'fingerprint'],
-            [$role === 'hr_admin' ? 'Request Overtime' : 'Overtime', 'employee.overtime.index', ['employee.overtime.*'], 'clock'],
-            [$role === 'hr_admin' ? 'Request Leave' : 'Leave', 'employee.leave.index', ['employee.leave.*'], 'calendar'],
-            ['Payslips', 'employee.payslips.index', ['employee.payslips.*'], 'banknotes'],
-            ['Helpdesk', 'employee.tickets.index', ['employee.tickets.*'], 'lifebuoy'],
-        ];
-    }
-
-    if ($role === 'technician') {
-        $groups['Support'] = [
-            ['Ticket Queue', 'technician.tickets.index', ['technician.tickets.*'], 'wrench'],
-        ];
-    }
-
-    if ($role === 'manager') {
-        $groups['My Team'] = [
-            ['Team Members', 'manager.employees.index', ['manager.employees.*'], 'users'],
-            ['Overtime Approvals', 'manager.overtime.index', ['manager.overtime.*'], 'check-badge'],
-            ['Leave Approvals', 'manager.leave.index', ['manager.leave.*'], 'calendar'],
-        ];
-    }
-
-    if (in_array($role, ['hr_admin', 'super_admin'])) {
-        $groups['People'] = [
-            ['Employees', 'hr.employees.index', ['hr.employees.*'], 'users'],
-            ['Departments', 'hr.departments.index', ['hr.departments.*'], 'building'],
-        ];
-        $groups['Operations'] = [
-            ['Attendance Records', 'hr.attendance.index', ['hr.attendance.*'], 'fingerprint'],
-            ['Overtime Records', 'hr.overtime.index', ['hr.overtime.*'], 'clock'],
-            ['Leave Records', 'hr.leave.index', ['hr.leave.*'], 'calendar'],
-            ['Working Hours', 'hr.work-hours.index', ['hr.work-hours.*'], 'shield'],
-            ['Public Holidays', 'hr.public-holidays.index', ['hr.public-holidays.*'], 'sparkles'],
-            ['Payroll', 'hr.payroll.index', ['hr.payroll.*'], 'banknotes'],
-            ['Helpdesk Tickets', 'hr.tickets.index', ['hr.tickets.*'], 'lifebuoy'],
-            ['Reports', 'hr.reports.index', ['hr.reports.*'], 'chart'],
-        ];
-    }
-
-    if ($role === 'super_admin') {
-        $groups['System'] = [
-            ['Offices & WiFi', 'super-admin.offices.index', ['super-admin.offices.*'], 'wifi'],
-            ['Audit Log', 'super-admin.audit-logs.index', ['super-admin.audit-logs.*'], 'shield'],
-        ];
-    }
+    $groups = \App\Support\Navigation::groupsFor($user);
 @endphp
 
 <aside
     :class="sidebarOpen ? 'translate-x-0' : '-translate-x-full'"
-    class="[view-transition-name:sidebar] fixed left-0 top-0 z-40 flex h-viewport w-[17rem] max-w-[85vw] flex-col overscroll-contain bg-white/80 text-slate-600 shadow-[var(--lg-specular),var(--lg-float)] backdrop-blur-2xl backdrop-saturate-[1.8] transition-transform duration-300 ease-out lg:inset-y-3 lg:left-3 lg:h-auto lg:max-w-none lg:translate-x-0 lg:rounded-[2rem] lg:bg-white/25 lg:backdrop-blur-md lg:backdrop-saturate-[2]"
+    class="[view-transition-name:sidebar] fixed left-0 top-0 z-40 hidden h-viewport lg:flex w-[17rem] max-w-[85vw] flex-col overscroll-contain bg-white/80 text-slate-600 shadow-[var(--lg-specular),var(--lg-float)] backdrop-blur-2xl backdrop-saturate-[1.8] transition-transform duration-300 ease-out lg:inset-y-3 lg:left-3 lg:h-auto lg:max-w-none lg:translate-x-0 lg:rounded-[2rem] lg:bg-white/25 lg:backdrop-blur-md lg:backdrop-saturate-[2]"
     data-refract
 >
 

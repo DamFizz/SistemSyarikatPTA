@@ -46,35 +46,7 @@
     $items = [...$tabs, ['More', null, [], 'menu']];
     $activeIndex = collect($items)->search(fn ($item) => $item[1] && request()->routeIs(...$item[2]));
     $centreActive = $centre && request()->routeIs(...$centre[2]);
+    $groups = \App\Support\Navigation::groupsFor($user);
 @endphp
 
-{{-- iOS 26 style: a floating clear-glass capsule of tabs, plus a separate round action. --}}
-<div class="tabdock">
-    <nav class="tabbar" data-refract aria-label="Main" style="--tabs: {{ count($items) }}; --tab-index: {{ $activeIndex === false ? 0 : $activeIndex }}">
-        @if ($activeIndex !== false)
-            <span class="tab-indicator"></span>
-        @endif
-
-        @foreach ($items as $i => [$label, $routeName, $patterns, $icon])
-            @if ($routeName === null)
-                <button type="button" @click="sidebarOpen = true; navigator.vibrate?.(8)" class="tab" :class="sidebarOpen && 'tab-active'">
-                    <x-icon :name="$icon" class="h-[22px] w-[22px]" />
-                    <span>{{ $label }}</span>
-                </button>
-            @else
-                <a href="{{ route($routeName) }}" class="tab {{ $activeIndex === $i ? 'tab-active' : '' }}" onclick="navigator.vibrate?.(8)"
-                   @if ($activeIndex === $i) aria-current="page" @endif>
-                    <x-icon :name="$icon" class="h-[22px] w-[22px]" />
-                    <span>{{ $label }}</span>
-                </a>
-            @endif
-        @endforeach
-    </nav>
-
-    @if ($centre)
-        <a href="{{ route($centre[1]) }}" class="tab-action {{ $centreActive ? 'tab-action-active' : '' }}" data-refract
-           onclick="navigator.vibrate?.(10)" aria-label="Attendance — clock in or out" @if ($centreActive) aria-current="page" @endif>
-            <x-icon :name="$centre[3]" class="h-7 w-7" />
-        </a>
-    @endif
-</div>
+@include('layouts.partials.tabdock')

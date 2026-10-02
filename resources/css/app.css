@@ -54,6 +54,8 @@
     body {
         @apply bg-canvas text-slate-700;
         font-feature-settings: 'cv11', 'ss01';
+        /* Last line of defence against sideways scrolling on phones (clip keeps sticky bars working). */
+        overflow-x: clip;
     }
 
     /* Ambient light behind the glass (fixed so it stays put while scrolling, incl. iOS). */
@@ -73,6 +75,15 @@
 
     h1, h2, h3, h4 {
         @apply text-slate-900 tracking-tight;
+    }
+
+    /*
+     | Grid children may shrink below their content. Without this one long, non-wrapping
+     | line (e.g. a truncated announcement title) widens the whole column and the page
+     | becomes wider than the phone screen.
+     */
+    .grid > * {
+        min-width: 0;
     }
 
     ::selection {
@@ -404,19 +415,41 @@
     /* Dock = capsule tab bar + separate round action button, floating above content. */
     .tabdock {
         bottom: calc(0.75rem + var(--safe-bottom));
-        view-transition-name: tabdock;
-        @apply fixed inset-x-3 z-30 mx-auto flex max-w-md items-end gap-2.5 lg:hidden;
+        /* No view-transition-name here: it would make the dock a backdrop root and the glass inside could not blur the page. */
+        @apply fixed inset-x-3 z-30 mx-auto flex max-w-md items-end lg:hidden;
     }
 
+    /* Springs used by the morph: open overshoots and settles, close is quick and soft. */
     .tabbar {
+        --spring-open: cubic-bezier(0.32, 1.45, 0.5, 1);
+        --spring-close: cubic-bezier(0.4, 0.9, 0.3, 1.08);
         height: var(--tabbar-h);
-        transition: height 0.45s cubic-bezier(0.2, 0.8, 0.2, 1.15);
-        @apply lg lg-regular relative flex min-w-0 flex-1 items-stretch rounded-full px-1;
+        border-radius: 2.15rem;
+        view-transition-name: tabbar;
+        transition: height 0.5s var(--spring-close), border-radius 0.5s var(--spring-close), box-shadow 0.4s ease;
+        /* Clearly frosted (Apple's tab bars are): labels must read over any content. */
+        background:
+            linear-gradient(180deg, rgba(255, 255, 255, 0.34), rgba(255, 255, 255, 0.06) 55%, rgba(255, 255, 255, 0.16)),
+            rgba(248, 250, 252, 0.34);
+        /* Light frost so the refracted edge stays visible (as on iOS); enough to keep labels readable. */
+        -webkit-backdrop-filter: blur(4px) saturate(220%) brightness(1.08);
+        backdrop-filter: blur(4px) saturate(220%) brightness(1.08);
+        box-shadow: var(--lg-specular), var(--lg-float);
+        @apply relative min-w-0 flex-1 overflow-hidden;
+    }
+
+    .tabrow {
+        height: var(--tabbar-h);
+        transition: opacity 0.25s ease, transform 0.45s var(--spring-open), filter 0.3s ease, height 0.45s cubic-bezier(0.2, 0.8, 0.2, 1.15);
+        @apply absolute inset-x-0 bottom-0 flex items-stretch px-1;
     }
 
     .tab {
         transition: transform 0.45s cubic-bezier(0.2, 0.8, 0.2, 1.3), color 0.25s ease;
-        @apply relative z-10 flex flex-1 flex-col items-center justify-center gap-0.5 rounded-full text-[10.5px] font-semibold text-slate-600 active:scale-110;
+        /* Vibrancy: a soft white halo keeps icons and labels crisp over whatever is refracted behind. */
+        text-shadow: 0 0 6px rgba(255, 255, 255, 0.95), 0 0 2px rgba(255, 255, 255, 0.9);
+        filter: drop-shadow(0 0 4px rgba(255, 255, 255, 0.85));
+        @apply relative z-10 flex flex-1 flex-col items-center justify-center gap-0.5 rounded-full text-[10.5px] font-semibold text-slate-700 active:scale-110;
     }
 
     .tab > span {
@@ -432,7 +465,7 @@
     .tab-indicator {
         width: calc((100% - 0.5rem) / var(--tabs));
         transform: translateX(calc(100% * var(--tab-index)));
-        background: rgba(255, 255, 255, 0.5);
+        background: rgba(255, 255, 255, 0.75);
         box-shadow: var(--lg-specular), 0 4px 12px -6px rgba(15, 23, 42, 0.25);
         transition: transform 0.55s cubic-bezier(0.25, 0.9, 0.25, 1.15);
         @apply pointer-events-none absolute inset-y-1 left-1 rounded-full;
@@ -446,10 +479,18 @@
     .tab-action {
         width: var(--tabbar-h);
         height: var(--tabbar-h);
-        background: linear-gradient(180deg, rgba(52, 211, 153, 0.9), rgba(13, 148, 136, 0.88));
+        margin-left: 0.625rem;
+        view-transition-name: tab-action;
+        background: linear-gradient(180deg, rgba(52, 211, 153, 0.92), rgba(13, 148, 136, 0.9));
         box-shadow: var(--lg-specular), 0 10px 26px -10px rgba(5, 150, 105, 0.8);
-        transition: transform 0.45s cubic-bezier(0.2, 0.8, 0.2, 1.3), width 0.45s cubic-bezier(0.2, 0.8, 0.2, 1.15), height 0.45s cubic-bezier(0.2, 0.8, 0.2, 1.15), filter 0.2s ease;
-        @apply flex shrink-0 items-center justify-center rounded-full text-white backdrop-blur active:scale-110 active:brightness-110;
+        transition:
+            transform 0.45s cubic-bezier(0.2, 0.8, 0.2, 1.3),
+            width 0.5s var(--spring, cubic-bezier(0.4, 0.9, 0.3, 1.08)),
+            height 0.45s cubic-bezier(0.2, 0.8, 0.2, 1.15),
+            margin 0.5s cubic-bezier(0.4, 0.9, 0.3, 1.08),
+            opacity 0.3s ease,
+            filter 0.2s ease;
+        @apply flex shrink-0 items-center justify-center overflow-hidden rounded-full text-white backdrop-blur active:scale-110 active:brightness-110;
     }
 
     .tab-action-active {
@@ -457,7 +498,8 @@
     }
 
     /* Scrolling down shrinks the bar to icons, scrolling up brings it back (as in iOS 26). */
-    .tabbar-min .tabbar {
+    .tabbar-min .tabbar,
+    .tabbar-min .tabrow {
         height: 3.25rem;
     }
 
@@ -468,6 +510,86 @@
     .tabbar-min .tab-action {
         width: 3.25rem;
         height: 3.25rem;
+    }
+
+    /* ---------- "More": the tab bar morphs into the full menu ---------- */
+    .tabdock.menu-open .tabbar {
+        height: min(76vh, var(--menu-h, 36rem));
+        /* A menu needs legible glass: heavier frost while open (overrides the refraction lens). */
+        background: linear-gradient(180deg, rgba(255, 255, 255, 0.5), rgba(255, 255, 255, 0.2)), rgba(244, 247, 250, 0.82) !important;
+        -webkit-backdrop-filter: blur(28px) saturate(200%) !important;
+        backdrop-filter: blur(28px) saturate(200%) !important;
+        border-radius: 2rem;
+        transition: height 0.62s var(--spring-open), border-radius 0.62s var(--spring-open), box-shadow 0.4s ease;
+        box-shadow: var(--lg-specular), 0 30px 60px -18px rgba(15, 23, 42, 0.38);
+    }
+
+    .tabdock.menu-open .tabrow {
+        @apply pointer-events-none;
+        opacity: 0;
+        transform: translateY(14px) scale(0.92);
+        filter: blur(4px);
+    }
+
+    /* The round action is absorbed into the growing glass. */
+    .tabdock.menu-open .tab-action {
+        @apply pointer-events-none;
+        width: 0;
+        margin-left: 0;
+        opacity: 0;
+        transform: scale(0.4);
+    }
+
+    .tabmenu {
+        transform: translateY(18px) scale(0.94);
+        transform-origin: 50% 100%;
+        transition: opacity 0.2s ease, transform 0.35s ease, visibility 0s linear 0.35s;
+        @apply invisible absolute inset-0 flex flex-col opacity-0;
+    }
+
+    .tabdock.menu-open .tabmenu {
+        transform: none;
+        transition: opacity 0.3s ease 0.08s, transform 0.6s var(--spring-open) 0.04s, visibility 0s;
+        @apply visible opacity-100;
+    }
+
+    /* Menu tiles pop in one after another, with a little bounce. */
+    .tile {
+        transform: translateY(10px) scale(0.6);
+        transition: transform 0.3s ease, opacity 0.15s ease;
+        @apply flex flex-col items-center gap-1.5 rounded-2xl p-1.5 text-center text-[11px] font-medium leading-tight text-slate-700 opacity-0;
+    }
+
+    .tabdock.menu-open .tile {
+        transform: none;
+        transition: transform 0.55s cubic-bezier(0.3, 1.6, 0.5, 1) calc(0.1s + var(--d, 0) * 22ms), opacity 0.3s ease calc(0.1s + var(--d, 0) * 22ms);
+        @apply opacity-100;
+    }
+
+    .tile:active {
+        transform: scale(1.1) !important;
+        transition-duration: 0.15s !important;
+    }
+
+    .tile-icon {
+        background: rgba(255, 255, 255, 0.6);
+        box-shadow: var(--lg-specular), 0 6px 14px -8px rgba(15, 23, 42, 0.3);
+        @apply flex h-[3.25rem] w-[3.25rem] items-center justify-center rounded-[1.1rem] text-slate-600;
+    }
+
+    .tile-active .tile-icon {
+        background: linear-gradient(180deg, rgba(52, 211, 153, 0.95), rgba(13, 148, 136, 0.92));
+        @apply text-white;
+    }
+
+    .tile-active {
+        @apply font-semibold text-emerald-800;
+    }
+
+    /* Dim, blurred page behind the open menu. */
+    .menu-scrim {
+        transition: opacity 0.35s ease;
+        @apply fixed inset-0 -z-10 bg-slate-900/20 backdrop-blur-[6px];
     }
 
     /* ---------- Phone: iOS 26 top bar ---------- */
