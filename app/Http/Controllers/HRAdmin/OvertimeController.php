@@ -11,6 +11,7 @@ use App\Services\WorkHoursService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Validation\ValidationException;
 use Illuminate\View\View;
 
 class OvertimeController extends Controller
@@ -68,7 +69,9 @@ class OvertimeController extends Controller
     private function authorizeFallbackApproval(Employee $employee, string $status): void
     {
         abort_unless(Auth::user()->isSuperAdmin(), 403, 'Overtime is approved by the employee\'s manager.');
-        abort_unless($status === Overtime::STATUS_PENDING, 422, 'This request has already been processed.');
+        if (! ($status === Overtime::STATUS_PENDING)) {
+            throw ValidationException::withMessages(['request' => 'This request has already been processed.']);
+        }
         abort_if($employee->approvingManager() !== null, 403, 'This employee has a manager who must approve the request.');
     }
 }

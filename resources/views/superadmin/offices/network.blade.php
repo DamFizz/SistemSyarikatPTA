@@ -19,13 +19,6 @@
         </div>
     </x-slot>
 
-    @if ($errors->any())
-        <div class="alert-error mb-5">
-            <x-icon name="warning" class="h-5 w-5 shrink-0" />
-            <div>{{ $errors->first() }}</div>
-        </div>
-    @endif
-
     <div class="grid gap-5 lg:grid-cols-5">
         <form method="POST" action="{{ route('super-admin.offices.network.update', $office) }}" class="space-y-5 lg:col-span-3"
               x-data="{
@@ -126,6 +119,19 @@
                     <p class="mt-1.5 text-xs text-slate-400">One per line. Supports single IPs and CIDR ranges (IPv4 &amp; IPv6).</p>
                     <x-input-error :messages="$errors->get('allowed_ips')" class="mt-1.5" />
 
+                    @if ($invalidEntries)
+                        <div x-data="{ bad: @js($invalidEntries) }" x-show="bad.some((e) => ips.split(/[\s,;]+/).includes(e))"
+                             class="mt-3 flex flex-wrap items-start justify-between gap-3 rounded-2xl bg-rose-500/10 p-3.5 text-sm text-rose-800">
+                            <div class="flex items-start gap-2">
+                                <x-icon name="warning" class="mt-0.5 h-5 w-5 shrink-0" />
+                                <span>These entries are server / proxy addresses and will never match a staff device:
+                                    <span class="font-mono font-semibold">{{ implode(', ', $invalidEntries) }}</span></span>
+                            </div>
+                            <button type="button" class="btn-danger-soft btn-sm"
+                                    @click="ips = ips.split(/[\s,;]+/).filter((e) => e && !bad.includes(e)).join('\n')">Remove them</button>
+                        </div>
+                    @endif
+
                     {{-- Devices on the same WiFi may use IPv4 or IPv6 — register both so PCs and phones all match. --}}
                     <div x-show="detected.v4 || detected.v6 || detected.error" x-cloak class="glass-inset mt-4 space-y-2 p-4 text-sm">
                         <p class="text-xs text-slate-500">This WiFi's public addresses. Add both so every device (PC or phone) is recognised:</p>
@@ -167,6 +173,20 @@
                     </div>
                 </label>
             </div>
+
+            @if ($otherOffices->isNotEmpty())
+                <label class="card flex cursor-pointer items-start gap-3 p-5">
+                    <input type="hidden" name="apply_to_all" value="0">
+                    <input type="checkbox" name="apply_to_all" value="1" class="mt-0.5" @checked(old('apply_to_all'))>
+                    <div>
+                        <div class="text-sm font-semibold text-slate-900">Use the same WiFi for all {{ $otherOffices->count() + 1 }} offices</div>
+                        <div class="mt-0.5 text-xs leading-relaxed text-slate-500">
+                            Staff are checked against <strong>their own office's</strong> network. Tick this if everyone shares this WiFi
+                            ({{ $otherOffices->pluck('name')->join(', ') }}).
+                        </div>
+                    </div>
+                </label>
+            @endif
 
             <div class="flex justify-end gap-3">
                 <a href="{{ route('super-admin.offices.index') }}" class="btn-ghost">Cancel</a>
@@ -212,6 +232,23 @@
                     </div>
                 @else
                     <p class="muted mt-3">Save the WiFi details to generate a QR code.</p>
+                @endif
+            </div>
+
+            <div class="card p-6">
+                <h3 class="card-title">Staff checked against this network</h3>
+                <p class="mt-1 text-xs text-slate-500">Only employees assigned to {{ $office->name }} use these settings. Change an employee's office under HR → Employees.</p>
+                @if ($staff->isEmpty())
+                    <p class="muted mt-3">No employees are assigned to this office yet.</p>
+                @else
+                    <ul class="mt-3 max-h-56 space-y-1.5 overflow-y-auto text-sm">
+                        @foreach ($staff as $member)
+                            <li class="flex items-center justify-between gap-3">
+                                <span class="truncate text-slate-800">{{ $member->full_name }}</span>
+                                <span class="shrink-0 font-mono text-xs text-slate-400">{{ $member->employee_code }}</span>
+                            </li>
+                        @endforeach
+                    </ul>
                 @endif
             </div>
         </div>

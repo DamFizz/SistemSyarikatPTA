@@ -151,8 +151,9 @@ class AttendanceController extends Controller
     {
         $data = $request->validate([
             'challenge' => ['required', 'string', 'size:64'],
-            'latitude' => ['required', 'numeric', 'between:-90,90'],
-            'longitude' => ['required', 'numeric', 'between:-180,180'],
+            // Optional only on the verified office WiFi — AttendanceService decides.
+            'latitude' => ['nullable', 'required_with:longitude', 'numeric', 'between:-90,90'],
+            'longitude' => ['nullable', 'required_with:latitude', 'numeric', 'between:-180,180'],
             'accuracy' => ['nullable', 'numeric', 'min:0'],
             'selfie' => ['required', 'string', 'max:'.(int) (AttendanceService::MAX_SELFIE_BYTES * 1.4)],
             'rest_day_reason' => ['nullable', 'string', 'max:1000'],
@@ -163,8 +164,8 @@ class AttendanceController extends Controller
         $deviceToken = $request->cookie(self::DEVICE_COOKIE);
 
         return new AttendanceCapture(
-            latitude: (float) $data['latitude'],
-            longitude: (float) $data['longitude'],
+            latitude: isset($data['latitude']) ? (float) $data['latitude'] : null,
+            longitude: isset($data['longitude']) ? (float) $data['longitude'] : null,
             accuracy: isset($data['accuracy']) ? (float) $data['accuracy'] : null,
             selfieDataUrl: $data['selfie'],
             ip: $request->ip(),

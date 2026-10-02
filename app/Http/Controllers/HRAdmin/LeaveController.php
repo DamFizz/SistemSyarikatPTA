@@ -9,6 +9,7 @@ use App\Models\LeaveRequest;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Validation\ValidationException;
 use Illuminate\View\View;
 
 class LeaveController extends Controller
@@ -56,7 +57,9 @@ class LeaveController extends Controller
     private function authorizeFallbackApproval(LeaveRequest $leaveRequest): void
     {
         abort_unless(Auth::user()->isSuperAdmin(), 403, 'Leave is approved by the employee\'s manager.');
-        abort_unless($leaveRequest->status === LeaveRequest::STATUS_PENDING, 422, 'This request has already been processed.');
+        if (! ($leaveRequest->status === LeaveRequest::STATUS_PENDING)) {
+            throw ValidationException::withMessages(['request' => 'This request has already been processed.']);
+        }
         abort_if($leaveRequest->employee->approvingManager() !== null, 403, 'This employee has a manager who must approve the request.');
     }
 }

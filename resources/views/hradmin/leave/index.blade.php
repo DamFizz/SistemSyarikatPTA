@@ -43,7 +43,7 @@
             <tbody>
                 @forelse ($leaveRequests as $leave)
                     <tr>
-                        <td class="px-4 py-3 font-medium text-slate-800">{{ $leave->employee->full_name }}</td>
+                        <td class="px-4 py-3 font-medium text-slate-800">{{ $leave->employee->full_name }}<x-request-details :request="$leave" type="leave" /></td>
                         <td class="px-4 py-3">{{ $leave->employee->department->name }}</td>
                         <td class="px-4 py-3">{{ $leave->leaveType->name }}</td>
                         <td class="px-4 py-3">{{ $leave->start_date->format('d M') }} - {{ $leave->end_date->format('d M Y') }}</td>

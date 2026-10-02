@@ -89,6 +89,30 @@ class Employee extends Model
         return $this->hasMany(LeaveBalance::class);
     }
 
+    /**
+     * This year's (or any year's) balance for a leave type, created with the type's
+     * yearly entitlement the first time it is needed — e.g. on 1 January.
+     */
+    public function leaveBalanceFor(LeaveType $leaveType, int $year): LeaveBalance
+    {
+        return $this->leaveBalances()->firstOrCreate(
+            ['leave_type_id' => $leaveType->id, 'year' => $year],
+            [
+                'allocated_days' => $leaveType->default_days_per_year,
+                'used_days' => 0,
+                'remaining_days' => $leaveType->default_days_per_year,
+            ],
+        );
+    }
+
+    /**
+     * Makes sure a balance exists for every leave type in the given year.
+     */
+    public function ensureLeaveBalances(int $year): void
+    {
+        LeaveType::all()->each(fn (LeaveType $leaveType) => $this->leaveBalanceFor($leaveType, $year));
+    }
+
     public function salaries(): HasMany
     {
         return $this->hasMany(EmployeeSalary::class);

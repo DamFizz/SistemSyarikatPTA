@@ -10,7 +10,6 @@
         <p class="muted mt-1">Monthly overtime cap, weekly hours limit and the weekly rest day.</p>
     </x-slot>
 
-    <x-validation-alert />
 
     <div class="grid gap-5 lg:grid-cols-3">
         {{-- Limits --}}

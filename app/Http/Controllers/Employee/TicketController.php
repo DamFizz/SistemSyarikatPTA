@@ -5,11 +5,11 @@ namespace App\Http\Controllers\Employee;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Employee\StoreTicketRequest;
 use App\Models\AuditLog;
+use App\Models\StoredFile;
 use App\Models\Ticket;
 use App\Models\TicketCategory;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Str;
 use Illuminate\View\View;
 
 class TicketController extends Controller
@@ -38,7 +38,7 @@ class TicketController extends Controller
 
         $attachmentPath = null;
         if ($request->hasFile('attachment')) {
-            $attachmentPath = $request->file('attachment')->store('attachments/tickets', 'public');
+            $attachmentPath = StoredFile::storeUpload($request->file('attachment'));
         }
 
         $ticket = Ticket::create([

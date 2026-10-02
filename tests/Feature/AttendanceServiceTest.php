@@ -112,9 +112,9 @@ class AttendanceServiceTest extends TestCase
         $this->assertTrue($attendance->is_flagged);
     }
 
-    public function test_clock_in_rejected_outside_geofence_radius(): void
+    public function test_testing_mode_rejects_clock_in_outside_geofence_radius(): void
     {
-        $office = Office::factory()->create(['allowed_radius_meters' => 100]);
+        $office = Office::factory()->create(['allowed_radius_meters' => 100, 'network_check_enabled' => false]);
         $employee = $this->makeEmployeeWithShift($office);
 
         $this->expectException(ValidationException::class);
@@ -123,14 +123,45 @@ class AttendanceServiceTest extends TestCase
         app(AttendanceService::class)->clockIn($employee, $this->capture(['latitude' => 3.1390, 'longitude' => 101.6869]));
     }
 
-    public function test_clock_in_rejected_with_weak_gps_accuracy(): void
+    public function test_testing_mode_rejects_weak_gps_accuracy(): void
     {
-        $employee = $this->makeEmployeeWithShift(Office::factory()->create());
+        $employee = $this->makeEmployeeWithShift(Office::factory()->create(['network_check_enabled' => false]));
 
         $this->expectException(ValidationException::class);
         $this->expectExceptionMessage('GPS signal is too weak');
 
         app(AttendanceService::class)->clockIn($employee, $this->capture(['accuracy' => 2500.0]));
+    }
+
+    public function test_on_verified_office_wifi_a_rough_pc_location_is_flagged_not_rejected(): void
+    {
+        $employee = $this->makeEmployeeWithShift(Office::factory()->create(['allowed_radius_meters' => 100]));
+
+        // A desktop browser: IP-based location kilometres away with poor accuracy.
+        $attendance = app(AttendanceService::class)->clockIn($employee, $this->capture(['latitude' => 3.1390, 'longitude' => 101.6869, 'accuracy' => 2500.0]));
+
+        $this->assertTrue($attendance->is_flagged);
+        $this->assertStringContainsString('verified by office WiFi', implode(' ', $attendance->flag_reasons));
+    }
+
+    public function test_on_verified_office_wifi_clock_in_works_without_location(): void
+    {
+        $employee = $this->makeEmployeeWithShift(Office::factory()->create());
+
+        $attendance = app(AttendanceService::class)->clockIn($employee, $this->capture(['latitude' => null, 'longitude' => null, 'accuracy' => null]));
+
+        $this->assertNull($attendance->clock_in_distance_meters);
+        $this->assertContains('Location unavailable (verified by office WiFi)', $attendance->flag_reasons);
+    }
+
+    public function test_testing_mode_requires_a_location(): void
+    {
+        $employee = $this->makeEmployeeWithShift(Office::factory()->create(['network_check_enabled' => false]));
+
+        $this->expectException(ValidationException::class);
+        $this->expectExceptionMessage('location is required');
+
+        app(AttendanceService::class)->clockIn($employee, $this->capture(['latitude' => null, 'longitude' => null]));
     }
 
     public function test_reused_selfie_is_rejected(): void

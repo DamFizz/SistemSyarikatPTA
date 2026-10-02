@@ -45,6 +45,10 @@ class PayrollController extends Controller
 
     public function generate(PayrollPeriod $payrollPeriod): RedirectResponse
     {
+        if (! in_array($payrollPeriod->status, [PayrollPeriod::STATUS_DRAFT, PayrollPeriod::STATUS_PROCESSING], true)) {
+            return back()->with('error', 'This payroll period is already approved and can no longer be regenerated.');
+        }
+
         $count = $this->payrollService->generate($payrollPeriod);
 
         AuditLog::record('generate', 'payroll', "Generated payroll for {$count} employee(s) in \"{$payrollPeriod->period_name}\"");
@@ -54,6 +58,10 @@ class PayrollController extends Controller
 
     public function approve(PayrollPeriod $payrollPeriod): RedirectResponse
     {
+        if ($payrollPeriod->status !== PayrollPeriod::STATUS_PROCESSING || ! $payrollPeriod->payrolls()->exists()) {
+            return back()->with('error', 'Generate the payroll before approving it.');
+        }
+
         $payrollPeriod->update(['status' => PayrollPeriod::STATUS_APPROVED]);
         $payrollPeriod->payrolls()->update(['status' => PayrollPeriod::STATUS_APPROVED]);
 
@@ -64,6 +72,10 @@ class PayrollController extends Controller
 
     public function markPaid(PayrollPeriod $payrollPeriod): RedirectResponse
     {
+        if ($payrollPeriod->status !== PayrollPeriod::STATUS_APPROVED) {
+            return back()->with('error', 'Only an approved payroll can be marked as paid.');
+        }
+
         $payrollPeriod->update(['status' => PayrollPeriod::STATUS_PAID]);
 
         foreach ($payrollPeriod->payrolls as $payroll) {

@@ -18,7 +18,8 @@ return [
     |
     */
 
-    'default' => env('LOG_CHANNEL', 'stack'),
+    // On Railway the disk is wiped on deploy and invisible, so errors go to the deploy logs instead.
+    'default' => env('LOG_CHANNEL', env('RAILWAY_ENVIRONMENT_NAME') !== null ? 'stderr' : 'stack'),
 
     /*
     |--------------------------------------------------------------------------

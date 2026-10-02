@@ -33,10 +33,12 @@
                 <option value="high">High</option>
                 <option value="critical">Critical</option>
             </select>
+            <x-input-error :messages="$errors->get('priority')" class="mt-1" />
         </div>
         <div>
             <x-input-label for="attachment" value="Attachment / Screenshot (optional)" />
             <input id="attachment" name="attachment" type="file" class="mt-1 block w-full text-sm">
+            <x-input-error :messages="$errors->get('attachment')" class="mt-1" />
         </div>
         <div class="flex justify-end gap-3 pt-2">
             <a href="{{ route('employee.tickets.index') }}" class="btn-ghost">Cancel</a>

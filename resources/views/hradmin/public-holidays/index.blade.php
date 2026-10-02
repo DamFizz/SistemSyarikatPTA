@@ -5,7 +5,6 @@
         <p class="muted mt-1">No clock-in reminders on these days. Anyone who still works is flagged as holiday work for HR.</p>
     </x-slot>
 
-    <x-validation-alert />
 
     @if ($today)
         <div class="alert-success mb-5">

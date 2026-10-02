@@ -5,7 +5,6 @@
         <p class="muted mt-1">Requests from employees you manage. Monthly overtime limits are checked when you approve.</p>
     </x-slot>
 
-    <x-validation-alert />
     <x-status-tabs />
 
     <div class="card overflow-x-auto">
@@ -45,7 +44,7 @@
                                 <span class="chip bg-slate-100 text-slate-600">Exempt</span>
                             @endif
                         </td>
-                        <td class="px-4 py-3 max-w-xs truncate" title="{{ $ot->reason }}">{{ $ot->reason }}</td>
+                        <td class="px-4 py-3"><x-request-details :request="$ot" type="overtime" /></td>
                         <td class="px-4 py-3"><x-status-badge :status="$ot->status" /></td>
                         <td class="px-4 py-3 text-right whitespace-nowrap space-x-1.5">
                             @if ($ot->status === 'pending')

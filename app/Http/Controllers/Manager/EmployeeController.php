@@ -6,9 +6,11 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\Manager\StoreEmployeeRequest;
 use App\Models\AuditLog;
 use App\Models\Employee;
-use App\Models\LeaveType;
 use App\Models\Office;
+use App\Models\Shift;
 use App\Models\User;
+use App\Services\EmployeeRecordsService;
+use Carbon\Carbon;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
@@ -34,17 +36,19 @@ class EmployeeController extends Controller
     {
         return view('manager.employees.create', [
             'offices' => Office::orderBy('name')->get(),
+            'shifts' => Shift::orderBy('start_time')->get(),
+            'defaultShiftId' => Auth::user()->employee?->currentShift()?->id,
         ]);
     }
 
-    public function store(StoreEmployeeRequest $request): RedirectResponse
+    public function store(StoreEmployeeRequest $request, EmployeeRecordsService $records): RedirectResponse
     {
         $manager = Auth::user()->employee;
         abort_if(! $manager, 403);
 
         $data = $request->validated();
 
-        $employee = DB::transaction(function () use ($data, $manager) {
+        $employee = DB::transaction(function () use ($data, $manager, $records) {
             $user = User::create([
                 'name' => $data['name'],
                 'email' => $data['email'],
@@ -54,7 +58,7 @@ class EmployeeController extends Controller
             ]);
 
             $employee = Employee::create([
-                ...collect($data)->except(['name', 'email', 'password', 'password_confirmation'])->all(),
+                ...collect($data)->except(['name', 'email', 'password', 'password_confirmation', 'shift_id'])->all(),
                 'user_id' => $user->id,
                 'full_name' => $data['name'],
                 'department_id' => $manager->department_id,
@@ -62,15 +66,9 @@ class EmployeeController extends Controller
                 'employment_status' => 'probation',
             ]);
 
-            foreach (LeaveType::all() as $leaveType) {
-                $employee->leaveBalances()->create([
-                    'leave_type_id' => $leaveType->id,
-                    'year' => now()->year,
-                    'allocated_days' => $leaveType->default_days_per_year,
-                    'used_days' => 0,
-                    'remaining_days' => $leaveType->default_days_per_year,
-                ]);
-            }
+            // New team members work the manager's shift unless another one is picked.
+            $records->assignShift($employee, $data['shift_id'] ?? $manager->currentShift()?->id, Carbon::parse($data['join_date']));
+            $records->createLeaveBalances($employee);
 
             return $employee;
         });

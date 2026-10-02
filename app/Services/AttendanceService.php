@@ -92,10 +92,10 @@ class AttendanceService
             ]);
         }
 
-        $distance = $this->assertWithinGeofence($office, $capture, 'Clock-in');
+        [$distance, $locationFlags] = $this->checkLocation($office, $capture, 'Clock-in');
         $selfie = $this->validateSelfie($capture->selfieDataUrl);
 
-        $flags = $this->detectFlags($employee, $office, $capture);
+        $flags = [...$locationFlags, ...$this->detectFlags($employee, $office, $capture)];
 
         if ($restDayDue) {
             $flags[] = 'Working without the weekly rest day (justification sent to HR)';
@@ -155,10 +155,10 @@ class AttendanceService
 
         $office = $employee->office;
         $this->assertOnOfficeNetwork($office, $capture->ip);
-        $distance = $this->assertWithinGeofence($office, $capture, 'Clock-out');
+        [$distance, $locationFlags] = $this->checkLocation($office, $capture, 'Clock-out');
         $selfie = $this->validateSelfie($capture->selfieDataUrl);
 
-        $flags = $this->detectFlags($employee, $office, $capture, $attendance);
+        $flags = [...$locationFlags, ...$this->detectFlags($employee, $office, $capture, $attendance)];
 
         $clockOutTime = now();
         $workingMinutes = max(0, (int) abs($clockOutTime->diffInMinutes($attendance->clock_in_time)));
@@ -244,15 +244,39 @@ class AttendanceService
         ];
     }
 
-    private function assertWithinGeofence(Office $office, AttendanceCapture $capture, string $action): int
+    /**
+     * Location is a second factor. On the verified office WiFi the network already proves the
+     * employee is on site, so a poor or missing fix (PCs and laptops have no GPS and report
+     * locations kilometres off) is flagged for HR rather than blocking. In testing mode the
+     * network is not checked, so the geofence is enforced.
+     *
+     * @return array{0: ?int, 1: list<string>}
+     */
+    private function checkLocation(Office $office, AttendanceCapture $capture, string $action): array
     {
+        $networkVerified = $office->network_check_enabled;
+        $hasFix = $capture->latitude !== null && $capture->longitude !== null;
+        $distance = $hasFix ? (int) round($office->distanceTo($capture->latitude, $capture->longitude)) : null;
+
+        if ($networkVerified) {
+            return [$distance, match (true) {
+                ! $hasFix => ['Location unavailable (verified by office WiFi)'],
+                $distance > $office->allowed_radius_meters => ["Device location {$distance}m from office (verified by office WiFi)"],
+                default => [],
+            }];
+        }
+
+        if (! $hasFix) {
+            throw ValidationException::withMessages([
+                'attendance' => 'Your location is required. Allow location access and try again.',
+            ]);
+        }
+
         if ($capture->accuracy !== null && $capture->accuracy > self::MAX_GPS_ACCURACY_METERS) {
             throw ValidationException::withMessages([
                 'attendance' => 'Your GPS signal is too weak (±'.round($capture->accuracy).'m). Turn on precise location / GPS and try again.',
             ]);
         }
-
-        $distance = (int) round($office->distanceTo($capture->latitude, $capture->longitude));
 
         if ($distance > $office->allowed_radius_meters) {
             throw ValidationException::withMessages([
@@ -260,7 +284,7 @@ class AttendanceService
             ]);
         }
 
-        return $distance;
+        return [$distance, []];
     }
 
     /**

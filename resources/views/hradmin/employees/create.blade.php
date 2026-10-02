@@ -57,6 +57,7 @@
                 <div>
                     <x-input-label for="phone" value="Phone" />
                     <x-text-input id="phone" name="phone" type="text" class="mt-1 block w-full" value="{{ old('phone') }}" />
+                    <x-input-error :messages="$errors->get('phone')" class="mt-1" />
                 </div>
                 <div>
                     <x-input-label for="gender" value="Gender" />
@@ -65,10 +66,12 @@
                         <option value="male" @selected(old('gender') === 'male')>Male</option>
                         <option value="female" @selected(old('gender') === 'female')>Female</option>
                     </select>
+                    <x-input-error :messages="$errors->get('gender')" class="mt-1" />
                 </div>
                 <div>
                     <x-input-label for="dob" value="Date of Birth" />
                     <x-text-input id="dob" name="dob" type="date" class="mt-1 block w-full" value="{{ old('dob') }}" />
+                    <x-input-error :messages="$errors->get('dob')" class="mt-1" />
                 </div>
                 <div>
                     <x-input-label for="join_date" value="Join Date" />
@@ -78,6 +81,7 @@
                 <div class="sm:col-span-2 lg:col-span-3">
                     <x-input-label for="address" value="Address" />
                     <textarea id="address" name="address" rows="2" class="input mt-1.5 block w-full">{{ old('address') }}</textarea>
+                    <x-input-error :messages="$errors->get('address')" class="mt-1" />
                 </div>
             </div>
         </div>
@@ -113,6 +117,7 @@
                             <option value="{{ $manager->id }}" @selected(old('manager_id') == $manager->id)>{{ $manager->full_name }}</option>
                         @endforeach
                     </select>
+                    <x-input-error :messages="$errors->get('manager_id')" class="mt-1" />
                 </div>
                 <div>
                     <x-input-label for="position" value="Position / Job Title" />
@@ -126,6 +131,7 @@
                             <option value="{{ $value }}" @selected(old('employment_type') === $value)>{{ $label }}</option>
                         @endforeach
                     </select>
+                    <x-input-error :messages="$errors->get('employment_type')" class="mt-1" />
                 </div>
                 <div>
                     <x-input-label for="employment_status" value="Employment Status" />
@@ -134,9 +140,16 @@
                             <option value="{{ $value }}" @selected(old('employment_status', 'probation') === $value)>{{ $label }}</option>
                         @endforeach
                     </select>
+                    <x-input-error :messages="$errors->get('employment_status')" class="mt-1" />
                 </div>
             </div>
         </div>
+
+        @include('hradmin.employees.partials.schedule-pay', [
+            'selectedShift' => $shifts->firstWhere('name', 'Morning Shift')?->id,
+            'salary' => null,
+            'hint' => 'Needed for clock-in reminders, late status, payroll and overtime pay. Can be changed later.',
+        ])
 
         <div class="flex justify-end gap-3 pt-2">
             <a href="{{ route('hr.employees.index') }}" class="btn-ghost">Cancel</a>

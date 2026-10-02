@@ -33,7 +33,7 @@
                         <td class="px-4 py-3">{{ $leave->start_date->format('d M Y') }}</td>
                         <td class="px-4 py-3">{{ $leave->end_date->format('d M Y') }}</td>
                         <td class="px-4 py-3">{{ $leave->total_days }}</td>
-                        <td class="px-4 py-3 max-w-xs truncate">{{ $leave->reason }}</td>
+                        <td class="px-4 py-3"><x-request-details :request="$leave" type="leave" /></td>
                         <td class="px-4 py-3"><x-status-badge :status="$leave->status" /></td>
                     </tr>
                 @empty

@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\AnnouncementController;
+use App\Http\Controllers\AttachmentController;
 use App\Http\Controllers\AttendanceSelfieController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\NetworkProbeController;
@@ -27,6 +28,10 @@ Route::middleware('auth')->group(function () {
         ->whereIn('type', ['in', 'out'])
         ->name('attendance.selfie');
 
+    Route::get('/attachments/{type}/{id}', [AttachmentController::class, 'show'])
+        ->whereIn('type', array_keys(AttachmentController::TYPES))
+        ->whereNumber('id')
+        ->name('attachments.show');
     Route::get('/payslips/{payroll}/download', [PayslipController::class, 'download'])->name('payslips.download');
 
     Route::get('/announcements', [AnnouncementController::class, 'index'])->name('announcements.index');

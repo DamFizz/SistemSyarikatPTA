@@ -10,6 +10,9 @@
 
     <div class="card p-6 mb-4">
         <p class="text-sm text-slate-700 whitespace-pre-line">{{ $ticket->description }}</p>
+        @if ($ticket->attachment)
+            <a href="{{ route('attachments.show', ['ticket', $ticket->id]) }}" target="_blank" rel="noopener" class="mt-3 inline-flex items-center gap-1.5 text-sm font-medium text-sky-700 hover:underline"><x-icon name="document" class="h-4 w-4" /> View attachment</a>
+        @endif
     </div>
 
     <div class="card p-6">

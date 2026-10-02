@@ -5,6 +5,8 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Validation\ValidationException;
 
 #[Fillable([
     'employee_id', 'leave_type_id', 'start_date', 'end_date', 'total_days',
@@ -45,21 +47,26 @@ class LeaveRequest extends Model
 
     public function approveAndDeductBalance(int $approverId): void
     {
-        $this->update([
-            'status' => self::STATUS_APPROVED,
-            'approved_by' => $approverId,
-            'approved_at' => now(),
-        ]);
+        DB::transaction(function () use ($approverId) {
+            $balance = $this->employee->leaveBalanceFor($this->leaveType, $this->start_date->year);
+            $balance = LeaveBalance::whereKey($balance->id)->lockForUpdate()->first();
 
-        $balance = $this->employee->leaveBalances()
-            ->where('leave_type_id', $this->leave_type_id)
-            ->where('year', $this->start_date->year)
-            ->first();
+            // Several pending requests can together exceed the balance — check again at approval.
+            if ($this->leaveType->default_days_per_year > 0 && $balance->remaining_days < $this->total_days) {
+                throw ValidationException::withMessages([
+                    'request' => "{$this->employee->full_name} only has {$balance->remaining_days} day(s) of {$this->leaveType->name} left, so this {$this->total_days}-day request cannot be approved.",
+                ]);
+            }
 
-        if ($balance) {
+            $this->update([
+                'status' => self::STATUS_APPROVED,
+                'approved_by' => $approverId,
+                'approved_at' => now(),
+            ]);
+
             $balance->increment('used_days', $this->total_days);
             $balance->decrement('remaining_days', $this->total_days);
-        }
+        });
     }
 
     public function rejectRequest(int $approverId): void

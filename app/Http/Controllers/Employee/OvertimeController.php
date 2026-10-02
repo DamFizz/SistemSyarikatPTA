@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\Employee\StoreOvertimeRequest;
 use App\Models\AuditLog;
 use App\Models\Overtime;
+use App\Models\StoredFile;
 use App\Services\WorkHoursService;
 use Carbon\Carbon;
 use Illuminate\Http\RedirectResponse;
@@ -49,7 +50,7 @@ class OvertimeController extends Controller
 
         $attachmentPath = null;
         if ($request->hasFile('attachment')) {
-            $attachmentPath = $request->file('attachment')->store('attachments/overtime', 'public');
+            $attachmentPath = StoredFile::storeUpload($request->file('attachment'));
         }
 
         $overtime = $employee->overtimes()->create([

@@ -90,10 +90,12 @@
                                     <x-icon name="signal" class="h-11 w-11 text-white" />
                                 </div>
                             </div>
-                            <h3 class="mt-4 text-xl font-semibold !text-white sm:text-2xl">Tap your phone on the NFC tag</h3>
+                            {{-- Phones tap the NFC tag; PCs and laptops simply join the WiFi. --}}
+                            <h3 class="mt-4 text-xl font-semibold !text-white sm:text-2xl" x-text="touchDevice ? 'Tap your phone on the NFC tag' : 'Connect this computer to the office WiFi'">Tap your phone on the NFC tag</h3>
                             <p class="mt-2 max-w-md text-sm leading-relaxed text-slate-400">
-                                Your phone will join <span class="font-semibold text-slate-200">{{ $office->wifi_ssid ?: 'the office WiFi' }}</span> automatically.
-                                Accept the “Connect” prompt — this page detects the office network by itself.
+                                <span x-show="touchDevice">Your phone will join <span class="font-semibold text-slate-200">{{ $office->wifi_ssid ?: 'the office WiFi' }}</span> automatically. Accept the “Connect” prompt —</span>
+                                <span x-show="!touchDevice" x-cloak>Join <span class="font-semibold text-slate-200">{{ $office->wifi_ssid ?: 'the office WiFi' }}</span> (not a mobile hotspot or VPN) —</span>
+                                this page detects the office network by itself.
                             </p>
 
                             <div class="mt-6 flex items-center gap-2 text-xs text-slate-500">
@@ -112,8 +114,15 @@
                                     <li>Turn off VPN / Private Relay — it hides the office network.</li>
                                     <li>Make sure mobile data isn't forced on (e.g. “WiFi assist”).</li>
                                 </ul>
-                                <p class="mt-3 text-xs text-slate-500">Current network IP: <span class="font-mono" x-text="ip || '…'"></span></p>
                             </details>
+
+                            {{-- Say exactly what the server sees, so a wrong office registration is obvious. --}}
+                            <div x-show="ip" x-cloak class="mt-4 w-full max-w-md rounded-2xl border border-white/10 bg-white/[0.04] px-4 py-3 text-left text-xs leading-relaxed text-slate-400">
+                                This device is on network <span class="font-mono font-semibold text-slate-200" x-text="ip"></span>,
+                                which isn't registered for <strong class="text-slate-200">{{ $office->name }}</strong>.
+                                Already on the office WiFi? Ask your Super Admin to add this network under
+                                <span class="text-slate-300">Offices &amp; WiFi → {{ $office->name }} → WiFi &amp; NFC</span>.
+                            </div>
                         @endif
                     </div>
 
@@ -173,8 +182,8 @@
                                 <div class="mt-3 grid grid-cols-3 gap-2 sm:hidden">
                                     <template x-for="item in checklist" :key="'m-' + item.label">
                                         <div class="flex min-w-0 items-center justify-center gap-1.5 rounded-xl px-2 py-2 text-[11px] font-medium ring-1"
-                                             :class="{ 'bg-emerald-400/10 text-emerald-300 ring-emerald-400/20': item.state === 'ok', 'bg-rose-400/10 text-rose-300 ring-rose-400/20': item.state === 'fail', 'bg-white/5 text-slate-400 ring-white/10': item.state === 'wait' }">
-                                            <span class="h-1.5 w-1.5 shrink-0 rounded-full" :class="{ 'bg-emerald-400': item.state === 'ok', 'bg-rose-400': item.state === 'fail', 'bg-slate-500 animate-pulse': item.state === 'wait' }"></span>
+                                             :class="{ 'bg-emerald-400/10 text-emerald-300 ring-emerald-400/20': item.state === 'ok', 'bg-rose-400/10 text-rose-300 ring-rose-400/20': item.state === 'fail', 'bg-white/5 text-slate-400 ring-white/10': item.state === 'wait', 'bg-amber-400/10 text-amber-200 ring-amber-400/20': item.state === 'warn' }">
+                                            <span class="h-1.5 w-1.5 shrink-0 rounded-full" :class="{ 'bg-emerald-400': item.state === 'ok', 'bg-rose-400': item.state === 'fail', 'bg-slate-500 animate-pulse': item.state === 'wait', 'bg-amber-400': item.state === 'warn' }"></span>
                                             <span class="truncate" x-text="item.short"></span>
                                         </div>
                                     </template>
@@ -190,8 +199,8 @@
                                 <template x-for="item in checklist" :key="item.label">
                                     <div class="flex items-start gap-3 rounded-2xl border border-white/5 bg-white/[0.03] p-3.5">
                                         <span class="mt-0.5 flex h-6 w-6 shrink-0 items-center justify-center rounded-full"
-                                              :class="{ 'bg-emerald-400/15 text-emerald-300': item.state === 'ok', 'bg-rose-400/15 text-rose-300': item.state === 'fail', 'bg-white/5 text-slate-400': item.state === 'wait' }">
-                                            <svg x-show="item.state === 'ok'" class="h-3.5 w-3.5" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M16.7 5.3a1 1 0 010 1.4l-8 8a1 1 0 01-1.4 0l-4-4a1 1 0 111.4-1.4L8 12.58l7.3-7.3a1 1 0 011.4 0z" clip-rule="evenodd"/></svg>
+                                              :class="{ 'bg-emerald-400/15 text-emerald-300': item.state === 'ok', 'bg-rose-400/15 text-rose-300': item.state === 'fail', 'bg-white/5 text-slate-400': item.state === 'wait', 'bg-amber-400/15 text-amber-300': item.state === 'warn' }">
+                                            <svg x-show="item.state === 'ok' || item.state === 'warn'" class="h-3.5 w-3.5" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M16.7 5.3a1 1 0 010 1.4l-8 8a1 1 0 01-1.4 0l-4-4a1 1 0 111.4-1.4L8 12.58l7.3-7.3a1 1 0 011.4 0z" clip-rule="evenodd"/></svg>
                                             <svg x-show="item.state === 'fail'" class="h-3.5 w-3.5" viewBox="0 0 20 20" fill="currentColor"><path d="M6.28 5.22a.75.75 0 00-1.06 1.06L8.94 10l-3.72 3.72a.75.75 0 101.06 1.06L10 11.06l3.72 3.72a.75.75 0 101.06-1.06L11.06 10l3.72-3.72a.75.75 0 00-1.06-1.06L10 8.94 6.28 5.22z"/></svg>
                                             <svg x-show="item.state === 'wait'" class="h-3.5 w-3.5 animate-spin" viewBox="0 0 24 24" fill="none"><path d="M22 12a10 10 0 00-10-10" stroke="currentColor" stroke-width="3" stroke-linecap="round"/></svg>
                                         </span>
@@ -225,7 +234,7 @@
                                         class="inline-flex w-full items-center justify-center gap-2 rounded-full bg-white px-5 py-3 text-sm font-semibold text-ink-900 transition hover:bg-slate-100 disabled:cursor-not-allowed disabled:opacity-40 sm:w-auto sm:py-2.5">
                                     <x-icon name="camera" class="h-4 w-4" /> Take selfie
                                 </button>
-                                <button type="button" x-show="selfie" x-cloak @click="submit()" :disabled="busy || locationState !== 'ok' || restDayMissing"
+                                <button type="button" x-show="selfie" x-cloak @click="submit()" :disabled="busy || !locationReady || restDayMissing"
                                         class="inline-flex w-full items-center justify-center gap-2 rounded-xl px-5 py-3 text-sm font-semibold text-white transition disabled:cursor-not-allowed disabled:opacity-40 sm:order-2 sm:w-auto sm:py-2.5"
                                         :class="action === 'in' ? 'bg-emerald-500 hover:bg-emerald-400' : 'bg-rose-500 hover:bg-rose-400'">
                                     <svg x-show="busy" class="h-4 w-4 animate-spin" viewBox="0 0 24 24" fill="none"><path d="M22 12a10 10 0 00-10-10" stroke="currentColor" stroke-width="3" stroke-linecap="round"/></svg>
@@ -291,7 +300,7 @@
                 <ul class="mt-4 space-y-3.5 text-sm">
                     @foreach ([
                         ['wifi', 'Office WiFi', 'Tapping the NFC tag connects you to the office network; only that network is accepted.'],
-                        ['map-pin', 'GPS geofence', 'You must be within '.$office->allowed_radius_meters.' m of '.$office->name.'.'],
+                        ['map-pin', 'Location', $office->network_check_enabled ? 'Checked against '.$office->name.' ('.$office->allowed_radius_meters.' m). On the office WiFi a rough or missing location (e.g. on a PC) is only noted for HR.' : 'You must be within '.$office->allowed_radius_meters.' m of '.$office->name.'.'],
                         ['camera', 'Live selfie', 'Taken with the front camera for both clock-in and clock-out. Re-used photos are rejected.'],
                         ['lock', 'One-time session', 'Each clock action expires after 3 minutes and can only be used once.'],
                         ['device', 'Registered device', 'Your first phone is registered. Other devices are flagged for HR review.'],
@@ -372,6 +381,7 @@
                 config,
                 state: config.state,
                 phase: 'network',
+                touchDevice: window.matchMedia('(pointer: coarse)').matches,
                 onNetwork: false,
                 checking: false,
                 ip: '',
@@ -398,6 +408,10 @@
 
                 get restDayMissing() {
                     return this.action === 'in' && config.restDayRequired && this.restDayReason.trim().length < 10;
+                },
+
+                get locationReady() {
+                    return this.locationState === 'ok' || this.locationState === 'warn';
                 },
 
                 get action() {
@@ -547,24 +561,36 @@
                     this.locationState = 'wait';
                     this.locationDetail = 'Getting your GPS position…';
                     if (!navigator.geolocation) {
-                        this.locationState = 'fail';
-                        this.locationDetail = 'GPS is not available on this device.';
+                        this.position = null;
+                        this.locationState = config.networkCheck ? 'warn' : 'fail';
+                        this.locationDetail = config.networkCheck ? 'No GPS on this device — accepted via office WiFi.' : 'GPS is not available on this device.';
                         return;
                     }
                     navigator.geolocation.getCurrentPosition((pos) => {
                         this.position = pos.coords;
                         const meters = Math.round(distance(pos.coords.latitude, pos.coords.longitude, config.office.lat, config.office.lng));
                         const accuracy = Math.round(pos.coords.accuracy);
-                        if (meters > config.office.radius) {
-                            this.locationState = 'fail';
-                            this.locationDetail = `${meters} m away — must be within ${config.office.radius} m.`;
-                        } else {
+                        if (meters <= config.office.radius) {
                             this.locationState = 'ok';
                             this.locationDetail = `${meters} m from office (±${accuracy} m)`;
+                        } else if (config.networkCheck) {
+                            // On the verified office WiFi a rough fix (PCs have no GPS) is only noted for HR.
+                            this.locationState = 'warn';
+                            this.locationDetail = `Approx. ${meters} m away — accepted via office WiFi, noted for HR.`;
+                        } else {
+                            this.locationState = 'fail';
+                            this.locationDetail = `${meters} m away — must be within ${config.office.radius} m.`;
                         }
                     }, (err) => {
-                        this.locationState = 'fail';
-                        this.locationDetail = err.code === 1 ? 'Location permission denied. Allow it in browser settings.' : 'Unable to get location: ' + err.message;
+                        this.position = null;
+                        const reason = err.code === 1 ? 'Location permission denied' : 'Location unavailable';
+                        if (config.networkCheck) {
+                            this.locationState = 'warn';
+                            this.locationDetail = reason + ' — accepted via office WiFi, noted for HR.';
+                        } else {
+                            this.locationState = 'fail';
+                            this.locationDetail = err.code === 1 ? 'Location permission denied. Allow it in browser settings.' : 'Unable to get location: ' + err.message;
+                        }
                     }, { enableHighAccuracy: true, timeout: 15000, maximumAge: 0 });
                 },
 
@@ -638,15 +664,15 @@
                 },
 
                 async submit() {
-                    if (!this.selfie || !this.position || this.busy) return;
+                    if (!this.selfie || !this.locationReady || this.busy) return;
                     this.busy = true;
                     this.error = '';
                     try {
                         const data = await this.post(this.action === 'in' ? config.clockInUrl : config.clockOutUrl, {
                             challenge: this.challenge,
-                            latitude: this.position.latitude,
-                            longitude: this.position.longitude,
-                            accuracy: this.position.accuracy,
+                            latitude: this.position?.latitude ?? null,
+                            longitude: this.position?.longitude ?? null,
+                            accuracy: this.position?.accuracy ?? null,
                             selfie: this.selfie,
                             rest_day_reason: this.action === 'in' && config.restDayRequired ? this.restDayReason : null,
                         });

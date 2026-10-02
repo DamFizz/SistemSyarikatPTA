@@ -26,7 +26,7 @@
                         <td class="px-4 py-3">{{ $ot->date->format('d M Y') }}</td>
                         <td class="px-4 py-3">{{ $ot->start_time }} - {{ $ot->end_time }}</td>
                         <td class="px-4 py-3">{{ $ot->total_hours }}h</td>
-                        <td class="px-4 py-3 max-w-xs truncate">{{ $ot->reason }}</td>
+                        <td class="px-4 py-3"><x-request-details :request="$ot" type="overtime" /></td>
                         <td class="px-4 py-3">{{ $ot->amount ? 'RM '.number_format($ot->amount, 2) : '-' }}</td>
                         <td class="px-4 py-3"><x-status-badge :status="$ot->status" /></td>
                     </tr>

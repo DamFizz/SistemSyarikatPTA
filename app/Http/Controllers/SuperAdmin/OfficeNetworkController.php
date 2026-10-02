@@ -27,6 +27,9 @@ class OfficeNetworkController extends Controller
                 'connecting_ip' => $request->server->get('REMOTE_ADDR'),
             ],
             'currentIpAllowed' => $office->isNetworkConfigured() && $office->acceptsNetwork($request->ip()),
+            'invalidEntries' => array_values(array_filter($office->allowedIpList(), fn (string $entry) => Office::isNonOfficeEntry($entry))),
+            'staff' => $office->employees()->orderBy('full_name')->get(['id', 'full_name', 'employee_code']),
+            'otherOffices' => Office::whereKeyNot($office->id)->orderBy('name')->get(),
             'wifiQrSvg' => $payload ? QrCodeService::svg($payload, 220) : null,
         ]);
     }
@@ -41,22 +44,31 @@ class OfficeNetworkController extends Controller
         } elseif (blank($data['wifi_password'] ?? null)) {
             unset($data['wifi_password']);
         }
-        unset($data['testing_mode'], $data['clear_password']);
+        unset($data['testing_mode'], $data['clear_password'], $data['apply_to_all']);
 
         $data['allowed_ips'] = implode("\n", $request->ipList());
         $data['network_check_enabled'] = ! $request->boolean('testing_mode');
 
-        $old = $office->only(['wifi_ssid', 'wifi_security', 'allowed_ips', 'network_check_enabled']);
-        $office->update($data);
+        // One company WiFi often serves every branch record — save it everywhere in one go.
+        $offices = $request->boolean('apply_to_all') ? Office::all() : collect([$office]);
 
-        AuditLog::record(
-            'update',
-            'office_network',
-            "Updated WiFi / NFC network settings for \"{$office->name}\"",
-            $old,
-            $office->only(['wifi_ssid', 'wifi_security', 'allowed_ips', 'network_check_enabled']),
-        );
+        foreach ($offices as $target) {
+            $old = $target->only(['wifi_ssid', 'wifi_security', 'allowed_ips', 'network_check_enabled']);
+            $target->update($data);
 
-        return redirect()->route('super-admin.offices.network.edit', $office)->with('success', 'Office network settings saved.');
+            AuditLog::record(
+                'update',
+                'office_network',
+                "Updated WiFi / NFC network settings for \"{$target->name}\"",
+                $old,
+                $target->only(['wifi_ssid', 'wifi_security', 'allowed_ips', 'network_check_enabled']),
+            );
+        }
+
+        $message = $offices->count() > 1
+            ? "Network settings saved for all {$offices->count()} offices."
+            : 'Office network settings saved.';
+
+        return redirect()->route('super-admin.offices.network.edit', $office)->with('success', $message);
     }
 }

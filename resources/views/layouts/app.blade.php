@@ -63,6 +63,17 @@
                             </div>
                         @endif
 
+                        @if (session('error'))
+                            <div x-data="{ show: true }" x-show="show" x-transition class="alert-error mb-5 animate-fade-up">
+                                <x-icon name="warning" class="mt-0.5 h-5 w-5 shrink-0" />
+                                <span class="flex-1">{{ session('error') }}</span>
+                                <button type="button" @click="show = false" class="opacity-60 hover:opacity-100" aria-label="Dismiss">&times;</button>
+                            </div>
+                        @endif
+
+                        {{-- Every form's validation errors are summarised here, so a rejected submit is never silent. --}}
+                        <x-validation-alert />
+
                         @if (session('success'))
                             <div x-data="{ show: true }" x-show="show" x-transition class="alert-success mb-5 animate-fade-up">
                                 <svg class="mt-0.5 h-5 w-5 shrink-0 text-emerald-500" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.857-9.809a.75.75 0 00-1.214-.882l-3.483 4.79-1.88-1.88a.75.75 0 10-1.06 1.061l2.5 2.5a.75.75 0 001.137-.089l4-5.5z" clip-rule="evenodd" /></svg>

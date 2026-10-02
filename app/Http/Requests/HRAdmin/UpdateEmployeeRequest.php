@@ -4,6 +4,7 @@ namespace App\Http\Requests\HRAdmin;
 
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
+use Illuminate\Validation\Rules\Password;
 
 class UpdateEmployeeRequest extends FormRequest
 {
@@ -19,6 +20,7 @@ class UpdateEmployeeRequest extends FormRequest
         return [
             'name' => ['required', 'string', 'max:255'],
             'email' => ['required', 'string', 'email', 'max:255', Rule::unique('users', 'email')->ignore($employee->user_id)],
+            'password' => ['nullable', 'confirmed', Password::min(8)],
             'role' => ['required', 'in:hr_admin,manager,technician,employee'],
             'employee_code' => ['required', 'string', 'max:50', Rule::unique('employees', 'employee_code')->ignore($employee->id)],
             'ic_number' => ['required', 'string', 'max:20', Rule::unique('employees', 'ic_number')->ignore($employee->id)],
@@ -33,6 +35,22 @@ class UpdateEmployeeRequest extends FormRequest
             'employment_type' => ['required', 'in:full_time,part_time,contract,intern'],
             'employment_status' => ['required', 'in:active,probation,resigned,terminated,suspended'],
             'join_date' => ['required', 'date'],
+            'shift_id' => ['nullable', 'exists:shifts,id'],
+            'basic_salary' => ['nullable', 'numeric', 'min:0', 'max:1000000'],
+            'allowance' => ['nullable', 'numeric', 'min:0', 'max:1000000'],
+        ];
+    }
+
+    public function attributes(): array
+    {
+        return [
+            'ic_number' => 'IC number',
+            'employee_code' => 'employee code',
+            'department_id' => 'department',
+            'office_id' => 'office',
+            'manager_id' => 'reporting manager',
+            'shift_id' => 'work shift',
+            'dob' => 'date of birth',
         ];
     }
 }

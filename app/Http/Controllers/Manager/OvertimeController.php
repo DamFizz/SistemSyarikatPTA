@@ -10,6 +10,7 @@ use App\Services\WorkHoursService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Validation\ValidationException;
 use Illuminate\View\View;
 
 class OvertimeController extends Controller
@@ -75,7 +76,9 @@ class OvertimeController extends Controller
 
     private function authorizeApprover(Overtime $overtime): void
     {
-        abort_unless($overtime->status === Overtime::STATUS_PENDING, 422, 'This request has already been processed.');
+        if (! ($overtime->status === Overtime::STATUS_PENDING)) {
+            throw ValidationException::withMessages(['request' => 'This request has already been processed.']);
+        }
         abort_unless($overtime->employee->isApprovableBy($this->manager()), 403, 'You are not the approving manager for this employee.');
     }
 }

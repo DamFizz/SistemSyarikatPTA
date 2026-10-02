@@ -26,4 +26,16 @@ return [
         '172.111.64.0/18', '185.31.16.0/22', '199.27.72.0/21', '199.232.0.0/16',
         '2a04:4e40::/32', '2a04:4e42::/32',
     ],
+
+    /*
+    | Addresses that can never be an office's public internet connection: private / CGNAT /
+    | loopback space, and the hosting platform's edge (Railway's edge runs on CDN77, observed
+    | as 152.233.x.x). Registering one of these was the classic "WiFi never detected" mistake,
+    | so they are rejected on save and stripped from existing office settings.
+    */
+    'non_office_ip_ranges' => [
+        '0.0.0.0/8', '10.0.0.0/8', '100.64.0.0/10', '127.0.0.0/8', '169.254.0.0/16',
+        '172.16.0.0/12', '192.168.0.0/16', '152.233.0.0/17',
+        '::1/128', 'fc00::/7', 'fe80::/10',
+    ],
 ];

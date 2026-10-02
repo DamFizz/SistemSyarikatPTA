@@ -26,15 +26,20 @@ class UpdateOfficeNetworkRequest extends FormRequest
                 'string',
                 'max:2000',
                 function (string $attribute, mixed $value, Closure $fail) {
+                    $proxies = $this->proxyHops();
+
                     foreach ($this->ipList() as $entry) {
                         if (! self::isValidIpOrCidr($entry)) {
                             $fail("\"{$entry}\" is not a valid IP address or CIDR range.");
+                        } elseif (in_array(explode('/', $entry, 2)[0], $proxies, true) || Office::isNonOfficeEntry($entry)) {
+                            $fail("\"{$entry}\" is a server / proxy address, not the office internet connection. Remove it and use “Add my current network” while connected to the office WiFi.");
                         }
                     }
                 },
             ],
             'testing_mode' => ['nullable', 'boolean'],
             'clear_password' => ['nullable', 'boolean'],
+            'apply_to_all' => ['nullable', 'boolean'],
         ];
     }
 
@@ -54,6 +59,19 @@ class UpdateOfficeNetworkRequest extends FormRequest
             'trim',
             preg_split('/[\s,;]+/', (string) $this->input('allowed_ips')) ?: []
         ))));
+    }
+
+    /**
+     * Proxies this very request passed through (everything except the resolved client).
+     *
+     * @return list<string>
+     */
+    private function proxyHops(): array
+    {
+        $chain = array_map('trim', explode(',', (string) $this->headers->get('X-Forwarded-For')));
+        $hops = [...$chain, (string) $this->server->get('REMOTE_ADDR')];
+
+        return array_values(array_diff(array_filter($hops), [$this->ip()]));
     }
 
     private static function isValidIpOrCidr(string $entry): bool

@@ -91,6 +91,73 @@ class ClientIpResolutionTest extends TestCase
             ->assertJson(['resolved_ip' => self::CLIENT, 'ip_version' => 4, 'connecting_proxy' => self::RAILWAY_PROXY]);
     }
 
+    public function test_proxy_and_private_addresses_cannot_be_registered_as_the_office_network(): void
+    {
+        config(['attendance.behind_platform_proxy' => true]);
+        $office = Office::factory()->create();
+        $admin = User::factory()->create(['role' => User::ROLE_SUPER_ADMIN]);
+
+        foreach (['152.233.68.98', '100.64.0.4', '192.168.1.0/24'] as $entry) {
+            $this->actingAs($admin)
+                ->withServerVariables(['REMOTE_ADDR' => self::RAILWAY_PROXY])
+                ->withHeaders(['X-Forwarded-For' => self::CLIENT.', '.self::RAILWAY_EDGE])
+                ->put(route('super-admin.offices.network.update', $office), ['wifi_ssid' => 'HQ', 'wifi_security' => 'nopass', 'allowed_ips' => self::CLIENT."\n".$entry])
+                ->assertSessionHasErrors('allowed_ips');
+        }
+
+        // The edge this request came through is rejected even outside the known ranges.
+        $this->actingAs($admin)
+            ->withServerVariables(['REMOTE_ADDR' => self::RAILWAY_PROXY])
+            ->withHeaders(['X-Forwarded-For' => self::CLIENT.', '.self::FASTLY_EDGE])
+            ->put(route('super-admin.offices.network.update', $office), ['wifi_ssid' => 'HQ', 'wifi_security' => 'nopass', 'allowed_ips' => self::FASTLY_EDGE])
+            ->assertSessionHasErrors('allowed_ips');
+
+        $this->actingAs($admin)
+            ->withServerVariables(['REMOTE_ADDR' => self::RAILWAY_PROXY])
+            ->withHeaders(['X-Forwarded-For' => self::CLIENT.', '.self::RAILWAY_EDGE])
+            ->put(route('super-admin.offices.network.update', $office), ['wifi_ssid' => 'HQ', 'wifi_security' => 'nopass', 'allowed_ips' => self::CLIENT])
+            ->assertSessionHasNoErrors();
+
+        $this->assertTrue($office->fresh()->acceptsNetwork(self::CLIENT));
+    }
+
+    public function test_network_can_be_applied_to_every_office(): void
+    {
+        $offices = Office::factory()->count(3)->create(['allowed_ips' => '1.1.1.1']);
+        $admin = User::factory()->create(['role' => User::ROLE_SUPER_ADMIN]);
+
+        $this->actingAs($admin)->put(route('super-admin.offices.network.update', $offices[0]), [
+            'wifi_ssid' => 'Company', 'wifi_security' => 'nopass', 'allowed_ips' => self::CLIENT, 'apply_to_all' => '1',
+        ])->assertSessionHasNoErrors();
+
+        foreach ($offices as $office) {
+            $this->assertTrue($office->fresh()->acceptsNetwork(self::CLIENT));
+            $this->assertSame('Company', $office->fresh()->wifi_ssid);
+        }
+    }
+
+    public function test_previously_saved_proxy_addresses_are_cleaned_up(): void
+    {
+        config(['attendance.behind_platform_proxy' => true]);
+        $office = Office::factory()->create(['allowed_ips' => "152.233.68.98\n".self::CLIENT."\n100.64.0.2"]);
+        $only = Office::factory()->create(['allowed_ips' => '152.233.15.121']);
+
+        (require database_path('migrations/2026_10_03_100001_remove_proxy_addresses_from_office_networks.php'))->up();
+
+        $this->assertSame(self::CLIENT, $office->fresh()->allowed_ips);
+        $this->assertNull($only->fresh()->allowed_ips);
+    }
+
+    public function test_attendance_page_explains_an_unregistered_network(): void
+    {
+        $user = $this->employeeOnOffice('203.0.113.9');
+
+        $this->actingAs($user)->get(route('employee.attendance.index'))
+            ->assertOk()
+            ->assertSee('which isn', false)
+            ->assertSee('WiFi &amp; NFC', false);
+    }
+
     public function test_ipv6_devices_on_the_same_wifi_share_the_64_network(): void
     {
         $this->assertSame('2001:e68:5432:9a00::/64', Office::networkEntryFor('2001:e68:5432:9a00:1c2d:3e4f:aaaa:bbbb'));

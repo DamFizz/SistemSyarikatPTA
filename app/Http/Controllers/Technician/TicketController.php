@@ -18,7 +18,7 @@ class TicketController extends Controller
             ->when($request->filled('status'), fn ($q) => $q->where('status', $request->string('status')))
             ->when(! $request->filled('status'), fn ($q) => $q->whereNotIn('status', ['resolved', 'closed']))
             ->when($request->filled('mine'), fn ($q) => $q->where('assigned_technician_id', Auth::id()))
-            ->orderByRaw("field(priority, 'critical','high','medium','low')")
+            ->orderByRaw("case priority when 'critical' then 0 when 'high' then 1 when 'medium' then 2 else 3 end")
             ->orderBy('created_at')
             ->paginate(15)
             ->withQueryString();

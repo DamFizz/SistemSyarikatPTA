@@ -33,6 +33,20 @@ class StoreEmployeeRequest extends FormRequest
             'position' => ['required', 'string', 'max:255'],
             'employment_type' => ['required', 'in:full_time,part_time,contract,intern'],
             'join_date' => ['required', 'date'],
+            'shift_id' => ['nullable', 'exists:shifts,id'],
+        ];
+    }
+
+    public function attributes(): array
+    {
+        return [
+            'ic_number' => 'IC number',
+            'employee_code' => 'employee code',
+            'department_id' => 'department',
+            'office_id' => 'office',
+            'manager_id' => 'reporting manager',
+            'shift_id' => 'work shift',
+            'dob' => 'date of birth',
         ];
     }
 }

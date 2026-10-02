@@ -19,6 +19,7 @@
             <div>
                 <x-input-label for="category" value="Category" />
                 <x-text-input id="category" name="category" type="text" class="mt-1 block w-full" value="{{ old('category') }}" placeholder="e.g. Meeting, Holiday" />
+                <x-input-error :messages="$errors->get('category')" class="mt-1" />
             </div>
             <div>
                 <x-input-label for="priority" value="Priority" />
@@ -27,6 +28,7 @@
                     <option value="important" @selected(old('priority') === 'important')>Important</option>
                     <option value="urgent" @selected(old('priority') === 'urgent')>Urgent</option>
                 </select>
+                <x-input-error :messages="$errors->get('priority')" class="mt-1" />
             </div>
             <div>
                 <x-input-label for="department_id" value="Target Department" />
@@ -36,11 +38,13 @@
                         <option value="{{ $department->id }}" @selected(old('department_id') == $department->id)>{{ $department->name }}</option>
                     @endforeach
                 </select>
+                <x-input-error :messages="$errors->get('department_id')" class="mt-1" />
             </div>
         </div>
         <div>
             <x-input-label for="attachment" value="Attachment (optional)" />
             <input id="attachment" name="attachment" type="file" class="mt-1 block w-full text-sm">
+            <x-input-error :messages="$errors->get('attachment')" class="mt-1" />
         </div>
         <div class="flex justify-end gap-3 pt-2">
             <a href="{{ route('announcements.index') }}" class="btn-ghost">Cancel</a>

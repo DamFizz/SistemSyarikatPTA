@@ -48,6 +48,7 @@
                 <div>
                     <x-input-label for="phone" value="Phone" />
                     <x-text-input id="phone" name="phone" type="text" class="mt-1 block w-full" value="{{ old('phone') }}" />
+                    <x-input-error :messages="$errors->get('phone')" class="mt-1" />
                 </div>
                 <div>
                     <x-input-label for="gender" value="Gender" />
@@ -56,10 +57,12 @@
                         <option value="male" @selected(old('gender') === 'male')>Male</option>
                         <option value="female" @selected(old('gender') === 'female')>Female</option>
                     </select>
+                    <x-input-error :messages="$errors->get('gender')" class="mt-1" />
                 </div>
                 <div>
                     <x-input-label for="dob" value="Date of Birth" />
                     <x-text-input id="dob" name="dob" type="date" class="mt-1 block w-full" value="{{ old('dob') }}" />
+                    <x-input-error :messages="$errors->get('dob')" class="mt-1" />
                 </div>
                 <div>
                     <x-input-label for="join_date" value="Join Date" />
@@ -69,6 +72,7 @@
                 <div class="sm:col-span-2 lg:col-span-3">
                     <x-input-label for="address" value="Address" />
                     <textarea id="address" name="address" rows="2" class="input mt-1.5 block w-full">{{ old('address') }}</textarea>
+                    <x-input-error :messages="$errors->get('address')" class="mt-1" />
                 </div>
             </div>
         </div>
@@ -99,6 +103,18 @@
                         @endforeach
                     </select>
                     <x-input-error :messages="$errors->get('employment_type')" class="mt-1" />
+                </div>
+                <div>
+                    <x-input-label for="shift_id" value="Work Shift" />
+                    <select id="shift_id" name="shift_id" class="input mt-1.5 block w-full">
+                        <option value="">No fixed shift</option>
+                        @foreach ($shifts as $shift)
+                            <option value="{{ $shift->id }}" @selected((string) old('shift_id', $defaultShiftId) === (string) $shift->id)>
+                                {{ $shift->name }} ({{ \Illuminate\Support\Carbon::parse($shift->start_time)->format('H:i') }}–{{ \Illuminate\Support\Carbon::parse($shift->end_time)->format('H:i') }})
+                            </option>
+                        @endforeach
+                    </select>
+                    <x-input-error :messages="$errors->get('shift_id')" class="mt-1" />
                 </div>
             </div>
         </div>

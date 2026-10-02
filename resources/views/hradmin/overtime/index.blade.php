@@ -43,7 +43,7 @@
             <tbody>
                 @forelse ($overtimes as $ot)
                     <tr>
-                        <td class="px-4 py-3 font-medium text-slate-800">{{ $ot->employee->full_name }}</td>
+                        <td class="px-4 py-3 font-medium text-slate-800">{{ $ot->employee->full_name }}<x-request-details :request="$ot" type="overtime" /></td>
                         <td class="px-4 py-3">{{ $ot->employee->department->name }}</td>
                         <td class="px-4 py-3">{{ $ot->date->format('d M Y') }}</td>
                         <td class="px-4 py-3">{{ $ot->total_hours }}h</td>

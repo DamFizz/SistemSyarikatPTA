@@ -8,9 +8,11 @@ use App\Http\Requests\HRAdmin\UpdateEmployeeRequest;
 use App\Models\AuditLog;
 use App\Models\Department;
 use App\Models\Employee;
-use App\Models\LeaveType;
 use App\Models\Office;
+use App\Models\Shift;
 use App\Models\User;
+use App\Services\EmployeeRecordsService;
+use Carbon\Carbon;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -18,6 +20,9 @@ use Illuminate\View\View;
 
 class EmployeeController extends Controller
 {
+    /** Form fields stored as dated history rather than on the employee row. */
+    private const RECORD_FIELDS = ['shift_id', 'basic_salary', 'allowance'];
+
     public function index(Request $request): View
     {
         $employees = Employee::with(['user', 'department', 'office'])
@@ -45,14 +50,15 @@ class EmployeeController extends Controller
             'departments' => Department::orderBy('name')->get(),
             'offices' => Office::orderBy('name')->get(),
             'managers' => Employee::orderBy('full_name')->get(),
+            'shifts' => Shift::orderBy('start_time')->get(),
         ]);
     }
 
-    public function store(StoreEmployeeRequest $request): RedirectResponse
+    public function store(StoreEmployeeRequest $request, EmployeeRecordsService $records): RedirectResponse
     {
         $data = $request->validated();
 
-        $employee = DB::transaction(function () use ($data) {
+        $employee = DB::transaction(function () use ($data, $records) {
             $user = User::create([
                 'name' => $data['name'],
                 'email' => $data['email'],
@@ -62,20 +68,15 @@ class EmployeeController extends Controller
             ]);
 
             $employee = Employee::create([
-                ...collect($data)->except(['name', 'email', 'password', 'password_confirmation', 'role'])->all(),
+                ...collect($data)->except(['name', 'email', 'password', 'password_confirmation', 'role', ...self::RECORD_FIELDS])->all(),
                 'user_id' => $user->id,
                 'full_name' => $data['name'],
             ]);
 
-            foreach (LeaveType::all() as $leaveType) {
-                $employee->leaveBalances()->create([
-                    'leave_type_id' => $leaveType->id,
-                    'year' => now()->year,
-                    'allocated_days' => $leaveType->default_days_per_year,
-                    'used_days' => 0,
-                    'remaining_days' => $leaveType->default_days_per_year,
-                ]);
-            }
+            $joined = Carbon::parse($data['join_date']);
+            $records->assignShift($employee, $data['shift_id'] ?? null, $joined);
+            $records->setSalary($employee, $data['basic_salary'] ?? null, $data['allowance'] ?? null, $joined);
+            $records->createLeaveBalances($employee);
 
             return $employee;
         });
@@ -92,24 +93,33 @@ class EmployeeController extends Controller
             'departments' => Department::orderBy('name')->get(),
             'offices' => Office::orderBy('name')->get(),
             'managers' => Employee::where('id', '!=', $employee->id)->orderBy('full_name')->get(),
+            'shifts' => Shift::orderBy('start_time')->get(),
+            'currentShiftId' => $employee->currentShift()?->id,
+            'salary' => $employee->currentSalary(),
         ]);
     }
 
-    public function update(UpdateEmployeeRequest $request, Employee $employee): RedirectResponse
+    public function update(UpdateEmployeeRequest $request, Employee $employee, EmployeeRecordsService $records): RedirectResponse
     {
         $data = $request->validated();
         $old = $employee->toArray();
 
-        $employee->user->update([
-            'name' => $data['name'],
-            'email' => $data['email'],
-            'role' => $data['role'],
-        ]);
+        DB::transaction(function () use ($data, $employee, $records) {
+            $employee->user->update([
+                'name' => $data['name'],
+                'email' => $data['email'],
+                'role' => $data['role'],
+                ...(filled($data['password'] ?? null) ? ['password' => $data['password']] : []),
+            ]);
 
-        $employee->update([
-            ...collect($data)->except(['name', 'email', 'role'])->all(),
-            'full_name' => $data['name'],
-        ]);
+            $employee->update([
+                ...collect($data)->except(['name', 'email', 'role', 'password', 'password_confirmation', ...self::RECORD_FIELDS])->all(),
+                'full_name' => $data['name'],
+            ]);
+
+            $records->assignShift($employee, $data['shift_id'] ?? null, today());
+            $records->setSalary($employee, $data['basic_salary'] ?? null, $data['allowance'] ?? null, today());
+        });
 
         AuditLog::record('update', 'employee', "Updated employee \"{$employee->full_name}\" ({$employee->employee_code})", $old, $employee->toArray());
 

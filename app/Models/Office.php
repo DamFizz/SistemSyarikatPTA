@@ -122,6 +122,23 @@ class Office extends Model
     }
 
     /**
+     * Whether an allow-list entry can never match an employee behind the hosting platform:
+     * private / CGNAT space or the platform's own edge proxy. Such entries were saved in the
+     * past by mistake (e.g. "Add my current network" before the proxy fix) and block clock-in.
+     */
+    public static function isNonOfficeEntry(string $entry): bool
+    {
+        if (! config('attendance.behind_platform_proxy')) {
+            return false; // On a LAN-hosted server private addresses are the real office network.
+        }
+
+        $ip = explode('/', $entry, 2)[0];
+
+        return filter_var($ip, FILTER_VALIDATE_IP) !== false
+            && IpUtils::checkIp($ip, config('attendance.non_office_ip_ranges', []));
+    }
+
+    /**
      * Standard "WIFI:" payload understood by Android/iOS cameras and NFC writer apps.
      */
     public function wifiQrPayload(): ?string

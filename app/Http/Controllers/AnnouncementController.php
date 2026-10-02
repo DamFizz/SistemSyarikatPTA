@@ -6,10 +6,10 @@ use App\Http\Requests\StoreAnnouncementRequest;
 use App\Models\Announcement;
 use App\Models\AuditLog;
 use App\Models\Department;
+use App\Models\StoredFile;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\Storage;
 use Illuminate\View\View;
 
 class AnnouncementController extends Controller
@@ -45,7 +45,7 @@ class AnnouncementController extends Controller
 
         $attachmentPath = null;
         if ($request->hasFile('attachment')) {
-            $attachmentPath = $request->file('attachment')->store('attachments/announcements', 'public');
+            $attachmentPath = StoredFile::storeUpload($request->file('attachment'));
         }
 
         $announcement = Announcement::create([
@@ -101,9 +101,7 @@ class AnnouncementController extends Controller
 
     private function deleteAnnouncement(Announcement $announcement): void
     {
-        if ($announcement->attachment) {
-            Storage::disk('public')->delete($announcement->attachment);
-        }
+        StoredFile::deleteReference($announcement->attachment);
 
         $announcement->delete();
 

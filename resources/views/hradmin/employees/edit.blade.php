@@ -30,8 +30,22 @@
                     </select>
                     <x-input-error :messages="$errors->get('role')" class="mt-1" />
                 </div>
-                <div class="flex items-end text-sm text-slate-400">
-                    Password unchanged. Employee can reset it from their profile page.
+            </div>
+
+            {{-- For staff who forgot their password: HR sets a temporary one. --}}
+            <div x-data="{ open: @js($errors->has('password')) }" class="mt-4">
+                <button type="button" x-show="!open" @click="open = true" class="text-sm font-medium text-sky-700 hover:underline">Set a new password…</button>
+                <div x-show="open" x-cloak class="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                    <div>
+                        <x-input-label for="password" value="New Password" />
+                        <x-text-input id="password" name="password" type="password" class="mt-1 block w-full" autocomplete="new-password" />
+                        <x-input-error :messages="$errors->get('password')" class="mt-1" />
+                    </div>
+                    <div>
+                        <x-input-label for="password_confirmation" value="Confirm New Password" />
+                        <x-text-input id="password_confirmation" name="password_confirmation" type="password" class="mt-1 block w-full" autocomplete="new-password" />
+                    </div>
+                    <p class="text-xs text-slate-400 sm:col-span-2">Leave blank to keep the current password.</p>
                 </div>
             </div>
         </div>
@@ -52,6 +66,7 @@
                 <div>
                     <x-input-label for="phone" value="Phone" />
                     <x-text-input id="phone" name="phone" type="text" class="mt-1 block w-full" value="{{ old('phone', $employee->phone) }}" />
+                    <x-input-error :messages="$errors->get('phone')" class="mt-1" />
                 </div>
                 <div>
                     <x-input-label for="gender" value="Gender" />
@@ -60,10 +75,12 @@
                         <option value="male" @selected(old('gender', $employee->gender) === 'male')>Male</option>
                         <option value="female" @selected(old('gender', $employee->gender) === 'female')>Female</option>
                     </select>
+                    <x-input-error :messages="$errors->get('gender')" class="mt-1" />
                 </div>
                 <div>
                     <x-input-label for="dob" value="Date of Birth" />
                     <x-text-input id="dob" name="dob" type="date" class="mt-1 block w-full" value="{{ old('dob', $employee->dob?->format('Y-m-d')) }}" />
+                    <x-input-error :messages="$errors->get('dob')" class="mt-1" />
                 </div>
                 <div>
                     <x-input-label for="join_date" value="Join Date" />
@@ -73,6 +90,7 @@
                 <div class="sm:col-span-2 lg:col-span-3">
                     <x-input-label for="address" value="Address" />
                     <textarea id="address" name="address" rows="2" class="input mt-1.5 block w-full">{{ old('address', $employee->address) }}</textarea>
+                    <x-input-error :messages="$errors->get('address')" class="mt-1" />
                 </div>
             </div>
         </div>
@@ -120,6 +138,7 @@
                             <option value="{{ $value }}" @selected(old('employment_type', $employee->employment_type) === $value)>{{ $label }}</option>
                         @endforeach
                     </select>
+                    <x-input-error :messages="$errors->get('employment_type')" class="mt-1" />
                 </div>
                 <div>
                     <x-input-label for="employment_status" value="Employment Status" />
@@ -128,9 +147,15 @@
                             <option value="{{ $value }}" @selected(old('employment_status', $employee->employment_status) === $value)>{{ $label }}</option>
                         @endforeach
                     </select>
+                    <x-input-error :messages="$errors->get('employment_status')" class="mt-1" />
                 </div>
             </div>
         </div>
+
+        @include('hradmin.employees.partials.schedule-pay', [
+            'selectedShift' => $currentShiftId,
+            'hint' => 'A changed shift or salary applies from today; earlier payroll and attendance keep the old values.',
+        ])
 
         <div class="flex justify-end gap-3 pt-2">
             <a href="{{ route('hr.employees.index') }}" class="btn-ghost">Cancel</a>
@@ -153,7 +178,7 @@
             </div>
         </div>
         @if ($employee->registered_device_hash)
-            <form method="POST" action="{{ route('hr.employees.reset-device', $employee) }}" onsubmit="return confirm('Reset the registered device for {{ e($employee->full_name) }}?')">
+            <form method="POST" action="{{ route('hr.employees.reset-device', $employee) }}" onsubmit="return confirm({{ \Illuminate\Support\Js::from('Reset the registered device for '.$employee->full_name.'?') }})">
                 @csrf
                 <button type="submit" class="btn-secondary shrink-0"><x-icon name="refresh" class="h-4 w-4" /> Reset device</button>
             </form>

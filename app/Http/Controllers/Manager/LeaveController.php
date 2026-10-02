@@ -9,6 +9,7 @@ use App\Models\LeaveRequest;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Validation\ValidationException;
 use Illuminate\View\View;
 
 class LeaveController extends Controller
@@ -59,7 +60,9 @@ class LeaveController extends Controller
 
     private function authorizeApprover(LeaveRequest $leaveRequest): void
     {
-        abort_unless($leaveRequest->status === LeaveRequest::STATUS_PENDING, 422, 'This request has already been processed.');
+        if (! ($leaveRequest->status === LeaveRequest::STATUS_PENDING)) {
+            throw ValidationException::withMessages(['request' => 'This request has already been processed.']);
+        }
         abort_unless($leaveRequest->employee->isApprovableBy($this->manager()), 403, 'You are not the approving manager for this employee.');
     }
 }

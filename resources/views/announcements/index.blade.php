@@ -75,7 +75,7 @@
                             </div>
                             <p class="mt-3 whitespace-pre-line text-sm leading-relaxed text-slate-600">{{ $announcement->description }}</p>
                             @if ($announcement->attachment)
-                                <a href="{{ \Illuminate\Support\Facades\Storage::url($announcement->attachment) }}" target="_blank" class="mt-3 inline-flex items-center gap-1.5 text-sm font-medium">
+                                <a href="{{ route('attachments.show', ['announcement', $announcement->id]) }}" target="_blank" class="mt-3 inline-flex items-center gap-1.5 text-sm font-medium">
                                     <x-icon name="document" class="h-4 w-4" /> View attachment
                                 </a>
                             @endif

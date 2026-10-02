@@ -8,8 +8,8 @@ namespace App\Support;
 final readonly class AttendanceCapture
 {
     public function __construct(
-        public float $latitude,
-        public float $longitude,
+        public ?float $latitude,
+        public ?float $longitude,
         public ?float $accuracy,
         public string $selfieDataUrl,
         public ?string $ip,

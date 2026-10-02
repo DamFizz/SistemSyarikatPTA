@@ -13,7 +13,8 @@ class PayrollService
     {
         $existingEmployeeIds = $period->payrolls()->pluck('employee_id');
 
-        $employees = Employee::where('employment_status', 'active')
+        // Staff on probation are paid too; only those who have left (or are suspended) are skipped.
+        $employees = Employee::whereIn('employment_status', ['active', 'probation'])
             ->whereNotIn('id', $existingEmployeeIds)
             ->get();
 
