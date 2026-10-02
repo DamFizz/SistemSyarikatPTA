@@ -37,9 +37,7 @@
 
     <div class="glass-thin relative m-3 rounded-2xl p-3">
         <div class="flex items-center gap-3">
-            <div class="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-emerald-400 to-teal-600 text-sm font-bold text-white">
-                {{ strtoupper(substr($user->name, 0, 1)) }}
-            </div>
+            <a href="{{ route('profile.edit') }}" title="My profile"><x-avatar :user="$user" size="h-9 w-9" /></a>
             <div class="min-w-0 flex-1">
                 <div class="truncate text-[13px] font-semibold text-slate-900">{{ $user->name }}</div>
                 <div class="truncate text-[11px] capitalize text-emerald-600">{{ str_replace('_', ' ', $role) }}</div>

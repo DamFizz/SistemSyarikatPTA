@@ -12,9 +12,7 @@
 <x-dropdown align="right" width="56">
     <x-slot name="trigger">
         <button class="lg-press flex items-center gap-2 rounded-full p-1 {{ ($showName ?? false) ? 'pe-2.5' : '' }} hover:bg-white/40">
-            <span class="flex h-8 w-8 items-center justify-center rounded-full bg-gradient-to-br from-emerald-400 to-teal-600 text-xs font-bold text-white shadow-[inset_1px_1px_0.5px_-1px_rgba(255,255,255,0.9),inset_0_0_0_0.5px_rgba(255,255,255,0.4)]">
-                {{ strtoupper(substr(Auth::user()->name, 0, 1)) }}
-            </span>
+            <x-avatar :user="Auth::user()" size="h-8 w-8" text="text-xs" />
             @if ($showName ?? false)
                 <span class="max-w-[10rem] truncate text-sm font-medium text-slate-800">{{ Auth::user()->name }}</span>
                 <svg class="h-4 w-4 text-slate-500" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clip-rule="evenodd" /></svg>

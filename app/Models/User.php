@@ -59,6 +59,24 @@ class User extends Authenticatable
         return $this->hasMany(AuditLog::class);
     }
 
+    /**
+     * URL of the profile photo, or null to show initials. The file id is part of the URL,
+     * so a new photo is never served from the browser's cache.
+     */
+    public function avatarUrl(): ?string
+    {
+        if (! $this->avatar || ! str_starts_with($this->avatar, StoredFile::PREFIX)) {
+            return null;
+        }
+
+        return route('avatars.show', ['user' => $this->id, 'v' => substr($this->avatar, strlen(StoredFile::PREFIX))]);
+    }
+
+    public function initial(): string
+    {
+        return mb_strtoupper(mb_substr(trim($this->name) ?: '?', 0, 1));
+    }
+
     public function hasRole(string ...$roles): bool
     {
         return in_array($this->role, $roles, true);

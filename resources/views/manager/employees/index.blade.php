@@ -25,8 +25,13 @@
                 @forelse ($team as $employee)
                     <tr>
                         <td class="px-4 py-3">
-                            <div class="font-medium text-slate-800">{{ $employee->full_name }}</div>
-                            <div class="text-xs text-slate-400">{{ $employee->employee_code }} &middot; {{ $employee->user->email }}</div>
+                            <div class="flex items-center gap-3">
+                                <x-avatar :user="$employee->user" size="h-9 w-9" />
+                                <div class="min-w-0">
+                                    <div class="font-medium text-slate-800">{{ $employee->full_name }}</div>
+                                    <div class="text-xs text-slate-400">{{ $employee->employee_code }} &middot; {{ $employee->user->email }}</div>
+                                </div>
+                            </div>
                         </td>
                         <td class="px-4 py-3">{{ $employee->position }}</td>
                         <td class="px-4 py-3">{{ str($employee->employment_type)->replace('_', ' ')->title() }}</td>

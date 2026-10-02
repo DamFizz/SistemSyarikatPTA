@@ -8,9 +8,7 @@
     <div class="grid gap-6 lg:grid-cols-3">
         <div class="surface-dark p-6 lg:row-span-3 lg:self-start">
             <div class="relative">
-                <div class="flex h-16 w-16 items-center justify-center rounded-2xl bg-gradient-to-br from-emerald-400 to-teal-600 text-2xl font-bold text-white shadow-lg shadow-emerald-500/30">
-                    {{ strtoupper(substr($user->name, 0, 1)) }}
-                </div>
+                @include('profile.partials.update-photo-form')
                 <div class="mt-4 text-lg font-semibold text-white">{{ $user->name }}</div>
                 <div class="text-sm text-slate-400">{{ $user->email }}</div>
                 <div class="mt-4 inline-flex chip bg-emerald-400/10 text-emerald-300 ring-1 ring-emerald-400/20 capitalize">{{ str_replace('_', ' ', $user->role) }}</div>

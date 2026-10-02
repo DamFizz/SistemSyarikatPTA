@@ -38,9 +38,7 @@
          @touchmove="if (! $event.target.closest('[data-menu-scroll]')) $event.preventDefault()">
         <div class="menupanel-body">
             <div class="flex items-center gap-3 px-5 pb-3 pt-5">
-                <span class="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-emerald-400 to-teal-600 text-sm font-bold text-white shadow-[var(--lg-specular)]">
-                    {{ strtoupper(substr($user->name, 0, 1)) }}
-                </span>
+                <x-avatar :user="$user" size="h-11 w-11" />
                 <div class="min-w-0 flex-1 leading-tight">
                     <div class="truncate text-[15px] font-semibold text-slate-900">{{ $user->name }}</div>
                     <div class="truncate text-xs capitalize text-emerald-700">{{ str_replace('_', ' ', $role) }}</div>
