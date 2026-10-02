@@ -514,56 +514,74 @@
     }
 
     /* ---------- "More": the tab bar morphs into the full menu ---------- */
-    .tabdock.menu-open .tabbar {
+    /*
+     | Performance: the panel is laid out once at its final size and only *revealed* —
+     | clip-path grows from the capsule's outline and a transform adds the spring.
+     | Nothing changes size while it animates, so there is no layout work per frame.
+     */
+    .tabdock {
+        --bar-h: var(--tabbar-h);
+        --action-gap: calc(var(--bar-h) + 0.625rem);
+    }
+
+    .tabbar-min .tabdock {
+        --bar-h: 3.25rem;
+    }
+
+    .tabdock.no-action {
+        --action-gap: 0px;
+    }
+
+    .menupanel {
         height: min(76vh, var(--menu-h, 36rem));
-        /* A menu needs legible glass: heavier frost while open (overrides the refraction lens). */
-        background: linear-gradient(180deg, rgba(255, 255, 255, 0.5), rgba(255, 255, 255, 0.2)), rgba(244, 247, 250, 0.82) !important;
-        -webkit-backdrop-filter: blur(28px) saturate(200%) !important;
-        backdrop-filter: blur(28px) saturate(200%) !important;
         border-radius: 2rem;
-        transition: height 0.62s var(--spring-open), border-radius 0.62s var(--spring-open), box-shadow 0.4s ease;
-        box-shadow: var(--lg-specular), 0 30px 60px -18px rgba(15, 23, 42, 0.38);
+        transform-origin: 50% 100%;
+        /* Closed: clipped down to exactly the capsule tab bar. */
+        clip-path: inset(calc(100% - var(--bar-h)) var(--action-gap) 0 0 round 2.15rem);
+        background: linear-gradient(180deg, rgba(255, 255, 255, 0.5), rgba(255, 255, 255, 0.2)), rgba(244, 247, 250, 0.84);
+        -webkit-backdrop-filter: blur(16px) saturate(190%);
+        backdrop-filter: blur(16px) saturate(190%);
+        box-shadow: var(--lg-specular);
+        transition:
+            clip-path 0.36s cubic-bezier(0.4, 0, 0.2, 1),
+            opacity 0.14s ease 0.24s,
+            visibility 0s linear 0.38s;
+        @apply invisible pointer-events-none absolute inset-x-0 bottom-0 z-10 flex flex-col opacity-0;
+    }
+
+    .tabdock.menu-open .menupanel {
+        clip-path: inset(0 0 0 0 round 2rem);
+        transition:
+            clip-path 0.5s cubic-bezier(0.22, 1, 0.36, 1),
+            opacity 0.1s ease,
+            visibility 0s;
+        animation: menu-spring 0.62s cubic-bezier(0.3, 1.25, 0.5, 1);
+        @apply visible pointer-events-auto opacity-100;
     }
 
     .tabdock.menu-open .tabrow {
         @apply pointer-events-none;
         opacity: 0;
-        transform: translateY(14px) scale(0.92);
-        filter: blur(4px);
+        transition: opacity 0.15s ease;
     }
 
-    /* The round action is absorbed into the growing glass. */
+    /* The round action is absorbed into the glass (transform + opacity only). */
     .tabdock.menu-open .tab-action {
         @apply pointer-events-none;
-        width: 0;
-        margin-left: 0;
         opacity: 0;
-        transform: scale(0.4);
-    }
-
-    .tabmenu {
-        transform: translateY(18px) scale(0.94);
-        transform-origin: 50% 100%;
-        transition: opacity 0.2s ease, transform 0.35s ease, visibility 0s linear 0.35s;
-        @apply invisible absolute inset-0 flex flex-col opacity-0;
-    }
-
-    .tabdock.menu-open .tabmenu {
-        transform: none;
-        transition: opacity 0.3s ease 0.08s, transform 0.6s var(--spring-open) 0.04s, visibility 0s;
-        @apply visible opacity-100;
+        transform: scale(0.5);
     }
 
     /* Menu tiles pop in one after another, with a little bounce. */
     .tile {
         transform: translateY(10px) scale(0.6);
-        transition: transform 0.3s ease, opacity 0.15s ease;
+        transition: transform 0.25s ease, opacity 0.12s ease;
         @apply flex flex-col items-center gap-1.5 rounded-2xl p-1.5 text-center text-[11px] font-medium leading-tight text-slate-700 opacity-0;
     }
 
     .tabdock.menu-open .tile {
         transform: none;
-        transition: transform 0.55s cubic-bezier(0.3, 1.6, 0.5, 1) calc(0.1s + var(--d, 0) * 22ms), opacity 0.3s ease calc(0.1s + var(--d, 0) * 22ms);
+        transition: transform 0.5s cubic-bezier(0.3, 1.6, 0.5, 1) calc(0.08s + var(--d, 0) * 18ms), opacity 0.25s ease calc(0.08s + var(--d, 0) * 18ms);
         @apply opacity-100;
     }
 
@@ -599,10 +617,9 @@
         @apply font-semibold text-emerald-800;
     }
 
-    /* Dim, blurred page behind the open menu. */
+    /* Dim the page behind the open menu (no full-screen blur: that was the costly part). */
     .menu-scrim {
-        transition: opacity 0.35s ease;
-        @apply fixed inset-0 -z-10 bg-slate-900/20 backdrop-blur-[6px];
+        @apply fixed inset-0 -z-10 bg-slate-900/25;
     }
 
     /* ---------- Phone: iOS 26 top bar ---------- */
@@ -647,7 +664,7 @@
 
         .table-modern tbody tr {
             box-shadow: var(--glass-rim), var(--glass-shadow);
-            @apply mb-3 block rounded-3xl border border-white/60 bg-white/80 p-4 last:border hover:bg-white/80;
+            @apply mb-3 block rounded-3xl border border-white/60 bg-white/60 p-4 backdrop-blur-2xl last:border hover:bg-white/60;
         }
 
         .table-modern tbody td {
@@ -703,45 +720,8 @@
         }
     }
 
-    /* Only desktops animate the ambient light; on phones it stays still (saves battery and frames). */
-    @media (hover: hover) and (pointer: fine) {
-        .ambient span {
-            @apply animate-drift;
-        }
-    }
-
-    /*
-     | Phones: same look, far less GPU work. Content cards sit on a smooth gradient, so they do
-     | not need a live blur — only the navigation glass (tab bar, top controls) keeps it.
-     */
-    @media (max-width: 1023px), (pointer: coarse) {
-        .glass {
-            -webkit-backdrop-filter: none;
-            backdrop-filter: none;
-            background:
-                linear-gradient(180deg, rgba(255, 255, 255, 0.88), rgba(255, 255, 255, 0.72)) padding-box,
-                var(--glass-edge) border-box;
-        }
-
-        .glass-thin {
-            -webkit-backdrop-filter: none;
-            backdrop-filter: none;
-            background-color: rgba(255, 255, 255, 0.75);
-        }
-
-        .surface-dark,
-        .btn-primary,
-        .btn-dark,
-        .btn-danger-soft,
-        .btn-success-soft,
-        .tab-action {
-            -webkit-backdrop-filter: none;
-            backdrop-filter: none;
-        }
-
-        .tab {
-            filter: none;
-        }
+    .ambient span {
+        @apply animate-drift;
     }
 
     @media (prefers-reduced-motion: reduce) {
@@ -795,5 +775,18 @@
     }
     100% {
         scale: 1 1;
+    }
+}
+
+/* The menu settles with a springy overshoot as it opens out of the tab bar. */
+@keyframes menu-spring {
+    0% {
+        transform: scale(0.97, 0.9);
+    }
+    55% {
+        transform: scale(1.008, 1.02);
+    }
+    100% {
+        transform: none;
     }
 }
