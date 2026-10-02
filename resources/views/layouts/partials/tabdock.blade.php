@@ -11,10 +11,22 @@
              const h = parts.reduce((sum, el) => sum + (el.dataset.scroll !== undefined ? el.scrollHeight : el.offsetHeight), 0);
              this.$refs.bar.style.setProperty('--menu-h', h + 'px');
          },
+         {{-- Picking an item: the tile pops, the menu springs shut, then the page changes. --}}
+         leaving: false,
+         go(event, then) {
+             if (this.leaving || event.metaKey || event.ctrlKey || event.shiftKey) return;
+             event.preventDefault();
+             this.leaving = true;
+             event.currentTarget.classList.add('tile-picked');
+             navigator.vibrate?.(8);
+             setTimeout(() => { this.menu = false; }, 140);
+             setTimeout(then, 520);
+         },
      }"
      x-init="fit()" @resize.window.debounce.200ms="fit()"
      x-effect="document.documentElement.classList.toggle('overflow-hidden', menu)"
-     @keydown.escape.window="menu = false">
+     @keydown.escape.window="menu = false"
+     @pageshow.window="menu = false; leaving = false">
     <div class="menu-scrim" x-show="menu" x-cloak x-transition.opacity.duration.300ms @click="menu = false" aria-hidden="true"></div>
 
     <nav class="tabbar" x-ref="bar" data-refract aria-label="Main" style="--tabs: {{ count($items) }}; --tab-index: {{ $activeIndex === false ? 0 : $activeIndex }}">
@@ -43,7 +55,7 @@
                         @foreach ($links as [$label, $routeName, $patterns, $icon])
                             @php $on = request()->routeIs(...$patterns); @endphp
                             <a href="{{ route($routeName) }}" class="tile {{ $on ? 'tile-active' : '' }}" style="--d: {{ $d++ }}"
-                               onclick="navigator.vibrate?.(8)" @if ($on) aria-current="page" @endif>
+                               @click="go($event, () => location.assign($el.href))" @if ($on) aria-current="page" @endif>
                                 <span class="tile-icon"><x-icon :name="$icon" class="h-6 w-6" /></span>
                                 <span class="line-clamp-2">{{ $label }}</span>
                             </a>
@@ -53,8 +65,8 @@
             </div>
 
             <div class="flex gap-2 border-t border-slate-900/[0.06] p-3">
-                <a href="{{ route('profile.edit') }}" class="btn-secondary flex-1"><x-icon name="user" class="h-4 w-4" /> Profile</a>
-                <form method="POST" action="{{ route('logout') }}" class="flex-1">
+                <a href="{{ route('profile.edit') }}" class="btn-secondary flex-1" @click="go($event, () => location.assign($el.href))"><x-icon name="user" class="h-4 w-4" /> Profile</a>
+                <form method="POST" action="{{ route('logout') }}" class="flex-1" @submit="go($event, () => $el.submit())">
                     @csrf
                     <button type="submit" class="btn-danger-soft w-full"><x-icon name="logout" class="h-4 w-4" /> Log out</button>
                 </form>

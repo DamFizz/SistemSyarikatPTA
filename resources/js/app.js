@@ -255,7 +255,9 @@ function initRefraction() {
     const ua = navigator.userAgent;
     const chromium = /(Chrome|Edg)\//.test(ua) && !/(CriOS|FxiOS|EdgiOS|Firefox)/.test(ua);
     const lessGlass = window.matchMedia('(prefers-reduced-transparency: reduce)').matches;
-    const targets = [...document.querySelectorAll('[data-refract]')];
+    // Phones: lens only on the tab bar, one pass (no colour split) — refraction is costly per frame.
+    const lite = window.matchMedia('(pointer: coarse), (max-width: 1023px)').matches;
+    const targets = [...document.querySelectorAll(lite ? '.tabbar[data-refract]' : '[data-refract]')];
     if (!chromium || lessGlass || !targets.length) return;
 
     const NS = 'http://www.w3.org/2000/svg';
@@ -267,8 +269,11 @@ function initRefraction() {
     document.body.appendChild(defs);
 
     let seq = 0;
+    const maps = new Map(); // size → data URL, so a bar that shrinks and grows reuses its lenses
 
     const lensMap = (w, h, radius, bezel) => {
+        const key = `${w}x${h}r${radius}b${bezel}`;
+        if (maps.has(key)) return maps.get(key);
         const canvas = document.createElement('canvas');
         canvas.width = w;
         canvas.height = h;
@@ -315,10 +320,13 @@ function initRefraction() {
         }
 
         ctx.putImageData(image, 0, 0);
-        return canvas.toDataURL();
+        maps.set(key, canvas.toDataURL());
+        return maps.get(key);
     };
 
     const apply = (el) => {
+        // While the menu is open the glass is frosted by CSS; the lens is rebuilt once it closes.
+        if (el.closest('.menu-open')) return;
         el.style.backdropFilter = '';
         el.style.webkitBackdropFilter = '';
         const style = getComputedStyle(el);
@@ -357,11 +365,13 @@ function initRefraction() {
 
         filter.append(
             map,
+            ...(lite ? [node('feDisplacementMap', { in: 'SourceGraphic', in2: 'lens', scale: Math.round(strength), xChannelSelector: 'R', yChannelSelector: 'G' })] : [
             ...channel('red', strength * 1.12, '1 0 0 0 0  0 0 0 0 0  0 0 0 0 0  0 0 0 1 0'),
             ...channel('green', strength, '0 0 0 0 0  0 1 0 0 0  0 0 0 0 0  0 0 0 1 0'),
             ...channel('blue', strength * 0.88, '0 0 0 0 0  0 0 0 0 0  0 0 1 0 0  0 0 0 1 0'),
             node('feBlend', { in: 'red', in2: 'green', mode: 'screen', result: 'rg' }),
             node('feBlend', { in: 'rg', in2: 'blue', mode: 'screen' }),
+            ]),
         );
         defs.appendChild(filter);
 

@@ -1,3 +1,5 @@
+@php($hasUnread = \App\Models\Announcement::unseenBy(auth()->user())->where('created_at', '>=', now()->subDays(30))->exists())
+
 {{-- Content blurs away as it slides under the floating controls. --}}
 <div class="scroll-edge" aria-hidden="true"></div>
 
@@ -11,7 +13,7 @@
         <div class="bar-title min-w-0 flex-1 truncate text-center text-[15px] font-semibold text-slate-900">{{ $title ?? 'Dashboard' }}</div>
 
         <div class="lg flex h-12 shrink-0 items-center gap-0.5 rounded-full px-1.5 [view-transition-name:bar-actions]" data-refract>
-            @include('layouts.partials.topbar-actions')
+            @include('layouts.partials.topbar-actions', ['hasUnread' => $hasUnread])
         </div>
     </div>
 
@@ -34,7 +36,7 @@
                 <span class="font-mono font-medium text-slate-900" x-text="now.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit', second: '2-digit' })">{{ now()->format('H:i:s') }}</span>
             </div>
 
-            @include('layouts.partials.topbar-actions', ['showName' => true])
+            @include('layouts.partials.topbar-actions', ['showName' => true, 'hasUnread' => $hasUnread])
         </div>
     </div>
 </header>

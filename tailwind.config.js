@@ -46,8 +46,8 @@ export default {
                 },
                 // Entrance used by the staggered reveal (ends on transform:none so fixed modals stay unconfined).
                 rise: {
-                    '0%': { opacity: '0', transform: 'translateY(14px) scale(0.985)', filter: 'blur(4px)' },
-                    '100%': { opacity: '1', transform: 'none', filter: 'none' },
+                    '0%': { opacity: '0', transform: 'translateY(14px) scale(0.985)' },
+                    '100%': { opacity: '1', transform: 'none' },
                 },
                 'pop-in': {
                     '0%': { opacity: '0', transform: 'scale(0.6)' },

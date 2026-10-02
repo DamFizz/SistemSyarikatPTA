@@ -1,7 +1,7 @@
 {{-- Bell + account menu, shared by the phone and desktop top bars. --}}
 <a href="{{ route('announcements.index') }}" class="lg-press relative rounded-full p-2 text-slate-700 hover:bg-white/40" title="Announcements">
     <x-icon name="bell" />
-    @if (\App\Models\Announcement::unseenBy(auth()->user())->where('created_at', '>=', now()->subDays(30))->exists())
+    @if ($hasUnread)
         <span class="absolute right-1.5 top-1.5 flex h-2.5 w-2.5">
             <span class="absolute inline-flex h-full w-full animate-ping rounded-full bg-rose-400 opacity-70"></span>
             <span class="relative h-2.5 w-2.5 rounded-full bg-rose-500 ring-2 ring-white"></span>

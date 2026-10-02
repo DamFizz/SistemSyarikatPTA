@@ -194,8 +194,9 @@
     }
 
     .ambient span {
-        @apply absolute rounded-full blur-3xl animate-drift;
-        will-change: transform;
+        /* A soft blob from a gradient (no blur filter: far cheaper to draw). Colour comes from text-*. */
+        background: radial-gradient(closest-side, currentColor, transparent);
+        @apply absolute rounded-full;
     }
 
     .card-header {
@@ -571,6 +572,18 @@
         transition-duration: 0.15s !important;
     }
 
+    /* The picked tile swells and lights up while the menu springs shut around it. */
+    .tabdock .tile.tile-picked {
+        transform: scale(1.14) !important;
+        opacity: 1 !important;
+        transition: transform 0.3s cubic-bezier(0.3, 1.6, 0.5, 1) !important;
+    }
+
+    .tile-picked .tile-icon {
+        background: linear-gradient(180deg, rgba(52, 211, 153, 0.95), rgba(13, 148, 136, 0.92));
+        @apply text-white;
+    }
+
     .tile-icon {
         background: rgba(255, 255, 255, 0.6);
         box-shadow: var(--lg-specular), 0 6px 14px -8px rgba(15, 23, 42, 0.3);
@@ -634,7 +647,7 @@
 
         .table-modern tbody tr {
             box-shadow: var(--glass-rim), var(--glass-shadow);
-            @apply mb-3 block rounded-3xl border border-white/60 bg-white/60 p-4 backdrop-blur-2xl last:border hover:bg-white/60;
+            @apply mb-3 block rounded-3xl border border-white/60 bg-white/80 p-4 last:border hover:bg-white/80;
         }
 
         .table-modern tbody td {
@@ -687,6 +700,47 @@
         .card {
             background: rgba(255, 255, 255, 0.94);
             backdrop-filter: none;
+        }
+    }
+
+    /* Only desktops animate the ambient light; on phones it stays still (saves battery and frames). */
+    @media (hover: hover) and (pointer: fine) {
+        .ambient span {
+            @apply animate-drift;
+        }
+    }
+
+    /*
+     | Phones: same look, far less GPU work. Content cards sit on a smooth gradient, so they do
+     | not need a live blur — only the navigation glass (tab bar, top controls) keeps it.
+     */
+    @media (max-width: 1023px), (pointer: coarse) {
+        .glass {
+            -webkit-backdrop-filter: none;
+            backdrop-filter: none;
+            background:
+                linear-gradient(180deg, rgba(255, 255, 255, 0.88), rgba(255, 255, 255, 0.72)) padding-box,
+                var(--glass-edge) border-box;
+        }
+
+        .glass-thin {
+            -webkit-backdrop-filter: none;
+            backdrop-filter: none;
+            background-color: rgba(255, 255, 255, 0.75);
+        }
+
+        .surface-dark,
+        .btn-primary,
+        .btn-dark,
+        .btn-danger-soft,
+        .btn-success-soft,
+        .tab-action {
+            -webkit-backdrop-filter: none;
+            backdrop-filter: none;
+        }
+
+        .tab {
+            filter: none;
         }
     }
 
