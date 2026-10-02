@@ -27,14 +27,15 @@
          },
      }"
      x-init="fit()" @resize.window.debounce.200ms="fit()"
-     x-effect="document.documentElement.classList.toggle('overflow-hidden', menu)"
+     {{-- No scroll lock on <html> (that relayout made the first frame stutter): the scrim just swallows touches. --}}
+     x-effect="if (menu) document.documentElement.classList.remove('tabbar-min')"
      @keydown.escape.window="menu = false"
      @pageshow.window="menu = false; leaving = false">
-    <div class="menu-scrim" x-show="menu" x-cloak x-transition.opacity.duration.250ms @click="menu = false" aria-hidden="true"></div>
+    <div class="menu-scrim" x-show="menu" x-cloak x-transition.opacity.duration.250ms @click="menu = false" @touchmove.prevent @wheel.prevent aria-hidden="true"></div>
 
     {{-- Full menu (revealed out of the tab bar) --}}
-    <div class="menupanel" x-ref="menu" :aria-hidden="(! menu).toString()" role="dialog" aria-label="Menu">
-        <div class="menupanel-fill"></div>
+    <div class="menupanel" x-ref="menu" :aria-hidden="(! menu).toString()" role="dialog" aria-label="Menu"
+         @touchmove="if (! $event.target.closest('[data-menu-scroll]')) $event.preventDefault()">
         <div class="menupanel-body">
             <div class="flex items-center gap-3 px-5 pb-3 pt-5">
                 <span class="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-emerald-400 to-teal-600 text-sm font-bold text-white shadow-[var(--lg-specular)]">
@@ -49,7 +50,7 @@
                 </button>
             </div>
 
-            <div class="min-h-0 flex-1 overflow-y-auto overscroll-contain px-3 pb-3 [scrollbar-width:none]">
+            <div class="min-h-0 flex-1 overflow-y-auto overscroll-contain px-3 pb-3 [scrollbar-width:none]" data-menu-scroll>
                 @php $d = 0; @endphp
                 @foreach ($groups as $section => $links)
                     @if ($section)
@@ -78,32 +79,37 @@
         </div>
     </div>
 
-    <nav class="tabbar" data-refract aria-label="Main" style="--tabs: {{ count($items) }}; --tab-index: {{ $activeIndex === false ? 0 : $activeIndex }}">
-        {{-- Tabs --}}
-        <div class="tabrow">
-            @if ($activeIndex !== false)
-                <span class="tab-indicator"></span>
-            @endif
+    <div class="tabglass">
+        <span class="glass-blur"></span>
+        <span class="glass-lens" data-refract></span>
 
-            @foreach ($items as $i => [$label, $routeName, $patterns, $icon])
-                @if ($routeName === null)
-                    <button type="button" @click="menu = true; navigator.vibrate?.(8)" class="tab" :aria-expanded="menu.toString()">
-                        <x-icon :name="$icon" class="h-[22px] w-[22px]" />
-                        <span>{{ $label }}</span>
-                    </button>
-                @else
-                    <a href="{{ route($routeName) }}" class="tab {{ $activeIndex === $i ? 'tab-active' : '' }}" onclick="navigator.vibrate?.(8)"
-                       @if ($activeIndex === $i) aria-current="page" @endif>
-                        <x-icon :name="$icon" class="h-[22px] w-[22px]" />
-                        <span>{{ $label }}</span>
-                    </a>
+        <nav class="tabbar" aria-label="Main" style="--tabs: {{ count($items) }}; --tab-index: {{ $activeIndex === false ? 0 : $activeIndex }}">
+            {{-- Tabs --}}
+            <div class="tabrow">
+                @if ($activeIndex !== false)
+                    <span class="tab-indicator"></span>
                 @endif
-            @endforeach
-        </div>
-    </nav>
+
+                @foreach ($items as $i => [$label, $routeName, $patterns, $icon])
+                    @if ($routeName === null)
+                        <button type="button" @click="menu = true; navigator.vibrate?.(8)" class="tab" :aria-expanded="menu.toString()">
+                            <x-icon :name="$icon" class="h-[22px] w-[22px]" />
+                            <span>{{ $label }}</span>
+                        </button>
+                    @else
+                        <a href="{{ route($routeName) }}" class="tab {{ $activeIndex === $i ? 'tab-active' : '' }}" onclick="navigator.vibrate?.(8)"
+                           @if ($activeIndex === $i) aria-current="page" @endif>
+                            <x-icon :name="$icon" class="h-[22px] w-[22px]" />
+                            <span>{{ $label }}</span>
+                        </a>
+                    @endif
+                @endforeach
+            </div>
+        </nav>
+    </div>
 
     @if ($centre)
-        <a href="{{ route($centre[1]) }}" class="tab-action {{ $centreActive ? 'tab-action-active' : '' }}" data-refract
+        <a href="{{ route($centre[1]) }}" class="tab-action {{ $centreActive ? 'tab-action-active' : '' }}"
            onclick="navigator.vibrate?.(10)" aria-label="Attendance — clock in or out" @if ($centreActive) aria-current="page" @endif>
             <x-icon :name="$centre[3]" class="h-7 w-7 shrink-0" />
         </a>

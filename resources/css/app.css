@@ -413,49 +413,86 @@
     }
 
     /* ---------- Phone: iOS 26 floating tab bar ---------- */
-    /* Dock = capsule tab bar + separate round action button, floating above content. */
+    /*
+     | Dock = capsule tab bar + separate round action, floating above content.
+     | Built for 60fps on phones — everything that moves animates transform/opacity only:
+     |   .tabglass        the capsule; shrinks with a transform while scrolling down
+     |     .glass-blur    GPU backdrop blur (always on)
+     |     .glass-lens    the SVG refraction lens (CPU-heavy) on its own layer: it fades
+     |                    out while scrolling or morphing and fades back in when still,
+     |                    so the page never stutters and the lens never "pops"
+     |     .tabbar        tint, specular rim and the tabs (no backdrop filter itself)
+     |   .menupanel       "More": real glass revealed out of the capsule (clip-path + spring)
+     */
     .tabdock {
+        --bar-h: var(--tabbar-h);
+        --action-gap: calc(var(--tabbar-h) + 0.625rem);
+        --morph-ease: cubic-bezier(0.32, 0.72, 0, 1);
+        --spring: cubic-bezier(0.3, 1.3, 0.5, 1);
         bottom: calc(0.75rem + var(--safe-bottom));
-        /* No view-transition-name here: it would make the dock a backdrop root and the glass inside could not blur the page. */
+        /* No view-transition-name here: it would make the dock a backdrop root and the glass inside could not see the page. */
         @apply fixed inset-x-3 z-30 mx-auto flex max-w-md items-end lg:hidden;
     }
 
-    /* Springs used by the morph: open overshoots and settles, close is quick and soft. */
-    .tabbar {
-        --spring-open: cubic-bezier(0.32, 1.45, 0.5, 1);
-        --spring-close: cubic-bezier(0.4, 0.9, 0.3, 1.08);
+    .tabdock.no-action {
+        --action-gap: 0px;
+    }
+
+    .tabglass {
         height: var(--tabbar-h);
-        border-radius: 2.15rem;
-        view-transition-name: tabbar;
-        transition: height 0.5s var(--spring-close), border-radius 0.5s var(--spring-close), box-shadow 0.4s ease;
-        /* Clearly frosted (Apple's tab bars are): labels must read over any content. */
+        transform-origin: 50% 100%;
+        transition: transform 0.55s var(--spring);
+        @apply relative z-10 min-w-0 flex-1 rounded-full;
+    }
+
+    .glass-blur,
+    .glass-lens {
+        @apply pointer-events-none absolute inset-0 rounded-full;
+    }
+
+    .glass-blur {
+        -webkit-backdrop-filter: blur(5px) saturate(220%) brightness(1.08);
+        backdrop-filter: blur(5px) saturate(220%) brightness(1.08);
+    }
+
+    .glass-lens {
+        transition: opacity 0.45s ease, visibility 0s;
+    }
+
+    /* Lens off while the page moves or the menu morphs (fades, never pops). */
+    .lens-off .glass-lens,
+    .tabdock.menu-open .glass-lens {
+        @apply invisible opacity-0;
+        transition: opacity 0.12s ease, visibility 0s linear 0.12s;
+    }
+
+    .tabbar {
         background:
             linear-gradient(180deg, rgba(255, 255, 255, 0.34), rgba(255, 255, 255, 0.06) 55%, rgba(255, 255, 255, 0.16)),
             rgba(248, 250, 252, 0.34);
-        /* Light frost so the refracted edge stays visible (as on iOS); enough to keep labels readable. */
-        -webkit-backdrop-filter: blur(4px) saturate(220%) brightness(1.08);
-        backdrop-filter: blur(4px) saturate(220%) brightness(1.08);
         box-shadow: var(--lg-specular), var(--lg-float);
-        @apply relative min-w-0 flex-1 overflow-hidden;
+        transition: opacity 0.25s ease 0.2s;
+        @apply relative flex h-full items-stretch overflow-hidden rounded-full px-1;
     }
 
     .tabrow {
-        height: var(--tabbar-h);
-        transition: opacity 0.25s ease, transform 0.45s var(--spring-open), filter 0.3s ease, height 0.45s cubic-bezier(0.2, 0.8, 0.2, 1.15);
-        @apply absolute inset-x-0 bottom-0 flex items-stretch px-1;
+        @apply relative flex w-full items-stretch;
     }
 
     .tab {
         transition: transform 0.45s cubic-bezier(0.2, 0.8, 0.2, 1.3), color 0.25s ease;
         /* Vibrancy: a soft white halo keeps icons and labels crisp over whatever is refracted behind. */
         text-shadow: 0 0 6px rgba(255, 255, 255, 0.95), 0 0 2px rgba(255, 255, 255, 0.9);
-        filter: drop-shadow(0 0 4px rgba(255, 255, 255, 0.85));
         @apply relative z-10 flex flex-1 flex-col items-center justify-center gap-0.5 rounded-full text-[10.5px] font-semibold text-slate-700 active:scale-110;
     }
 
+    .tab > svg {
+        filter: drop-shadow(0 0 3px rgba(255, 255, 255, 0.9));
+        transition: transform 0.45s var(--spring);
+    }
+
     .tab > span {
-        transition: opacity 0.25s ease, max-height 0.35s ease;
-        @apply max-h-4 overflow-hidden;
+        transition: opacity 0.2s ease;
     }
 
     .tab-active {
@@ -481,83 +518,72 @@
         width: var(--tabbar-h);
         height: var(--tabbar-h);
         margin-left: 0.625rem;
-        view-transition-name: tab-action;
-        background: linear-gradient(180deg, rgba(52, 211, 153, 0.92), rgba(13, 148, 136, 0.9));
+        transform-origin: 50% 100%;
+        background: linear-gradient(180deg, rgba(52, 211, 153, 0.94), rgba(13, 148, 136, 0.92));
         box-shadow: var(--lg-specular), 0 10px 26px -10px rgba(5, 150, 105, 0.8);
-        transition:
-            transform 0.45s cubic-bezier(0.2, 0.8, 0.2, 1.3),
-            width 0.5s var(--spring, cubic-bezier(0.4, 0.9, 0.3, 1.08)),
-            height 0.45s cubic-bezier(0.2, 0.8, 0.2, 1.15),
-            margin 0.5s cubic-bezier(0.4, 0.9, 0.3, 1.08),
-            opacity 0.3s ease,
-            filter 0.2s ease;
-        @apply flex shrink-0 items-center justify-center overflow-hidden rounded-full text-white backdrop-blur active:scale-110 active:brightness-110;
+        transition: transform 0.55s var(--spring), opacity 0.22s ease 0.18s, filter 0.2s ease;
+        @apply relative z-20 flex shrink-0 items-center justify-center rounded-full text-white active:brightness-110;
+    }
+
+    .tab-action:active {
+        transform: scale(1.1);
+        transition-duration: 0.15s;
     }
 
     .tab-action-active {
         box-shadow: var(--lg-specular), 0 0 0 3px rgba(255, 255, 255, 0.7), 0 10px 26px -10px rgba(5, 150, 105, 0.8);
     }
 
-    /* Scrolling down shrinks the bar to icons, scrolling up brings it back (as in iOS 26). */
-    .tabbar-min .tabbar,
-    .tabbar-min .tabrow {
-        height: 3.25rem;
-    }
-
-    .tabbar-min .tab > span {
-        @apply max-h-0 opacity-0;
+    /* Scrolling down shrinks the dock (labels fade, icons settle), scrolling up restores it. */
+    .tabbar-min .tabglass {
+        transform: scale(0.9) translateY(4px);
     }
 
     .tabbar-min .tab-action {
-        width: 3.25rem;
-        height: 3.25rem;
+        transform: scale(0.84) translateY(4px);
+    }
+
+    .tabbar-min .tab > span {
+        @apply opacity-0;
+    }
+
+    .tabbar-min .tab > svg {
+        transform: translateY(7px) scale(1.08);
     }
 
     /* ---------- "More": the tab bar morphs into the full menu ---------- */
-    /*
-     | Choreography (open):
-     |   1. the shape grows out of the capsule's outline (clip-path, one iOS-style curve)
-     |   2. the glass fill cross-fades with the tabs underneath
-     |   3. the contents rise in with a soft spring (transform/opacity: GPU only)
-     | Close plays it backwards. The panel is laid out once at its final size and has no
-     | backdrop blur, so revealing it costs almost nothing per frame.
-     */
-    .tabdock {
-        --bar-h: var(--tabbar-h);
-        --action-gap: calc(var(--bar-h) + 0.625rem);
-        --morph-ease: cubic-bezier(0.32, 0.72, 0, 1);
-    }
-
-    .tabbar-min .tabdock {
-        --bar-h: 3.25rem;
-    }
-
-    .tabdock.no-action {
-        --action-gap: 0px;
-    }
-
     .menupanel {
         height: min(76vh, var(--menu-h, 36rem));
-        contain: layout paint;
         /* Closed: clipped down to exactly the capsule tab bar. */
         clip-path: inset(calc(100% - var(--bar-h)) var(--action-gap) 0 0 round 2.15rem);
-        transition: clip-path 0.42s var(--morph-ease), visibility 0s linear 0.42s;
-        @apply invisible pointer-events-none absolute inset-x-0 bottom-0 z-10;
+        /* Real Liquid Glass (GPU blur only): the page shows through, softly. */
+        /* Starts as the tab bar's glass (same tint and blur) and deepens as it grows — one continuous material. */
+        background-image: linear-gradient(180deg, rgba(255, 255, 255, 0.5), rgba(255, 255, 255, 0.2) 60%, rgba(255, 255, 255, 0.34));
+        background-color: rgba(248, 250, 252, 0.34);
+        -webkit-backdrop-filter: blur(5px) saturate(220%) brightness(1.08);
+        backdrop-filter: blur(5px) saturate(220%) brightness(1.08);
+        box-shadow: var(--lg-specular);
+        transition:
+            clip-path 0.42s var(--morph-ease),
+            backdrop-filter 0.36s ease,
+            -webkit-backdrop-filter 0.36s ease,
+            background-color 0.3s ease,
+            visibility 0s linear 0.42s;
+        @apply invisible pointer-events-none absolute inset-x-0 bottom-0 z-20 overflow-hidden rounded-[2rem];
     }
 
     .tabdock.menu-open .menupanel {
         clip-path: inset(0 0 0 0 round 2rem);
-        transition: clip-path 0.55s var(--morph-ease), visibility 0s;
+        background-color: rgba(241, 245, 249, 0.55);
+        -webkit-backdrop-filter: blur(24px) saturate(190%) brightness(1.05);
+        backdrop-filter: blur(24px) saturate(190%) brightness(1.05);
+        transition:
+            clip-path 0.55s var(--morph-ease),
+            backdrop-filter 0.45s ease,
+            -webkit-backdrop-filter 0.45s ease,
+            background-color 0.35s ease,
+            visibility 0s;
         @apply visible pointer-events-auto;
-    }
-
-    /* The glass fill: starts as the tab bar's look and cross-fades in. */
-    .menupanel-fill {
-        background:
-            linear-gradient(180deg, rgba(255, 255, 255, 0.7), rgba(255, 255, 255, 0.25)),
-            #eef2f6;
-        box-shadow: var(--lg-specular);
-        @apply absolute inset-0 rounded-[2rem];
     }
 
     .menupanel-body {
@@ -574,28 +600,18 @@
         transition: opacity 0.28s ease 0.08s, transform 0.62s cubic-bezier(0.25, 1.25, 0.4, 1) 0.04s;
     }
 
-    /* Nothing inside the panel blurs its backdrop: keeps every animation frame cheap. */
-    .menupanel-body .btn-secondary,
-    .menupanel-body .btn-danger-soft {
-        -webkit-backdrop-filter: none;
-        backdrop-filter: none;
-    }
-
-    .menupanel-body .btn-secondary {
-        background: rgba(255, 255, 255, 0.75);
-    }
-
-    /* Tabs and the round action hand over to the panel (and come back on close). */
-    /* The tab bar sits above the panel: the panel lifts out from behind it while the bar fades. */
-    .tabdock .tabbar {
-        z-index: 20;
-        transition: opacity 0.22s ease 0.18s, height 0.45s cubic-bezier(0.2, 0.8, 0.2, 1.15);
+    /*
+     | The capsule hands over to the panel: only its tint + tabs fade (the blur layer stays,
+     | so nothing pops back when the menu closes). opacity on .tabglass itself would cut its blur.
+     */
+    .tabdock.menu-open .tabglass {
+        @apply pointer-events-none;
+        transform: none;
     }
 
     .tabdock.menu-open .tabbar {
-        @apply pointer-events-none;
         opacity: 0;
-        transition: opacity 0.22s ease 0.03s, height 0.45s cubic-bezier(0.2, 0.8, 0.2, 1.15);
+        transition: opacity 0.2s ease;
     }
 
     .tabdock.menu-open .tab-action {
@@ -603,6 +619,17 @@
         opacity: 0;
         transform: scale(0.6);
         transition: opacity 0.16s ease, transform 0.3s var(--morph-ease);
+    }
+
+    /* Nothing inside the panel blurs its own backdrop: keeps every frame cheap. */
+    .menupanel-body .btn-secondary,
+    .menupanel-body .btn-danger-soft {
+        -webkit-backdrop-filter: none;
+        backdrop-filter: none;
+    }
+
+    .menupanel-body .btn-secondary {
+        background: rgba(255, 255, 255, 0.7);
     }
 
     /* Menu tiles pop in one after another, with a little bounce. */
@@ -636,7 +663,7 @@
     }
 
     .tile-icon {
-        background: rgba(255, 255, 255, 0.7);
+        background: rgba(255, 255, 255, 0.62);
         box-shadow: var(--lg-specular), 0 6px 14px -8px rgba(15, 23, 42, 0.3);
         @apply flex h-[3.25rem] w-[3.25rem] items-center justify-center rounded-[1.1rem] text-slate-600;
     }
@@ -652,7 +679,7 @@
 
     /* Dim the page behind the open menu (opacity only). */
     .menu-scrim {
-        @apply fixed inset-0 -z-10 bg-slate-900/25;
+        @apply fixed inset-0 -z-10 bg-slate-900/20;
     }
 
     /* ---------- Phone: iOS 26 top bar ---------- */

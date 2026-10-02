@@ -255,7 +255,11 @@ function initRefraction() {
     const ua = navigator.userAgent;
     const chromium = /(Chrome|Edg)\//.test(ua) && !/(CriOS|FxiOS|EdgiOS|Firefox)/.test(ua);
     const lessGlass = window.matchMedia('(prefers-reduced-transparency: reduce)').matches;
-    const targets = [...document.querySelectorAll('[data-refract]')];
+    // The lens is computed on the CPU every frame its backdrop changes. Phones therefore get it
+    // only on the tab bar's own lens layer (faded out while scrolling — see initScrollChrome),
+    // in a single pass; desktops get it on every glass control, with the colour split.
+    const touch = window.matchMedia('(pointer: coarse)').matches;
+    const targets = [...document.querySelectorAll(touch ? '.glass-lens[data-refract]' : '[data-refract]')];
     if (!chromium || lessGlass || !targets.length) return;
 
     const NS = 'http://www.w3.org/2000/svg';
@@ -363,11 +367,13 @@ function initRefraction() {
 
         filter.append(
             map,
+            ...(touch ? [node('feDisplacementMap', { in: 'SourceGraphic', in2: 'lens', scale: Math.round(strength), xChannelSelector: 'R', yChannelSelector: 'G' })] : [
             ...channel('red', strength * 1.12, '1 0 0 0 0  0 0 0 0 0  0 0 0 0 0  0 0 0 1 0'),
             ...channel('green', strength, '0 0 0 0 0  0 1 0 0 0  0 0 0 0 0  0 0 0 1 0'),
             ...channel('blue', strength * 0.88, '0 0 0 0 0  0 0 0 0 0  0 0 1 0 0  0 0 0 1 0'),
             node('feBlend', { in: 'red', in2: 'green', mode: 'screen', result: 'rg' }),
             node('feBlend', { in: 'rg', in2: 'blue', mode: 'screen' }),
+            ]),
         );
         defs.appendChild(filter);
 
@@ -394,6 +400,7 @@ function initScrollChrome() {
     const root = document.documentElement;
     let lastY = window.scrollY;
     let ticking = false;
+    let still = null;
 
     const update = () => {
         ticking = false;
@@ -406,6 +413,11 @@ function initScrollChrome() {
     };
 
     window.addEventListener('scroll', () => {
+        // While the page moves the refraction lens fades out (CSS), and fades back once still.
+        root.classList.add('lens-off');
+        clearTimeout(still);
+        still = setTimeout(() => root.classList.remove('lens-off'), 220);
+
         if (!ticking) {
             ticking = true;
             requestAnimationFrame(update);
