@@ -248,7 +248,7 @@ function animateTabIndicator() {
 /**
  * Real Liquid Glass refraction (Chromium): each [data-refract] element gets an SVG
  * displacement lens built for its exact size and corner radius. Near the rim the
- * backdrop is bent outward, as light is through the curved edge of a glass slab;
+ * backdrop is magnified towards the rim, as light is through the curved edge of a glass slab;
  * the middle stays undistorted. Safari / Firefox keep the plain clear glass.
  */
 function initRefraction() {
@@ -314,8 +314,11 @@ function initRefraction() {
                 const depth = -dist; // distance in from the rim
                 const strength = depth < bezel ? Math.pow(1 - Math.max(0, depth) / bezel, 2) : 0;
                 const i = (y * w + x) * 4;
-                image.data[i] = 128 + nx * strength * 127;
-                image.data[i + 1] = 128 + ny * strength * 127;
+                // Sample inward (towards the centre): the rim magnifies what is just inside it.
+                // Sampling outward read pixels beyond the element, which a backdrop filter does not
+                // have — that showed up as a ghost edge at the rounded ends of the tab bar.
+                image.data[i] = 128 - nx * strength * 127;
+                image.data[i + 1] = 128 - ny * strength * 127;
                 image.data[i + 2] = 128;
                 image.data[i + 3] = 255;
             }
