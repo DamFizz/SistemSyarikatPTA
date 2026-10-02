@@ -26,6 +26,7 @@
     </head>
     <body class="font-sans antialiased">
         @include('layouts.partials.ambient')
+        <x-lightbox />
 
         <div x-data="{ sidebarOpen: false }" x-effect="document.documentElement.classList.toggle('overflow-hidden', sidebarOpen)" @keydown.escape.window="sidebarOpen = false" class="relative min-h-screen">
             @include('layouts.sidebar')

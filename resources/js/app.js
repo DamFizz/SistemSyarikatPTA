@@ -182,6 +182,100 @@ Alpine.data('installApp', () => ({
     },
 }));
 
+/*
+ | Photo lightbox (selfies etc.). Any link with [data-lightbox] opens its image in a
+ | glass popup on the same page — the picture zooms out of its thumbnail and back.
+ | Links sharing data-lightbox="<group>" can be flicked through with the arrows/swipe.
+ | Without JavaScript the link still opens the image normally.
+ */
+Alpine.data('lightbox', () => ({
+    open: false,
+    items: [],
+    index: 0,
+    loaded: false,
+    origin: null,
+    touchX: null,
+
+    get item() {
+        return this.items[this.index] ?? null;
+    },
+
+    init() {
+        document.addEventListener('click', (event) => {
+            const link = event.target.closest?.('a[data-lightbox]');
+            if (!link || event.metaKey || event.ctrlKey || event.shiftKey) return;
+            event.preventDefault();
+            this.show(link);
+        });
+    },
+
+    show(link) {
+        const group = link.dataset.lightbox;
+        const links = group ? [...document.querySelectorAll(`a[data-lightbox="${CSS.escape(group)}"]`)] : [link];
+        this.items = links.map((a) => ({ src: a.href, caption: a.dataset.caption || a.title || '', thumb: a }));
+        this.index = Math.max(0, links.indexOf(link));
+        this.loaded = false;
+        this.origin = link.getBoundingClientRect();
+        this.open = true;
+        navigator.vibrate?.(6);
+    },
+
+    /** Zoom the picture out of the thumbnail it came from (transform only — GPU). */
+    zoomIn() {
+        this.loaded = true;
+        const img = this.$refs.img;
+        if (!img || !this.origin || reduceMotion) return;
+        const to = img.getBoundingClientRect();
+        const from = this.origin;
+        this.origin = null;
+        img.animate([
+            { transform: `translate(${from.left + from.width / 2 - (to.left + to.width / 2)}px, ${from.top + from.height / 2 - (to.top + to.height / 2)}px) scale(${from.width / to.width})`, borderRadius: '40%', opacity: 0.6 },
+            { transform: 'none', borderRadius: '1.5rem', opacity: 1 },
+        ], { duration: 420, easing: 'cubic-bezier(0.3, 1.2, 0.4, 1)' });
+    },
+
+    close() {
+        if (!this.open) return;
+        const img = this.$refs.img;
+        const thumb = this.item?.thumb;
+        const from = img?.getBoundingClientRect();
+        const to = thumb?.getBoundingClientRect();
+        const visible = to && to.bottom > 0 && to.top < window.innerHeight && to.width > 0;
+        if (img && from && visible && !reduceMotion) {
+            const shrink = img.animate([
+                { transform: 'none', opacity: 1 },
+                { transform: `translate(${to.left + to.width / 2 - (from.left + from.width / 2)}px, ${to.top + to.height / 2 - (from.top + from.height / 2)}px) scale(${to.width / from.width})`, borderRadius: '40%', opacity: 0.4 },
+            ], { duration: 260, easing: 'cubic-bezier(0.4, 0, 0.2, 1)', fill: 'forwards' });
+            const done = () => {
+                if (!this.open) return;
+                this.open = false;
+                shrink.cancel(); // or the next opening would start from the shrunken frame
+            };
+            shrink.finished.then(done);
+            setTimeout(done, 400); // in case animations are paused (e.g. a background tab)
+        } else {
+            this.open = false;
+        }
+    },
+
+    step(delta) {
+        if (this.items.length < 2) return;
+        this.index = (this.index + delta + this.items.length) % this.items.length;
+        this.loaded = false;
+    },
+
+    swipeStart(event) {
+        this.touchX = event.touches[0].clientX;
+    },
+
+    swipeEnd(event) {
+        if (this.touchX === null) return;
+        const dx = event.changedTouches[0].clientX - this.touchX;
+        this.touchX = null;
+        if (Math.abs(dx) > 50) this.step(dx < 0 ? 1 : -1);
+    },
+}));
+
 Alpine.start();
 
 /* ------------------------------------------------------------------

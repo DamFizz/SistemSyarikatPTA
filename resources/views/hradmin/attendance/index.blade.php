@@ -97,7 +97,8 @@
                             <div class="flex -space-x-2">
                                 @foreach (['in', 'out'] as $type)
                                     @if ($record->hasSelfie($type))
-                                        <a href="{{ route('attendance.selfie', [$record, $type]) }}" target="_blank" title="Clock-{{ $type }} selfie" class="block h-9 w-9 overflow-hidden rounded-xl bg-slate-100 ring-2 ring-white transition hover:z-10 hover:scale-110">
+                                        <a href="{{ route('attendance.selfie', [$record, $type]) }}" data-lightbox="selfies-{{ $record->id }}"
+                                           data-caption="{{ $record->employee->full_name }} · Clock-{{ $type }} {{ ($type === 'in' ? $record->clock_in_time : $record->clock_out_time)?->format('h:i A') }}" title="Clock-{{ $type }} selfie" class="block h-9 w-9 overflow-hidden rounded-xl bg-slate-100 ring-2 ring-white transition hover:z-10 hover:scale-110">
                                             <img src="{{ route('attendance.selfie', [$record, $type]) }}" alt="Clock-{{ $type }} selfie" loading="lazy" class="h-full w-full object-cover" onerror="this.parentElement.remove()">
                                         </a>
                                     @endif
