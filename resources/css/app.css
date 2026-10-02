@@ -7,16 +7,30 @@
 }
 
 /*
- | Liquid glass design language
+ | Liquid Glass (after Apple's iOS 26 material)
  | --------------------------------------------------------------
- | Soft ambient colour sits behind everything; surfaces are frosted
- | translucent glass with a bright rim, a gentle top sheen and a
- | diffuse shadow. Colour stays neutral with a single emerald accent.
+ | Two layers, as Apple prescribes:
+ |  - Navigation layer (tab bar, top controls, sidebar, buttons): CLEAR glass —
+ |    barely tinted, light blur, a specular rim lit from the top-left, an inner
+ |    glow that gives the pane thickness, and (Chromium) real edge refraction
+ |    from an SVG displacement lens generated per element in app.js.
+ |  - Content layer (cards): frosted platters, so text stays legible.
+ | Interactive glass grows and brightens under the finger, like iOS.
  */
 
 @layer base {
     :root {
         --glass-rim: inset 0 1px 0 0 rgba(255, 255, 255, 0.85), inset 0 0 0 1px rgba(255, 255, 255, 0.35);
+        /* Specular rim: light enters top-left, a fainter catch-light bottom-right, a hairline edge, inner thickness glow. */
+        --lg-specular:
+            inset 1.5px 1.5px 0.5px -1px rgba(255, 255, 255, 0.95),
+            inset -1px -1px 0.5px -0.5px rgba(255, 255, 255, 0.55),
+            inset 0 0 0 0.5px rgba(255, 255, 255, 0.55),
+            inset 0 0 18px -4px rgba(255, 255, 255, 0.45),
+            inset 0 -10px 18px -14px rgba(15, 23, 42, 0.12);
+        --lg-float: 0 10px 30px -10px rgba(15, 23, 42, 0.22), 0 2px 8px -2px rgba(15, 23, 42, 0.08);
+        --lg-clear: rgba(255, 255, 255, 0.2);
+        --lg-clear-filter: blur(9px) saturate(200%) brightness(1.06);
         --glass-shadow: 0 1px 2px rgba(15, 23, 42, 0.04), 0 12px 32px -14px rgba(15, 23, 42, 0.16);
         --glass-shadow-lift: 0 2px 6px rgba(15, 23, 42, 0.05), 0 24px 48px -18px rgba(15, 23, 42, 0.24);
         --glass-sheen: linear-gradient(180deg, rgba(255, 255, 255, 0.74) 0%, rgba(255, 255, 255, 0.42) 100%);
@@ -77,19 +91,50 @@
 
 @layer components {
     /* ---------- Glass primitives ---------- */
+    /* Frosted platter for content: legible, with the same specular rim as the navigation glass. */
     .glass {
         border: 1px solid transparent;
         background:
             var(--glass-spot) padding-box,
             var(--glass-sheen) padding-box,
             var(--glass-edge) border-box;
-        box-shadow: var(--glass-rim), var(--glass-shadow);
+        box-shadow: var(--lg-specular), var(--glass-shadow);
         @apply backdrop-blur-2xl backdrop-saturate-[1.8];
     }
 
     .glass-thin {
         box-shadow: var(--glass-rim);
         @apply bg-white/45 border border-white/60 backdrop-blur-xl backdrop-saturate-150;
+    }
+
+    /* Clear Liquid Glass for the navigation layer. */
+    .lg {
+        background:
+            linear-gradient(180deg, rgba(255, 255, 255, 0.22), rgba(255, 255, 255, 0.04) 55%, rgba(255, 255, 255, 0.1)),
+            var(--lg-clear);
+        box-shadow: var(--lg-specular), var(--lg-float);
+        -webkit-backdrop-filter: var(--lg-clear-filter);
+        backdrop-filter: var(--lg-clear-filter);
+    }
+
+    /* "Regular" variant (Apple uses it for tab bars): more frosting so labels read over any content. */
+    .lg-regular {
+        background:
+            linear-gradient(180deg, rgba(255, 255, 255, 0.3), rgba(255, 255, 255, 0.08) 55%, rgba(255, 255, 255, 0.16)),
+            rgba(255, 255, 255, 0.52);
+        -webkit-backdrop-filter: blur(14px) saturate(200%) brightness(1.04);
+        backdrop-filter: blur(14px) saturate(200%) brightness(1.04);
+    }
+
+    /* iOS: touched glass swells and lights up, then springs back. */
+    .lg-press {
+        transition: transform 0.45s cubic-bezier(0.2, 0.8, 0.2, 1.3), filter 0.3s ease, background-color 0.3s ease;
+    }
+
+    .lg-press:active {
+        transform: scale(1.06);
+        filter: brightness(1.12) saturate(1.1);
+        transition-duration: 0.15s;
     }
 
     /* Recessed well inside a glass card (small stat tiles, grouped rows). */
@@ -174,43 +219,55 @@
         @apply text-sm text-slate-500;
     }
 
-    /* ---------- Buttons (capsules) ---------- */
+    /* ---------- Buttons: glass capsules that swell when pressed (iOS 26) ---------- */
     .btn {
-        @apply inline-flex items-center justify-center gap-2 rounded-full px-4 py-2.5 text-sm font-semibold transition duration-200
+        transition: transform 0.45s cubic-bezier(0.2, 0.8, 0.2, 1.3), filter 0.25s ease, background-color 0.25s ease, box-shadow 0.25s ease, color 0.2s ease;
+        @apply inline-flex items-center justify-center gap-2 rounded-full px-4 py-2.5 text-sm font-semibold
                focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-offset-transparent focus-visible:ring-emerald-500
-               disabled:opacity-50 disabled:cursor-not-allowed ease-spring active:scale-[0.95] active:duration-100;
+               disabled:opacity-50 disabled:cursor-not-allowed;
     }
 
+    .btn:not(:disabled):active {
+        transform: scale(1.05);
+        filter: brightness(1.1);
+        transition-duration: 0.12s;
+    }
+
+    /* Tinted glass: colour you can see through, lit like the clear glass. */
     .btn-primary {
-        box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.35), 0 8px 20px -8px rgba(5, 150, 105, 0.65);
-        @apply btn shine text-white bg-gradient-to-b from-emerald-400 to-emerald-600 hover:from-emerald-400 hover:to-emerald-700 hover:-translate-y-px;
+        background: linear-gradient(180deg, rgba(52, 211, 153, 0.95), rgba(5, 150, 105, 0.92));
+        box-shadow: var(--lg-specular), 0 8px 20px -8px rgba(5, 150, 105, 0.7);
+        @apply btn shine text-white backdrop-blur backdrop-saturate-150 hover:brightness-105;
     }
 
     .btn-dark {
-        box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.12), 0 8px 20px -10px rgba(6, 10, 19, 0.6);
-        @apply btn shine text-white bg-slate-900/90 backdrop-blur hover:bg-slate-900 hover:-translate-y-px;
+        background: linear-gradient(180deg, rgba(30, 41, 59, 0.92), rgba(15, 23, 42, 0.92));
+        box-shadow: inset 1px 1px 0.5px -1px rgba(255, 255, 255, 0.5), inset 0 0 0 0.5px rgba(255, 255, 255, 0.14), 0 8px 20px -10px rgba(6, 10, 19, 0.6);
+        @apply btn shine text-white backdrop-blur hover:brightness-110;
     }
 
     .btn-secondary {
-        box-shadow: var(--glass-rim), 0 2px 8px -3px rgba(15, 23, 42, 0.14);
-        @apply btn text-slate-700 bg-white/60 border border-white/70 backdrop-blur-xl hover:bg-white/85 hover:text-slate-900;
+        @apply btn lg text-slate-800 hover:bg-white/30;
     }
 
     .btn-ghost {
-        @apply btn text-slate-600 hover:bg-white/60 hover:text-slate-900;
+        @apply btn text-slate-600 hover:bg-white/45 hover:text-slate-900;
     }
 
     .btn-danger {
-        box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.3), 0 8px 20px -8px rgba(225, 29, 72, 0.6);
-        @apply btn text-white bg-gradient-to-b from-rose-500 to-rose-600 hover:to-rose-700;
+        background: linear-gradient(180deg, rgba(251, 113, 133, 0.95), rgba(225, 29, 72, 0.92));
+        box-shadow: var(--lg-specular), 0 8px 20px -8px rgba(225, 29, 72, 0.6);
+        @apply btn text-white hover:brightness-105;
     }
 
     .btn-danger-soft {
-        @apply btn text-rose-700 bg-rose-500/10 hover:bg-rose-500/15;
+        box-shadow: inset 1px 1px 0.5px -1px rgba(255, 255, 255, 0.8), inset 0 0 0 0.5px rgba(244, 63, 94, 0.15);
+        @apply btn text-rose-700 bg-rose-500/10 backdrop-blur hover:bg-rose-500/15;
     }
 
     .btn-success-soft {
-        @apply btn text-emerald-700 bg-emerald-500/10 hover:bg-emerald-500/15;
+        box-shadow: inset 1px 1px 0.5px -1px rgba(255, 255, 255, 0.8), inset 0 0 0 0.5px rgba(16, 185, 129, 0.18);
+        @apply btn text-emerald-700 bg-emerald-500/10 backdrop-blur hover:bg-emerald-500/15;
     }
 
     .btn-sm {
@@ -308,68 +365,134 @@
         @apply inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-medium;
     }
 
-    /* ---------- Navigation (light glass sidebar) ---------- */
+    /* ---------- Navigation: clear-glass sidebar ---------- */
     .nav-link {
-        @apply relative flex items-center gap-3 rounded-2xl px-3 py-2.5 text-[13.5px] font-medium text-slate-500 transition duration-200 ease-spring
-               hover:translate-x-0.5 hover:bg-white/55 hover:text-slate-900 active:scale-[0.97];
+        transition: transform 0.4s cubic-bezier(0.2, 0.8, 0.2, 1.3), background-color 0.2s ease, color 0.2s ease;
+        @apply relative flex items-center gap-3 rounded-full px-3.5 py-2.5 text-[13.5px] font-medium text-slate-600
+               hover:bg-white/35 hover:text-slate-900 active:scale-[1.03];
     }
 
+    /* Selected item: a lens of brighter glass, like the iPadOS 26 sidebar. */
     .nav-link-active {
-        box-shadow: var(--glass-rim), 0 4px 14px -6px rgba(15, 23, 42, 0.18);
-        @apply bg-white/80 text-slate-900;
-    }
-
-    .nav-link-active::before {
-        content: '';
-        @apply absolute -left-3 top-1/2 h-5 w-1 -translate-y-1/2 rounded-r-full bg-emerald-500 shadow-[0_0_10px_1px_rgba(16,185,129,0.45)];
+        background: rgba(255, 255, 255, 0.55);
+        box-shadow: var(--lg-specular), 0 6px 16px -8px rgba(15, 23, 42, 0.22);
+        @apply text-slate-900;
     }
 
     .nav-section {
-        @apply px-3 pt-5 pb-1.5 text-[10.5px] font-semibold uppercase tracking-[0.16em] text-slate-400;
+        @apply px-3.5 pt-5 pb-1.5 text-[11px] font-semibold uppercase tracking-[0.12em] text-slate-500/80;
     }
 
-    /* Apple-style segmented control. */
+    /* Segmented control with a glass lens for the selection. */
     .segmented {
-        @apply inline-flex gap-1 rounded-full bg-slate-900/[0.06] p-1 backdrop-blur-xl;
+        box-shadow: inset 0 1px 2px rgba(15, 23, 42, 0.08), inset 0 0 0 0.5px rgba(15, 23, 42, 0.05);
+        @apply inline-flex gap-1 rounded-full bg-slate-900/[0.05] p-1 backdrop-blur-xl;
     }
 
     .segmented-item {
-        @apply shrink-0 rounded-full px-4 py-1.5 text-sm font-medium text-slate-500 transition hover:text-slate-900;
+        transition: transform 0.4s cubic-bezier(0.2, 0.8, 0.2, 1.3), color 0.2s ease;
+        @apply shrink-0 rounded-full px-4 py-1.5 text-sm font-medium text-slate-500 hover:text-slate-900 active:scale-105;
     }
 
     .segmented-item-active {
-        box-shadow: var(--glass-rim), 0 2px 8px -2px rgba(15, 23, 42, 0.18);
-        @apply bg-white text-slate-900;
+        background: rgba(255, 255, 255, 0.85);
+        box-shadow: var(--lg-specular), 0 3px 10px -3px rgba(15, 23, 42, 0.2);
+        @apply text-slate-900;
     }
 
-    /* ---------- Phone: app-style bottom tab bar ---------- */
-    .tabbar {
+    /* ---------- Phone: iOS 26 floating tab bar ---------- */
+    /* Dock = capsule tab bar + separate round action button, floating above content. */
+    .tabdock {
         bottom: calc(0.75rem + var(--safe-bottom));
+        view-transition-name: tabdock;
+        @apply fixed inset-x-3 z-30 mx-auto flex max-w-md items-end gap-2.5 lg:hidden;
+    }
+
+    .tabbar {
         height: var(--tabbar-h);
-        view-transition-name: tabbar;
-        @apply glass fixed inset-x-3 z-30 mx-auto flex max-w-md items-stretch rounded-[1.75rem] !bg-white/70 px-1.5 lg:hidden;
+        transition: height 0.45s cubic-bezier(0.2, 0.8, 0.2, 1.15);
+        @apply lg lg-regular relative flex min-w-0 flex-1 items-stretch rounded-full px-1;
     }
 
     .tab {
-        @apply relative z-10 flex flex-1 flex-col items-center justify-center gap-1 rounded-[1.25rem] text-[10.5px] font-semibold text-slate-400 transition duration-200 ease-spring active:scale-90;
+        transition: transform 0.45s cubic-bezier(0.2, 0.8, 0.2, 1.3), color 0.25s ease;
+        @apply relative z-10 flex flex-1 flex-col items-center justify-center gap-0.5 rounded-full text-[10.5px] font-semibold text-slate-600 active:scale-110;
+    }
+
+    .tab > span {
+        transition: opacity 0.25s ease, max-height 0.35s ease;
+        @apply max-h-4 overflow-hidden;
     }
 
     .tab-active {
         @apply text-emerald-700;
     }
 
-    /* The glass pill that slides under the active tab. */
+    /* The selected tab sits in a lens of brighter glass that stretches like liquid as it moves. */
     .tab-indicator {
-        width: calc((100% - 0.75rem) / var(--tabs));
+        width: calc((100% - 0.5rem) / var(--tabs));
         transform: translateX(calc(100% * var(--tab-index)));
-        box-shadow: var(--glass-rim), 0 4px 14px -6px rgba(15, 23, 42, 0.22);
-        @apply pointer-events-none absolute inset-y-1.5 left-1.5 rounded-[1.25rem] bg-white/90 transition-transform duration-500 ease-spring;
+        background: rgba(255, 255, 255, 0.5);
+        box-shadow: var(--lg-specular), 0 4px 12px -6px rgba(15, 23, 42, 0.25);
+        transition: transform 0.55s cubic-bezier(0.25, 0.9, 0.25, 1.15);
+        @apply pointer-events-none absolute inset-y-1 left-1 rounded-full;
     }
 
-    /* Raised centre action (Attendance). */
-    .tab-fab {
-        box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.4), 0 10px 24px -8px rgba(5, 150, 105, 0.75);
-        @apply -mt-6 flex h-14 w-14 items-center justify-center rounded-full bg-gradient-to-br from-emerald-400 to-teal-600 text-white ring-4 ring-white/70 transition duration-200 ease-spring;
+    .tab-indicator.is-moving {
+        animation: lg-stretch 0.55s cubic-bezier(0.3, 0.7, 0.3, 1);
+    }
+
+    /* Round action beside the bar (iOS 26 puts Search there; SEMS puts Clock in/out). */
+    .tab-action {
+        width: var(--tabbar-h);
+        height: var(--tabbar-h);
+        background: linear-gradient(180deg, rgba(52, 211, 153, 0.9), rgba(13, 148, 136, 0.88));
+        box-shadow: var(--lg-specular), 0 10px 26px -10px rgba(5, 150, 105, 0.8);
+        transition: transform 0.45s cubic-bezier(0.2, 0.8, 0.2, 1.3), width 0.45s cubic-bezier(0.2, 0.8, 0.2, 1.15), height 0.45s cubic-bezier(0.2, 0.8, 0.2, 1.15), filter 0.2s ease;
+        @apply flex shrink-0 items-center justify-center rounded-full text-white backdrop-blur active:scale-110 active:brightness-110;
+    }
+
+    .tab-action-active {
+        box-shadow: var(--lg-specular), 0 0 0 3px rgba(255, 255, 255, 0.7), 0 10px 26px -10px rgba(5, 150, 105, 0.8);
+    }
+
+    /* Scrolling down shrinks the bar to icons, scrolling up brings it back (as in iOS 26). */
+    .tabbar-min .tabbar {
+        height: 3.25rem;
+    }
+
+    .tabbar-min .tab > span {
+        @apply max-h-0 opacity-0;
+    }
+
+    .tabbar-min .tab-action {
+        width: 3.25rem;
+        height: 3.25rem;
+    }
+
+    /* ---------- Phone: iOS 26 top bar ---------- */
+    /* Content blurs progressively as it scrolls under the floating top controls. */
+    .scroll-edge {
+        height: calc(6rem + env(safe-area-inset-top, 0px));
+        background: linear-gradient(180deg, rgba(238, 242, 246, 0.85), rgba(238, 242, 246, 0.4) 60%, rgba(238, 242, 246, 0));
+        -webkit-mask-image: linear-gradient(180deg, #000 45%, transparent);
+        mask-image: linear-gradient(180deg, #000 45%, transparent);
+        transition: opacity 0.3s ease;
+        @apply pointer-events-none fixed inset-x-0 top-0 z-[19] opacity-0 backdrop-blur-md;
+    }
+
+    .is-scrolled .scroll-edge {
+        @apply opacity-100;
+    }
+
+    /* Compact title that appears in the bar once the large page title scrolls away. */
+    .bar-title {
+        transition: opacity 0.25s ease, transform 0.35s cubic-bezier(0.2, 0.8, 0.2, 1);
+        @apply translate-y-1 opacity-0;
+    }
+
+    .is-scrolled .bar-title {
+        @apply translate-y-0 opacity-100;
     }
 
     /* ---------- Phone: tables become stacked cards ---------- */
@@ -480,5 +603,21 @@
     from {
         opacity: 0;
         transform: translateY(10px);
+    }
+}
+
+/* Liquid lens: squashes and stretches while it slides to the new tab. */
+@keyframes lg-stretch {
+    0% {
+        scale: 1 1;
+    }
+    35% {
+        scale: 1.35 0.86;
+    }
+    70% {
+        scale: 0.94 1.04;
+    }
+    100% {
+        scale: 1 1;
     }
 }

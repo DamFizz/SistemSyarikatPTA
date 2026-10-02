@@ -29,7 +29,7 @@ $width = match ($width) {
             class="absolute z-50 mt-2 {{ $width }} rounded-2xl {{ $alignmentClasses }}"
             style="display: none;"
             @click="open = false">
-        <div class="glass overflow-hidden rounded-2xl !bg-white/75 {{ $contentClasses }}">
+        <div class="glass overflow-hidden rounded-[1.4rem] !bg-white/90 {{ $contentClasses }}">
             {{ $content }}
         </div>
     </div>

@@ -62,7 +62,8 @@
 
 <aside
     :class="sidebarOpen ? 'translate-x-0' : '-translate-x-full'"
-    class="[view-transition-name:sidebar] fixed left-0 top-0 z-40 flex h-viewport w-[17rem] max-w-[85vw] flex-col overscroll-contain border-r border-white/60 bg-white/80 text-slate-600 shadow-[var(--glass-rim),var(--glass-shadow-lift)] backdrop-blur-2xl backdrop-saturate-[1.8] transition-transform duration-300 ease-out lg:inset-y-3 lg:left-3 lg:h-auto lg:max-w-none lg:translate-x-0 lg:rounded-[1.75rem] lg:border lg:bg-white/50"
+    class="[view-transition-name:sidebar] fixed left-0 top-0 z-40 flex h-viewport w-[17rem] max-w-[85vw] flex-col overscroll-contain bg-white/80 text-slate-600 shadow-[var(--lg-specular),var(--lg-float)] backdrop-blur-2xl backdrop-saturate-[1.8] transition-transform duration-300 ease-out lg:inset-y-3 lg:left-3 lg:h-auto lg:max-w-none lg:translate-x-0 lg:rounded-[2rem] lg:bg-white/25 lg:backdrop-blur-md lg:backdrop-saturate-[2]"
+    data-refract
 >
 
     <div class="relative flex h-20 shrink-0 items-center gap-3 px-6">

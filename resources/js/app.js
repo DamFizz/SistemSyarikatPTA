@@ -222,22 +222,173 @@ function labelTableCells() {
     });
 }
 
-/** The tab bar's glass pill slides from the previous tab to the new one. */
+/** The tab bar's glass lens slides from the previous tab to the new one, stretching like liquid. */
 function animateTabIndicator() {
     const bar = document.querySelector('.tabbar');
+    const lens = bar?.querySelector('.tab-indicator');
     if (!bar || reduceMotion) return;
 
     const index = getComputedStyle(bar).getPropertyValue('--tab-index').trim();
     let previous = null;
     try {
         previous = sessionStorage.getItem('sems-tab');
-        sessionStorage.setItem('sems-tab', index);
+        sessionStorage.setItem('sems-tab', lens ? index : '');
     } catch (e) {}
 
-    if (previous === null || previous === index || !bar.querySelector('.tab-indicator')) return;
+    if (!lens || !previous || previous === index) return;
 
     bar.style.setProperty('--tab-index', previous);
-    requestAnimationFrame(() => requestAnimationFrame(() => bar.style.setProperty('--tab-index', index)));
+    requestAnimationFrame(() => requestAnimationFrame(() => {
+        lens.classList.add('is-moving');
+        lens.addEventListener('animationend', () => lens.classList.remove('is-moving'), { once: true });
+        bar.style.setProperty('--tab-index', index);
+    }));
+}
+
+/**
+ * Real Liquid Glass refraction (Chromium): each [data-refract] element gets an SVG
+ * displacement lens built for its exact size and corner radius. Near the rim the
+ * backdrop is bent outward, as light is through the curved edge of a glass slab;
+ * the middle stays undistorted. Safari / Firefox keep the plain clear glass.
+ */
+function initRefraction() {
+    const ua = navigator.userAgent;
+    const chromium = /(Chrome|Edg)\//.test(ua) && !/(CriOS|FxiOS|EdgiOS|Firefox)/.test(ua);
+    const lessGlass = window.matchMedia('(prefers-reduced-transparency: reduce)').matches;
+    const targets = [...document.querySelectorAll('[data-refract]')];
+    if (!chromium || lessGlass || !targets.length) return;
+
+    const NS = 'http://www.w3.org/2000/svg';
+    const defs = document.createElementNS(NS, 'svg');
+    defs.setAttribute('aria-hidden', 'true');
+    defs.setAttribute('width', '0');
+    defs.setAttribute('height', '0');
+    defs.style.position = 'absolute';
+    document.body.appendChild(defs);
+
+    let seq = 0;
+
+    const lensMap = (w, h, radius, bezel) => {
+        const canvas = document.createElement('canvas');
+        canvas.width = w;
+        canvas.height = h;
+        const ctx = canvas.getContext('2d');
+        const image = ctx.createImageData(w, h);
+        const hw = w / 2;
+        const hh = h / 2;
+
+        for (let y = 0; y < h; y++) {
+            for (let x = 0; x < w; x++) {
+                // Signed distance to the rounded rectangle (negative inside) and its outward normal.
+                const px = x + 0.5 - hw;
+                const py = y + 0.5 - hh;
+                const qx = Math.abs(px) - (hw - radius);
+                const qy = Math.abs(py) - (hh - radius);
+                let nx;
+                let ny;
+                let dist;
+                if (qx > 0 && qy > 0) {
+                    const len = Math.hypot(qx, qy) || 1;
+                    nx = qx / len;
+                    ny = qy / len;
+                    dist = len - radius;
+                } else if (qx > qy) {
+                    nx = 1;
+                    ny = 0;
+                    dist = qx - radius;
+                } else {
+                    nx = 0;
+                    ny = 1;
+                    dist = qy - radius;
+                }
+                nx *= Math.sign(px) || 1;
+                ny *= Math.sign(py) || 1;
+
+                const depth = -dist; // distance in from the rim
+                const strength = depth < bezel ? Math.pow(1 - Math.max(0, depth) / bezel, 2) : 0;
+                const i = (y * w + x) * 4;
+                image.data[i] = 128 + nx * strength * 127;
+                image.data[i + 1] = 128 + ny * strength * 127;
+                image.data[i + 2] = 128;
+                image.data[i + 3] = 255;
+            }
+        }
+
+        ctx.putImageData(image, 0, 0);
+        return canvas.toDataURL();
+    };
+
+    const apply = (el) => {
+        el.style.backdropFilter = '';
+        el.style.webkitBackdropFilter = '';
+        const style = getComputedStyle(el);
+        const w = Math.round(el.offsetWidth);
+        const h = Math.round(el.offsetHeight);
+        if (!w || !h || style.display === 'none') return;
+
+        const radius = Math.min(parseFloat(style.borderTopLeftRadius) || 0, w / 2, h / 2);
+        const bezel = Math.max(6, Math.min(20, Math.min(w, h) * 0.32));
+        const id = (el.dataset.refractId ||= `lg-lens-${seq++}`);
+
+        defs.querySelector(`#${id}`)?.remove();
+        const filter = document.createElementNS(NS, 'filter');
+        filter.id = id;
+        filter.setAttribute('filterUnits', 'userSpaceOnUse');
+        filter.setAttribute('primitiveUnits', 'userSpaceOnUse');
+        filter.setAttribute('color-interpolation-filters', 'sRGB');
+        for (const [k, v] of Object.entries({ x: 0, y: 0, width: w, height: h })) filter.setAttribute(k, v);
+
+        const map = document.createElementNS(NS, 'feImage');
+        map.setAttribute('href', lensMap(w, h, radius, bezel));
+        for (const [k, v] of Object.entries({ x: 0, y: 0, width: w, height: h, result: 'lens', preserveAspectRatio: 'none' })) map.setAttribute(k, v);
+
+        const displace = document.createElementNS(NS, 'feDisplacementMap');
+        for (const [k, v] of Object.entries({ in: 'SourceGraphic', in2: 'lens', scale: Math.round(bezel * 1.6), xChannelSelector: 'R', yChannelSelector: 'G' })) displace.setAttribute(k, v);
+
+        filter.append(map, displace);
+        defs.appendChild(filter);
+
+        const base = style.backdropFilter && style.backdropFilter !== 'none' ? style.backdropFilter : '';
+        el.style.backdropFilter = `url(#${id}) ${base}`.trim();
+    };
+
+    const pending = new Map();
+    const observer = new ResizeObserver((entries) => {
+        entries.forEach(({ target }) => {
+            clearTimeout(pending.get(target));
+            pending.set(target, setTimeout(() => apply(target), 120));
+        });
+    });
+
+    targets.forEach((el) => {
+        apply(el);
+        observer.observe(el);
+    });
+}
+
+/** iOS 26 scroll chrome: compact title + edge blur once scrolled; tab bar shrinks while scrolling down. */
+function initScrollChrome() {
+    const root = document.documentElement;
+    let lastY = window.scrollY;
+    let ticking = false;
+
+    const update = () => {
+        ticking = false;
+        const y = window.scrollY;
+        root.classList.toggle('is-scrolled', y > 56);
+        if (Math.abs(y - lastY) > 10) {
+            root.classList.toggle('tabbar-min', y > lastY && y > 140);
+            lastY = y;
+        }
+    };
+
+    window.addEventListener('scroll', () => {
+        if (!ticking) {
+            ticking = true;
+            requestAnimationFrame(update);
+        }
+    }, { passive: true });
+    update();
 }
 
 document.addEventListener('DOMContentLoaded', () => {
@@ -246,4 +397,6 @@ document.addEventListener('DOMContentLoaded', () => {
     initReveal();
     initCountUp();
     animateTabIndicator();
+    initScrollChrome();
+    initRefraction();
 });
