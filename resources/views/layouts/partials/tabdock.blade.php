@@ -16,6 +16,41 @@
          },
          {{-- Picking an item: the tile pops, the menu springs shut, then the page changes. --}}
          leaving: false,
+         {{--
+          | Tapping a tab: the glass lens slides there on THIS page (instant feedback, like a
+          | native app), then the page changes. The next page simply shows the lens in place.
+          --}}
+         {{-- Back/forward restores this page from cache: put the lens back on this page's tab. --}}
+         reset() {
+             const bar = this.$refs.bar;
+             const index = bar.dataset.index;
+             this.$refs.lens.classList.remove('is-moving');
+             this.$refs.lens.classList.toggle('is-hidden', index === '');
+             bar.style.setProperty('--tab-index', index === '' ? 0 : index);
+             bar.querySelectorAll('[data-i]').forEach((tab) => tab.classList.toggle('tab-active', tab.dataset.i === index));
+         },
+         slide(event, index) {
+             if (event.metaKey || event.ctrlKey || event.shiftKey || event.button > 0) return;
+             const bar = this.$refs.bar;
+             const lens = this.$refs.lens;
+             const href = event.currentTarget.href;
+             if (lens.classList.contains('is-hidden')) {
+                 bar.style.setProperty('--tab-index', index);
+                 void lens.offsetWidth;
+                 lens.classList.remove('is-hidden');
+             } else if (bar.style.getPropertyValue('--tab-index').trim() === String(index)) {
+                 return;
+             }
+             event.preventDefault();
+             navigator.vibrate?.(8);
+             bar.querySelectorAll('.tab-active').forEach((tab) => tab.classList.remove('tab-active'));
+             event.currentTarget.classList.add('tab-active');
+             lens.classList.remove('is-moving');
+             void lens.offsetWidth;
+             lens.classList.add('is-moving');
+             bar.style.setProperty('--tab-index', index);
+             setTimeout(() => location.assign(href), 260);
+         },
          go(event, then) {
              if (this.leaving || event.metaKey || event.ctrlKey || event.shiftKey) return;
              event.preventDefault();
@@ -30,7 +65,7 @@
      {{-- No scroll lock on <html> (that relayout made the first frame stutter): the scrim just swallows touches. --}}
      x-effect="if (menu) document.documentElement.classList.remove('tabbar-min')"
      @keydown.escape.window="menu = false"
-     @pageshow.window="menu = false; leaving = false">
+     @pageshow.window="menu = false; leaving = false; if ($event.persisted) reset()">
     <div class="menu-scrim" x-show="menu" x-cloak x-transition.opacity.duration.250ms @click="menu = false" @touchmove.prevent @wheel.prevent aria-hidden="true"></div>
 
     {{-- Full menu (revealed out of the tab bar) --}}
@@ -81,12 +116,10 @@
         <span class="glass-blur"></span>
         <span class="glass-lens" data-refract></span>
 
-        <nav class="tabbar" aria-label="Main" style="--tabs: {{ count($items) }}; --tab-index: {{ $activeIndex === false ? 0 : $activeIndex }}">
+        <nav class="tabbar" x-ref="bar" data-index="{{ $activeIndex === false ? '' : $activeIndex }}" aria-label="Main" style="--tabs: {{ count($items) }}; --tab-index: {{ $activeIndex === false ? 0 : $activeIndex }}">
             {{-- Tabs --}}
             <div class="tabrow">
-                @if ($activeIndex !== false)
-                    <span class="tab-indicator"></span>
-                @endif
+                <span class="tab-indicator {{ $activeIndex === false ? 'is-hidden' : '' }}" x-ref="lens"></span>
 
                 @foreach ($items as $i => [$label, $routeName, $patterns, $icon])
                     @if ($routeName === null)
@@ -95,7 +128,7 @@
                             <span>{{ $label }}</span>
                         </button>
                     @else
-                        <a href="{{ route($routeName) }}" class="tab {{ $activeIndex === $i ? 'tab-active' : '' }}" onclick="navigator.vibrate?.(8)"
+                        <a href="{{ route($routeName) }}" class="tab {{ $activeIndex === $i ? 'tab-active' : '' }}" data-i="{{ $i }}" @click="slide($event, {{ $i }})"
                            @if ($activeIndex === $i) aria-current="page" @endif>
                             <x-icon :name="$icon" class="h-[22px] w-[22px]" />
                             <span>{{ $label }}</span>

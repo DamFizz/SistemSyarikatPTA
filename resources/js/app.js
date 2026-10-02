@@ -282,29 +282,6 @@ function labelTableCells() {
     });
 }
 
-/** The tab bar's glass lens slides from the previous tab to the new one, stretching like liquid. */
-function animateTabIndicator() {
-    const bar = document.querySelector('.tabbar');
-    const lens = bar?.querySelector('.tab-indicator');
-    if (!bar || reduceMotion) return;
-
-    const index = getComputedStyle(bar).getPropertyValue('--tab-index').trim();
-    let previous = null;
-    try {
-        previous = sessionStorage.getItem('sems-tab');
-        sessionStorage.setItem('sems-tab', lens ? index : '');
-    } catch (e) {}
-
-    if (!lens || !previous || previous === index) return;
-
-    bar.style.setProperty('--tab-index', previous);
-    requestAnimationFrame(() => requestAnimationFrame(() => {
-        lens.classList.add('is-moving');
-        lens.addEventListener('animationend', () => lens.classList.remove('is-moving'), { once: true });
-        bar.style.setProperty('--tab-index', index);
-    }));
-}
-
 /**
  * Real Liquid Glass refraction (Chromium): each [data-refract] element gets an SVG
  * displacement lens built for its exact size and corner radius. Near the rim the
@@ -494,7 +471,6 @@ document.addEventListener('DOMContentLoaded', () => {
     initGlassSpotlight();
     initReveal();
     initCountUp();
-    animateTabIndicator();
     initScrollChrome();
     initRefraction();
 });

@@ -467,6 +467,7 @@
     }
 
     .tabbar {
+        view-transition-name: tabbar;
         background:
             linear-gradient(180deg, rgba(255, 255, 255, 0.34), rgba(255, 255, 255, 0.06) 55%, rgba(255, 255, 255, 0.16)),
             rgba(248, 250, 252, 0.34);
@@ -500,17 +501,33 @@
     }
 
     /* The selected tab sits in a lens of brighter glass that stretches like liquid as it moves. */
+    /*
+     | Two layers on purpose: the element slides (translate), its ::before is the glass that
+     | stretches. Stretching the same element that translates would scale the offset too and
+     | overshoot the target tab.
+     */
     .tab-indicator {
         width: calc((100% - 0.5rem) / var(--tabs));
         transform: translateX(calc(100% * var(--tab-index)));
-        background: rgba(255, 255, 255, 0.75);
-        box-shadow: var(--lg-specular), 0 4px 12px -6px rgba(15, 23, 42, 0.25);
-        transition: transform 0.55s cubic-bezier(0.25, 0.9, 0.25, 1.15);
+        transition: transform 0.42s cubic-bezier(0.3, 1.25, 0.45, 1), opacity 0.2s ease;
         @apply pointer-events-none absolute inset-y-1 left-1 rounded-full;
     }
 
-    .tab-indicator.is-moving {
-        animation: lg-stretch 0.55s cubic-bezier(0.3, 0.7, 0.3, 1);
+    .tab-indicator::before {
+        content: '';
+        background: rgba(255, 255, 255, 0.78);
+        box-shadow: var(--lg-specular), 0 4px 12px -6px rgba(15, 23, 42, 0.25);
+        @apply absolute inset-0 rounded-full;
+    }
+
+    .tab-indicator.is-moving::before {
+        animation: lg-stretch 0.42s cubic-bezier(0.3, 0.7, 0.3, 1);
+    }
+
+    /* Pages that are not a tab (e.g. Attendance) have no lens until a tab is tapped. */
+    .tab-indicator.is-hidden {
+        opacity: 0;
+        transition: none;
     }
 
     /* Round action beside the bar (iOS 26 puts Search there; SEMS puts Clock in/out). */
@@ -519,6 +536,7 @@
         height: var(--tabbar-h);
         margin-left: 0.625rem;
         transform-origin: 50% 100%;
+        view-transition-name: tab-action;
         background: linear-gradient(180deg, rgba(52, 211, 153, 0.94), rgba(13, 148, 136, 0.92));
         box-shadow: var(--lg-specular), 0 10px 26px -10px rgba(5, 150, 105, 0.8);
         transition: transform 0.55s var(--spring), opacity 0.22s ease 0.18s, filter 0.2s ease;
@@ -838,3 +856,19 @@
     }
 }
 
+
+/*
+ | Page changes: the tab bar and round action are swapped instantly instead of cross-faded
+ | (a cross-fade showed two overlapping bars). The pill already slid on the old page.
+ */
+::view-transition-group(tabbar),
+::view-transition-group(tab-action),
+::view-transition-new(tabbar),
+::view-transition-new(tab-action) {
+    animation: none;
+}
+
+::view-transition-old(tabbar),
+::view-transition-old(tab-action) {
+    display: none;
+}
